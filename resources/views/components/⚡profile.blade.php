@@ -1,7 +1,9 @@
 <?php
 
+use App\Ai\Agents\KeywordSpecialist;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Ai\Files\Document;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -27,6 +29,14 @@ new class extends Component
         $this->city = $user->city ?? '';
         $this->maxDistance = $user->max_distance ?? 50;
         $this->existingCv = $user->cv;
+
+        // if ($this->existingCv && Storage::disk('local')->exists($this->existingCv)) {
+        //     $test = (new KeywordSpecialist)->prompt('Give me the keywords for this CV',
+        //     attachments: [
+        //         Document::fromStorage($this->existingCv)
+        //     ]);
+        //     dd($test);
+        // }
     }
 
     public function save(): void
