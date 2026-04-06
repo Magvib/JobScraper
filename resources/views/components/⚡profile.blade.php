@@ -13,6 +13,7 @@ new class extends Component
     public string $address = '';
     public string $zip = '';
     public string $city = '';
+    public int $maxDistance = 50;
     public $cvFile = null;
     public ?string $existingCv = null;
     public bool $saved = false;
@@ -24,6 +25,7 @@ new class extends Component
         $this->address = $user->address ?? '';
         $this->zip = $user->zip ?? '';
         $this->city = $user->city ?? '';
+        $this->maxDistance = $user->max_distance ?? 50;
         $this->existingCv = $user->cv;
     }
 
@@ -34,6 +36,7 @@ new class extends Component
             'address' => ['nullable', 'string', 'max:255'],
             'zip' => ['nullable', 'string', 'max:10'],
             'city' => ['nullable', 'string', 'max:100'],
+            'maxDistance' => ['required', 'integer', 'min:1', 'max:500'],
             'cvFile' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx'],
         ]);
 
@@ -42,7 +45,7 @@ new class extends Component
         $user->address = $this->address ?: null;
         $user->zip = $this->zip ?: null;
         $user->city = $this->city ?: null;
-
+        $user->max_distance = $this->maxDistance;
         
         if ($this->cvFile) {
             if ($user->cv) {
@@ -127,6 +130,16 @@ new class extends Component
                         class="input w-full" 
                         placeholder="{{ __('Viborg') }}"
                         maxlength="100"
+                    />
+                    <label class="label mt-2">
+                        <span class="label-text">{{ __('Max Distance (km)') }}</span>
+                    </label>
+                    <input 
+                        type="number" 
+                        wire:model="maxDistance" 
+                        class="input w-full" 
+                        min="1"
+                        max="500"
                     />
                 </fieldset>
 
