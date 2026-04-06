@@ -49,10 +49,10 @@ new class extends Component
         
         if ($this->cvFile) {
             if ($user->cv) {
-                Storage::disk('public')->delete($user->cv);
+                Storage::disk('local')->delete($user->cv);
             }
 
-            $path = $this->cvFile->store('cv', 'public');
+            $path = $this->cvFile->store('cv', 'local');
             $user->cv = $path;
             $this->existingCv = $path;
         }
@@ -60,6 +60,15 @@ new class extends Component
         $user->save();
         $this->saved = true;
         $this->dispatch('saved');
+    }
+
+    public function showCV(): void
+    {
+        if ($this->existingCv) {
+            $url = Storage::temporaryUrl($this->existingCv, now()->addMinutes(5));
+            // redirect()->away($url);
+            $this->js("window.open('{$url}', '_blank')");
+        }
     }
 }
 ?>
@@ -155,9 +164,9 @@ new class extends Component
                                 <p class="font-medium">{{ __('CV uploaded') }}</p>
                                 <p class="text-sm text-base-content/60">{{ Str::afterLast($existingCv, '/') }}</p>
                             </div>
-                            <a href="{{ Storage::url($existingCv) }}" target="_blank" class="btn btn-sm btn-ghost">
+                            <button type="button" wire:click="showCV" class="btn btn-sm btn-ghost">
                                 {{ __('View') }}
-                            </a>
+                            </button>
                         </div>
                     @endif
 
