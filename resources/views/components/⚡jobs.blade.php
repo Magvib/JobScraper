@@ -59,6 +59,48 @@ new class extends Component
     {
         return round($distance).' km';
     }
+
+    public function aiScore($jobId)
+    {
+        $job = collect($this->jobs)->firstWhere('tid', $jobId);
+        
+        if (!$job) {
+            // TODO handle error
+            return;
+        }
+
+        $jobUrl = $job['url'] ?? null;
+
+        if (!$jobUrl) {
+            // TODO handle error
+            return;
+        }
+
+        $text = Cache::remember('job_description_'.md5($jobUrl), now()->addHours(6), function () use ($jobUrl) {
+            $body = Http::get($jobUrl)->body();
+            
+            $dom = new DOMDocument();
+            @$dom->loadHTML($body);
+
+            // Remove script and style tags
+            $scriptTags = $dom->getElementsByTagName('script');
+            for ($i = $scriptTags->length - 1; $i >= 0; $i--) {
+                $scriptTags->item($i)->parentNode->removeChild($scriptTags->item($i));
+            }
+            $styleTags = $dom->getElementsByTagName('style');
+            for ($i = $styleTags->length - 1; $i >= 0; $i--) {
+                $styleTags->item($i)->parentNode->removeChild($styleTags->item($i));
+            }
+            
+            $text = $dom->textContent;
+            $text = preg_replace('/\s+/', ' ', $text); // Replace multiple whitespace with single space
+            $text = trim($text);
+            
+            return $text;
+        });
+        
+        dd($text);
+    }
 };
 ?>
 
@@ -105,6 +147,7 @@ new class extends Component
                         $rating = $job['rating']['score'] ?? null;
                         $jobUrl = $job['url'] ?? '#';
                         $headline = $job['headline'] ?? 'No title';
+                        $jobId = $job['tid'] ?? null;
                     @endphp
                     <div class="card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors duration-300">
                         <div class="card-body p-5">
@@ -147,7 +190,7 @@ new class extends Component
                                 </div>
                             </div>
                             <div class="card-actions justify-end mt-4">
-                                <button class="btn btn-secondary btn-sm gap-2">
+                                <button class="btn btn-secondary btn-sm gap-2" wire:click="aiScore('{{ $jobId }}')">
                                     AI Score
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
