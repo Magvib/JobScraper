@@ -1,8 +1,11 @@
 <?php
 
+use App\Ai\Agents\ResumeToJobSpecialist;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Ai\Files\Document;
 use Livewire\Component;
 
 new class extends Component
@@ -98,8 +101,22 @@ new class extends Component
             
             return $text;
         });
+
+        $user = auth()->user();
+
+        if (Storage::missing($user->cv)) {
+            // TODO handle error
+            return;
+        }
         
-        dd($text);
+        $test = (new ResumeToJobSpecialist)->prompt(
+            "Here is the job description: " . $text,
+            attachments: [
+                Document::fromStorage($user->cv),
+            ]
+        );
+
+        dd($test);
     }
 };
 ?>
