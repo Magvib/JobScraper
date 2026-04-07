@@ -1,6 +1,7 @@
 <?php
 
 use App\Ai\Agents\ResumeToJobSpecialist;
+use App\Models\JobRating;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -16,6 +17,8 @@ new class extends Component
     public int $jobCount = 0;
 
     public array $jobs = [];
+
+    public array $ratings = [];
 
     public function mount()
     {
@@ -40,7 +43,15 @@ new class extends Component
             $this->jobs = Cache::remember($cacheKey.'_results', now()->addMinutes(30), function () use ($data) {
                 return Http::get('https://www.jobindex.dk/api/jobsearch/v3', $data)->json()['results'] ?? [];
             });
+
+            $this->getRatings();
         }
+    }
+
+    public function getRatings()
+    {
+        $user = auth()->user();
+        $this->ratings = JobRating::where('user_id', $user->id)->whereIn('job_id', collect($this->jobs)->pluck('tid'))->get()->keyBy('job_id')->toArray();
     }
 
     public function companyInitials(string $name): string
@@ -65,6 +76,15 @@ new class extends Component
 
     public function aiScore($jobId)
     {
+        $user = auth()->user();
+        $jobRating = JobRating::where('user_id', $user->id)->where('job_id', $jobId)->first();
+
+        if ($jobRating) {
+            // TODO show existing rating
+            dd($jobRating);
+            return;
+        }
+        
         $job = collect($this->jobs)->firstWhere('tid', $jobId);
         
         if (!$job) {
@@ -116,7 +136,14 @@ new class extends Component
             ]
         );
 
-        dd($test);
+        JobRating::create([
+            'user_id' => $user->id,
+            'job_id' => $jobId,
+            'rating' => $test->structured['rating'] ?? 0,
+            'summary' => $test->structured['summary'] ?? '',
+        ]);
+
+        $this->getRatings();
     }
 };
 ?>
@@ -161,7 +188,8 @@ new class extends Component
                         $location = $job['area'] ?? 'Remote';
                         $postedDate = $this->formatDate($job['firstdate'] ?? date('Y-m-d'));
                         $distance = isset($job['distance']) ? $this->formatDistance($job['distance']) : null;
-                        $rating = $job['rating']['score'] ?? null;
+                        // $rating = $job['rating']['score'] ?? null;
+                        $rating = $this->ratings[$job['tid']]['rating'] ?? null;
                         $jobUrl = $job['url'] ?? '#';
                         $headline = $job['headline'] ?? 'No title';
                         $jobId = $job['tid'] ?? null;
@@ -179,11 +207,11 @@ new class extends Component
                                     <div class="text-sm text-base-content/60 mt-1">{{ $companyName }}</div>
                                 </div>
                                 @if($rating)
-                                    <div class="badge badge-warning badge-sm gap-1 shrink-0">
+                                    <div class="badge {{ $rating >= 8 ? 'badge-success' : ($rating >= 5 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1 shrink-0">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
                                             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                         </svg>
-                                        {{ number_format($rating, 1) }}
+                                        {{ number_format($rating, 1) }} / 10.0
                                     </div>
                                 @endif
                             </div>
