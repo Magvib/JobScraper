@@ -81,7 +81,6 @@ new class extends Component
 
         if ($jobRating) {
             // TODO show existing rating
-            dd($jobRating);
             return;
         }
         
