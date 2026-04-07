@@ -6,10 +6,16 @@ new class extends Component
 {
     public string $username = '';
 
+    public ?string $cv = null;
+
+    public ?array $keywords = null;
+
     public function mount()
     {
         $user = auth()->user();
         $this->username = $user->name;
+        $this->cv = $user->cv;
+        $this->keywords = $user->keywords;
     }
 }
 ?>
@@ -33,13 +39,20 @@ new class extends Component
             <div class="mt-4 mb-6 card bg-base-200/50 shadow-sm p-4">
                 <ul class="steps">
                     <li class="step step-primary">{{ __('Login') }}</li>
-                    <li class="step step-primary">{{ __('Upload CV') }}</li>
-                    <li class="step">{{ __('Checking CV') }}</li>
-                    <li class="step">{{ __('Find Jobs') }}</li>
+                    <li class="step {{ $cv ? 'step-primary' : '' }}">{{ __('Upload CV') }}</li>
+                    <li class="step {{ $keywords ? 'step-primary' : '' }}">{{ __('Checking CV') }}</li>
+                    <li class="step {{ $keywords ? 'step-primary' : '' }}">{{ __('Find Jobs') }}</li>
                 </ul>
             </div>
 
-            <button class="btn btn-warning w-fit" wire:navigate href="{{ route('profile') }}">{{ __('Upload CV') }}</button>
+            @if ($cv)
+                <div class="flex gap-3">
+                    <a href="{{ route('jobs') }}" wire:navigate class="btn btn-primary">{{ __('Browse Jobs') }}</a>
+                    <a href="{{ route('profile') }}" wire:navigate class="btn btn-ghost">{{ __('Update CV') }}</a>
+                </div>
+            @else
+                <button class="btn btn-warning w-fit" wire:navigate href="{{ route('profile') }}">{{ __('Upload CV') }}</button>
+            @endif
         </div>
     </div>
 
