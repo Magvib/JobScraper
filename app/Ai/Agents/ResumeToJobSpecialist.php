@@ -31,7 +31,7 @@ class ResumeToJobSpecialist implements Agent, Conversational, HasStructuredOutpu
             'You will be given a resume and a job description, and you will return a rating of how well the resume matches the job description, on a scale from 0 to 10.',
             'You will also return a brief summary of the resume, highlighting the most relevant skills and experiences for the job description.',
             'The rating should be based on how well the skills and experiences listed in the resume match the requirements and preferences listed in the job description.',
-            'The summary should focus on the most relevant skills and experiences for the job description, and should not simply repeat the contents of the resume. (max 300 characters)',
+            'The summary should focus on the most relevant skills and experiences for the job description, and should not simply repeat the contents of the resume. (max 300 characters) (the summary should be in english)',
         ]);
     }
 
