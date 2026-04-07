@@ -26,6 +26,10 @@ Route::get('/auth/redirect', function () {
 
 Route::get('/auth/callback', function () {
     $githubUser = Socialite::driver('github')->user();
+
+    if (!str_ends_with($githubUser->email, '@p13.dk')) {
+        return redirect()->route('home')->with('error', 'You must use a p13.dk email to login.');
+    }
     
     $user = \App\Models\User::firstOrCreate([
         'email' => $githubUser->email,
