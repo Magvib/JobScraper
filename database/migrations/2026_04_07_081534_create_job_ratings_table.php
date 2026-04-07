@@ -18,6 +18,8 @@ return new class extends Migration
             $table->float('rating');
             $table->string('summary', 1000);
             $table->timestamps();
+
+            $table->unique(['user_id', 'job_id']);
         });
     }
 
