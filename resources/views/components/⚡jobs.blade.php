@@ -108,7 +108,9 @@ new class extends Component
         }
 
         $text = Cache::remember('job_description_'.md5($jobUrl), now()->addHours(6), function () use ($jobUrl) {
-            $body = Http::get($jobUrl)->body();
+            $body = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            ])->get($jobUrl)->body();
             
             $dom = new DOMDocument();
             @$dom->loadHTML($body);
@@ -254,12 +256,14 @@ new class extends Component
                                 </div>
                             </div>
                             <div class="card-actions justify-end mt-4">
+                                @if($rating === null)
                                 <button class="btn btn-secondary btn-sm gap-2" wire:click="aiScore('{{ $jobId }}')">
                                     AI Score
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                     </svg>
                                 </button>
+                                @endif
                                 <a href="{{ $jobUrl }}" target="_blank" class="btn btn-primary btn-sm gap-2">
                                     View Job
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
