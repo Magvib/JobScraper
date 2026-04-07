@@ -1,7 +1,6 @@
 <?php
 
 use App\Ai\Agents\KeywordSpecialist;
-use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Ai\Files\Document;
 use Livewire\Component;
@@ -12,13 +11,24 @@ new class extends Component
     use WithFileUploads;
 
     public string $username = '';
+
     public string $address = '';
+
     public string $zip = '';
+
     public string $city = '';
+
     public int $maxDistance = 50;
+
     public $cvFile = null;
+
     public ?string $existingCv = null;
+
     public bool $saved = false;
+
+    public array $keywords = [];
+
+    public string $newKeyword = '';
 
     public function mount(): void
     {
@@ -29,6 +39,7 @@ new class extends Component
         $this->city = $user->city ?? '';
         $this->maxDistance = $user->max_distance ?? 50;
         $this->existingCv = $user->cv;
+        $this->keywords = $user->keywords ?? [];
     }
 
     public function save(): void
@@ -48,7 +59,7 @@ new class extends Component
         $user->zip = $this->zip ?: null;
         $user->city = $this->city ?: null;
         $user->max_distance = $this->maxDistance;
-        
+
         if ($this->cvFile) {
             if ($user->cv) {
                 Storage::disk('local')->delete($user->cv);
@@ -61,14 +72,14 @@ new class extends Component
             if (Storage::disk('local')->exists($this->existingCv)) {
                 $keywords = (new KeywordSpecialist)->prompt('Give me the keywords for this CV',
                     attachments: [
-                        Document::fromStorage($this->existingCv)
+                        Document::fromStorage($this->existingCv),
                     ]
                 );
-                $user->keywords = $keywords->structured['keywords'] ?? [];
-                $user->save();
+                $this->keywords = $keywords->structured['keywords'] ?? [];
             }
         }
 
+        $user->keywords = $this->keywords;
         $user->save();
         $this->saved = true;
         $this->dispatch('saved');
@@ -80,6 +91,23 @@ new class extends Component
             $url = Storage::temporaryUrl($this->existingCv, now()->addMinutes(5));
             // redirect()->away($url);
             $this->js("window.open('{$url}', '_blank')");
+        }
+    }
+
+    public function addKeyword(): void
+    {
+        $keyword = trim($this->newKeyword);
+        if ($keyword && ! in_array($keyword, $this->keywords)) {
+            $this->keywords[] = $keyword;
+            $this->newKeyword = '';
+        }
+    }
+
+    public function removeKeyword(int $index): void
+    {
+        if (isset($this->keywords[$index])) {
+            unset($this->keywords[$index]);
+            $this->keywords = array_values($this->keywords);
         }
     }
 }
@@ -193,6 +221,37 @@ new class extends Component
                     @error('cvFile')
                         <p class="text-error text-sm mt-1">{{ $message }}</p>
                     @enderror
+                </fieldset>
+
+                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">{{ __('Search Keywords') }}</legend>
+                    <p class="text-sm text-base-content/60 mb-3">{{ __('These keywords are used to find matching jobs based on your CV. You can add or remove keywords.') }}</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        @foreach($keywords as $index => $keyword)
+                            <div class="badge badge-primary badge-lg gap-2">
+                                {{ $keyword }}
+                                <button type="button" wire:click="removeKeyword({{ $index }})" class="hover:text-error">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="flex gap-2">
+                        <input 
+                            type="text" 
+                            wire:model="newKeyword" 
+                            wire:keydown.enter="addKeyword"
+                            class="input input-bordered w-full" 
+                            placeholder="{{ __('Add a keyword') }}"
+                        />
+                        <button type="button" wire:click="addKeyword" class="btn btn-secondary">
+                            {{ __('Add') }}
+                        </button>
+                    </div>
                 </fieldset>
 
                 <div class="flex items-center justify-end gap-3">
