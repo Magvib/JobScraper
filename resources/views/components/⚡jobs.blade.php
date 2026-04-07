@@ -103,7 +103,7 @@ new class extends Component
                         $postedDate = $this->formatDate($job['firstdate'] ?? date('Y-m-d'));
                         $distance = isset($job['distance']) ? $this->formatDistance($job['distance']) : null;
                         $rating = $job['rating']['score'] ?? null;
-                        $jobUrl = $job['share_url'] ?? '#';
+                        $jobUrl = $job['url'] ?? '#';
                         $headline = $job['headline'] ?? 'No title';
                     @endphp
                     <div class="card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors duration-300">
