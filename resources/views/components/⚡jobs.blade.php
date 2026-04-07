@@ -27,6 +27,7 @@ new class extends Component
         if ($user->keywords) {
             $data = [
                 'q' => implode(' ', $user->keywords),
+                'sort' => 'date',
             ];
 
             if ($user->address && $user->max_distance) {
