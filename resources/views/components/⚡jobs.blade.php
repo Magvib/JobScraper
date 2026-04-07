@@ -80,21 +80,30 @@ new class extends Component
         $jobRating = JobRating::where('user_id', $user->id)->where('job_id', $jobId)->first();
 
         if ($jobRating) {
-            // TODO show existing rating
+            $this->dispatch('toast', 
+                message: 'You have already calculated the AI score for this job.',
+                type: 'error'
+            );
             return;
         }
         
         $job = collect($this->jobs)->firstWhere('tid', $jobId);
         
         if (!$job) {
-            // TODO handle error
+            $this->dispatch('toast', 
+                message: 'Job not found.',
+                type: 'error'
+            );
             return;
         }
 
         $jobUrl = $job['url'] ?? null;
 
         if (!$jobUrl) {
-            // TODO handle error
+            $this->dispatch('toast', 
+                message: 'Job URL not found.',
+                type: 'error'
+            );
             return;
         }
 
@@ -124,7 +133,10 @@ new class extends Component
         $user = auth()->user();
 
         if (Storage::missing($user->cv)) {
-            // TODO handle error
+            $this->dispatch('toast', 
+                message: 'CV not found.',
+                type: 'error'
+            );
             return;
         }
         
@@ -143,6 +155,11 @@ new class extends Component
         ]);
 
         $this->getRatings();
+
+        $this->dispatch('toast', 
+            message: 'AI score calculated successfully!',
+            type: 'success'
+        );
     }
 };
 ?>
@@ -206,9 +223,9 @@ new class extends Component
                                     </a>
                                     <div class="text-sm text-base-content/60 mt-1">{{ $companyName }}</div>
                                 </div>
-                                @if($rating)
-                                    <div class="tooltip tooltip-info" data-tip="{{ $ratingDesc }}">
-                                        <div class="badge {{ $rating >= 8 ? 'badge-success' : ($rating >= 5 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1 shrink-0">
+                                @if($rating !== null)
+                                    <div class="tooltip tooltip-info gap-1 shrink-0" data-tip="{{ $ratingDesc }}">
+                                        <div class="badge {{ $rating >= 8 ? 'badge-success' : ($rating >= 5 ? 'badge-warning' : 'badge-error') }} badge-sm">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
                                                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                             </svg>

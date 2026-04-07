@@ -48,6 +48,57 @@
     </div>
 
     {{ $slot }}
+
+    @persist('toast')
+    <?php
+    // Alert types alert-dash alert-error alert-horizontal alert-info alert-outline alert-soft alert-success alert-vertical alert-warning
+    ?>
+    <div
+        x-data="toastManager()"
+        x-on:toast.window="add($event.detail)"
+        class="toast toast-end toast-bottom"
+    >
+        <template x-for="toast in toasts" :key="toast.id">
+            <div
+                x-show="toast.show"
+                x-transition
+                :class="'alert alert-' + toast.type"
+            >
+                <span x-text="toast.message"></span>
+
+                <button @click="remove(toast.id)">✕</button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+    function toastManager() {
+        return {
+            toasts: [],
+
+            add(toast) {
+                const id = Date.now() + Math.random();
+
+                this.toasts.push({
+                    id,
+                    message: toast.message,
+                    type: toast.type || 'info',
+                    show: true
+                });
+
+                setTimeout(() => this.remove(id), 3000);
+            },
+
+            remove(id) {
+                const index = this.toasts.findIndex(t => t.id === id);
+                if (index !== -1) {
+                    this.toasts.splice(index, 1);
+                }
+            }
+        }
+    }
+    </script>
+    @endpersist
 </body>
 
 </html>
