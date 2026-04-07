@@ -67,7 +67,12 @@ new class extends Component
         <div class="flex items-center justify-between mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Job Listings</h1>
-                <p class="text-gray-600 dark:text-gray-400 mt-1">{{ number_format($jobCount) }} jobs found</p>
+                <div class="flex items-center gap-2">
+                    <p class="text-gray-600 dark:text-gray-400 mt-1">{{ number_format($jobCount) }} jobs found</p>
+                    <a class="btn btn-xs mt-2" href="{{ route('profile') }}" wire:navigate>
+                        Change keywords or location
+                    </a>
+                </div>
             </div>
             <div class="badge badge-primary badge-outline">
                 <span class="w-2 h-2 bg-primary rounded-full animate-pulse mr-2"></span>
