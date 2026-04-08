@@ -48,6 +48,15 @@ new class extends Component
         }
     }
 
+    public function with()
+    {
+        $this->getRatings();
+        
+        return [
+            'ratings' => $this->ratings,
+        ];
+    }
+
     public function getRatings()
     {
         $user = auth()->user();
@@ -236,7 +245,7 @@ new class extends Component
                                     <div class="text-sm text-base-content/60 mt-1">{{ $companyName }}</div>
                                 </div>
                                 @if ($ratingStatus === 'pending')
-                                    <div class="badge badge-info badge-sm">
+                                    <div class="badge badge-info badge-sm" wire:poll.5000ms>
                                         Calculating...
                                     </div>
                                 @elseif ($ratingStatus === 'failed')
