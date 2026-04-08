@@ -51,7 +51,7 @@ new class extends Component
     public function with()
     {
         $this->getRatings();
-        
+
         return [
             'ratings' => $this->ratings,
         ];
@@ -61,9 +61,10 @@ new class extends Component
     {
         if (empty($this->jobs)) {
             $this->ratings = [];
+
             return;
         }
-        
+
         $user = auth()->user();
         $this->ratings = JobRating::where('user_id', $user->id)->whereIn('job_id', collect($this->jobs)->pluck('tid'))->get()->keyBy('job_id')->toArray();
     }
@@ -196,6 +197,47 @@ new class extends Component
             <div class="badge badge-primary badge-outline">
                 <span class="w-2 h-2 bg-primary rounded-full animate-pulse mr-2"></span>
                 Live results
+            </div>
+        </div>
+
+        <div class="alert bg-base-200 border border-base-300 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0 mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 16v-4"/>
+                <path d="M12 8h.01"/>
+            </svg>
+            <div class="space-y-3">
+                <p class="text-sm font-medium">AI Rating Scores (0-100%)</p>
+                <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current text-success" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        <span class="text-base-content/70">Skills Match</span>
+                        <span class="badge badge-success badge-xs">80%+</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current text-warning" viewBox="0 0 24 24">
+                            <path d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.2 0-2 .8-2 2v11c0 1.2.8 2 2 2h16c1.2 0 2-.8 2-2V9c0-1.2-.8-2-2-2zM10 4h4v3h-4V4z"/>
+                        </svg>
+                        <span class="text-base-content/70">Experience Relevance</span>
+                        <span class="badge badge-warning badge-xs">50-79%</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current text-error" viewBox="0 0 24 24">
+                            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                        </svg>
+                        <span class="text-base-content/70">Seniority Fit</span>
+                        <span class="badge badge-error badge-xs">&lt;50%</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current text-info" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        <span class="text-base-content/70">Keyword Match (ATS)</span>
+                    </div>
+                </div>
+                <p class="text-xs text-base-content/50">Click "AI Score" on any job to analyze it. Hover over ratings for detailed reasoning.</p>
             </div>
         </div>
 
