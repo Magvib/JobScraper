@@ -1,12 +1,11 @@
 <?php
 
-use App\Ai\Agents\ResumeToJobSpecialist;
+use App\Jobs\ProcessJobRating;
 use App\Models\JobRating;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use Laravel\Ai\Files\Document;
 use Livewire\Component;
 
 new class extends Component
@@ -147,25 +146,18 @@ new class extends Component
             );
             return;
         }
-        
-        $test = (new ResumeToJobSpecialist)->prompt(
-            "Here is the job description: " . $text,
-            attachments: [
-                Document::fromStorage($user->cv),
-            ]
-        );
 
-        JobRating::create([
+        $jobRating = JobRating::create([
             'user_id' => $user->id,
             'job_id' => $jobId,
-            'rating' => $test->structured['rating'] ?? 0,
-            'summary' => $test->structured['summary'] ?? '',
         ]);
+
+        ProcessJobRating::dispatch($jobRating, $user, $text);
 
         $this->getRatings();
 
         $this->dispatch('toast', 
-            message: 'AI score calculated successfully!',
+            message: 'AI score is being calculated. Please check back in a few moments.',
             type: 'success'
         );
     }
@@ -213,11 +205,20 @@ new class extends Component
                         $postedDate = $this->formatDate($job['firstdate'] ?? date('Y-m-d'));
                         $distance = isset($job['distance']) ? $this->formatDistance($job['distance']) : null;
                         // $rating = $job['rating']['score'] ?? null;
-                        $rating = $this->ratings[$job['tid']]['rating'] ?? null;
-                        $ratingDesc = $this->ratings[$job['tid']]['summary'] ?? '';
                         $jobUrl = $job['url'] ?? '#';
                         $headline = $job['headline'] ?? 'No title';
                         $jobId = $job['tid'] ?? null;
+
+                        # Ratings
+                        $ratingStatus = $this->ratings[$job['tid']]['status'] ?? null;
+                        $skillsMatch = $this->ratings[$job['tid']]['skills_match'] ?? null;
+                        $skillsMatchDesc = $this->ratings[$job['tid']]['skills_match_reasoning'] ?? '';
+                        $experienceRelevance = $this->ratings[$job['tid']]['experience_relevance'] ?? null;
+                        $experienceRelevanceDesc = $this->ratings[$job['tid']]['experience_relevance_reasoning'] ?? '';
+                        $seniorityFit = $this->ratings[$job['tid']]['seniority_fit'] ?? null;
+                        $seniorityFitDesc = $this->ratings[$job['tid']]['seniority_fit_reasoning'] ?? '';
+                        $keywordMatch = $this->ratings[$job['tid']]['keyword_match'] ?? null;
+                        $keywordMatchDesc = $this->ratings[$job['tid']]['keyword_match_reasoning'] ?? '';
                     @endphp
                     <div class="card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors duration-300">
                         <div class="card-body p-5">
@@ -231,13 +232,21 @@ new class extends Component
                                     </a>
                                     <div class="text-sm text-base-content/60 mt-1">{{ $companyName }}</div>
                                 </div>
-                                @if($rating !== null)
-                                    <div class="tooltip tooltip-info gap-1 shrink-0" data-tip="{{ $ratingDesc }}">
-                                        <div class="badge {{ $rating >= 8 ? 'badge-success' : ($rating >= 5 ? 'badge-warning' : 'badge-error') }} badge-sm">
+                                @if ($ratingStatus === 'pending')
+                                    <div class="badge badge-info badge-sm">
+                                        Calculating...
+                                    </div>
+                                @elseif ($ratingStatus === 'failed')
+                                    <div class="badge badge-error badge-sm">
+                                        Failed
+                                    </div>
+                                @elseif($ratingStatus === 'completed')
+                                    <div class="tooltip tooltip-info gap-1 shrink-0" data-tip="{{ $skillsMatchDesc }}">
+                                        <div class="badge {{ $skillsMatch >= 80 ? 'badge-success' : ($skillsMatch >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
                                                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                             </svg>
-                                            {{ number_format($rating, 1) }} / 10.0
+                                            {{ number_format($skillsMatch, 0) }}%
                                         </div>
                                     </div>
                                 @endif

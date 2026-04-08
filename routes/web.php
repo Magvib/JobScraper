@@ -1,6 +1,8 @@
 <?php
 
+use App\Ai\Agents\ResumeToJobSpecialistPro;
 use Illuminate\Support\Facades\Route;
+use Laravel\Ai\Files\Document;
 use Laravel\Socialite\Socialite;
 
 Route::view('/', 'welcome')->name('home');
