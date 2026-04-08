@@ -59,6 +59,11 @@ new class extends Component
 
     public function getRatings()
     {
+        if (empty($this->jobs)) {
+            $this->ratings = [];
+            return;
+        }
+        
         $user = auth()->user();
         $this->ratings = JobRating::where('user_id', $user->id)->whereIn('job_id', collect($this->jobs)->pluck('tid'))->get()->keyBy('job_id')->toArray();
     }
