@@ -12,7 +12,7 @@ new class extends Component
 {
     // https://www.jobindex.dk/api/jobsearch/v3/jobcount?subid=1&radius=60&address=Svinglen+24%2C+8800+Viborg&q=php
     // https://www.jobindex.dk/api/jobsearch/v3?q=php&radius=60&address=Svinglen+24%2C+8800+Viborg
-    
+
     public int $jobCount = 0;
 
     public array $jobs = [];
@@ -81,7 +81,7 @@ new class extends Component
 
         if ($jobRating) {
             // if ($jobRating->rating >= 1) {
-            //     $this->dispatch('toast', 
+            //     $this->dispatch('toast',
             //         message: 'You have already calculated the AI score for this job.',
             //         type: 'error'
             //     );
@@ -91,24 +91,26 @@ new class extends Component
             // }
             $jobRating->delete();
         }
-        
+
         $job = collect($this->jobs)->firstWhere('tid', $jobId);
-        
-        if (!$job) {
-            $this->dispatch('toast', 
+
+        if (! $job) {
+            $this->dispatch('toast',
                 message: 'Job not found.',
                 type: 'error'
             );
+
             return;
         }
 
         $jobUrl = $job['url'] ?? null;
 
-        if (!$jobUrl) {
-            $this->dispatch('toast', 
+        if (! $jobUrl) {
+            $this->dispatch('toast',
                 message: 'Job URL not found.',
                 type: 'error'
             );
+
             return;
         }
 
@@ -116,8 +118,8 @@ new class extends Component
             $body = Http::withHeaders([
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             ])->get($jobUrl)->body();
-            
-            $dom = new DOMDocument();
+
+            $dom = new DOMDocument;
             @$dom->loadHTML($body);
 
             // Remove script and style tags
@@ -129,21 +131,22 @@ new class extends Component
             for ($i = $styleTags->length - 1; $i >= 0; $i--) {
                 $styleTags->item($i)->parentNode->removeChild($styleTags->item($i));
             }
-            
+
             $text = $dom->textContent;
             $text = preg_replace('/\s+/', ' ', $text); // Replace multiple whitespace with single space
             $text = trim($text);
-            
+
             return $text;
         });
 
         $user = auth()->user();
 
         if (Storage::missing($user->cv)) {
-            $this->dispatch('toast', 
+            $this->dispatch('toast',
                 message: 'CV not found.',
                 type: 'error'
             );
+
             return;
         }
 
@@ -156,7 +159,7 @@ new class extends Component
 
         $this->getRatings();
 
-        $this->dispatch('toast', 
+        $this->dispatch('toast',
             message: 'AI score is being calculated. Please check back in a few moments.',
             type: 'success'
         );
@@ -241,12 +244,38 @@ new class extends Component
                                         Failed
                                     </div>
                                 @elseif($ratingStatus === 'completed')
-                                    <div class="tooltip tooltip-info gap-1 shrink-0" data-tip="{{ $skillsMatchDesc }}">
-                                        <div class="badge {{ $skillsMatch >= 80 ? 'badge-success' : ($skillsMatch >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
-                                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                            </svg>
-                                            {{ number_format($skillsMatch, 0) }}%
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        <div class="tooltip tooltip-info" data-tip="{{ $skillsMatchDesc }}">
+                                            <div class="badge {{ $skillsMatch >= 80 ? 'badge-success' : ($skillsMatch >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                                </svg>
+                                                {{ number_format($skillsMatch, 0) }}%
+                                            </div>
+                                        </div>
+                                        <div class="tooltip tooltip-info" data-tip="{{ $experienceRelevanceDesc }}">
+                                            <div class="badge {{ $experienceRelevance >= 80 ? 'badge-success' : ($experienceRelevance >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                                                    <path d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.2 0-2 .8-2 2v11c0 1.2.8 2 2 2h16c1.2 0 2-.8 2-2V9c0-1.2-.8-2-2-2zM10 4h4v3h-4V4z"/>
+                                                </svg>
+                                                {{ number_format($experienceRelevance, 0) }}%
+                                            </div>
+                                        </div>
+                                        <div class="tooltip tooltip-info" data-tip="{{ $seniorityFitDesc }}">
+                                            <div class="badge {{ $seniorityFit >= 80 ? 'badge-success' : ($seniorityFit >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                                                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                                </svg>
+                                                {{ number_format($seniorityFit, 0) }}%
+                                            </div>
+                                        </div>
+                                        <div class="tooltip tooltip-info" data-tip="{{ $keywordMatchDesc }}">
+                                            <div class="badge {{ $keywordMatch >= 80 ? 'badge-success' : ($keywordMatch >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                                                </svg>
+                                                {{ number_format($keywordMatch, 0) }}%
+                                            </div>
                                         </div>
                                     </div>
                                 @endif
