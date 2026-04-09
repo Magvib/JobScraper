@@ -118,6 +118,7 @@ new class extends Component
             return;
         }
 
+        $headline = $job['headline'] ?? null;
         $jobUrl = $job['url'] ?? null;
 
         if (! $jobUrl) {
@@ -168,9 +169,10 @@ new class extends Component
         $jobRating = JobRating::create([
             'user_id' => $user->id,
             'job_id' => $jobId,
+            'job_title' => $headline,
         ]);
 
-        ProcessJobRating::dispatch($jobRating, $user, $text);
+        ProcessJobRating::dispatch($jobRating, $user, $text, $headline);
 
         $this->getRatings();
 
@@ -232,9 +234,9 @@ new class extends Component
                         </svg>
                         <div class="grow">
                             <div class="font-medium">{{ __('Experience Relevance') }}</div>
-                            <div class="text-base-content/60">{{ __('50–79% = partial match') }}</div>
+                            <div class="text-base-content/60">{{ __('50-79% = partial match') }}</div>
                         </div>
-                        <span class="badge badge-warning badge-xs">{{ __('50–79%') }}</span>
+                        <span class="badge badge-warning badge-xs">{{ __('50-79%') }}</span>
                     </div>
                     <div class="rounded-box bg-base-200/50 p-3 text-sm flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current text-error" viewBox="0 0 24 24">

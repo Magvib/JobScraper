@@ -83,6 +83,7 @@ class AutoMatchNewJobs extends Command
                     continue;
                 }
 
+                $jobTitle = $job['headline'] ?? null;
                 $jobUrl = $job['url'] ?? null;
 
                 if (! $jobUrl) {
@@ -95,16 +96,21 @@ class AutoMatchNewJobs extends Command
                     continue;
                 }
 
-                $jobRating = JobRating::firstOrCreate([
-                    'user_id' => $user->id,
-                    'job_id' => $jobId,
-                ]);
+                $jobRating = JobRating::firstOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'job_id' => $jobId,
+                    ],
+                    [
+                        'job_title' => $jobTitle,
+                    ],
+                );
 
                 if (! $jobRating->wasRecentlyCreated) {
                     continue;
                 }
 
-                ProcessJobRating::dispatch($jobRating, $user, $text, true);
+                ProcessJobRating::dispatch($jobRating, $user, $text, $jobTitle, true);
             }
         }
 

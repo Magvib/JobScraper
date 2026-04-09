@@ -23,6 +23,7 @@ class ProcessJobRating implements ShouldQueue
         protected JobRating $jobRating,
         protected User $user,
         protected string $text,
+        protected ?string $jobTitle = null,
         protected bool $isCron = false
     ) {}
 
@@ -39,7 +40,7 @@ class ProcessJobRating implements ShouldQueue
                 ]
             );
 
-            $this->jobRating->update([
+            $updateData = [
                 'skills_match' => $response->structured['skills_match'] ?? null,
                 'skills_match_reasoning' => $response->structured['skills_match_reasoning'] ?? null,
                 'experience_relevance' => $response->structured['experience_relevance'] ?? null,
@@ -49,7 +50,13 @@ class ProcessJobRating implements ShouldQueue
                 'keyword_match' => $response->structured['keyword_match'] ?? null,
                 'keyword_match_reasoning' => $response->structured['keyword_match_reasoning'] ?? null,
                 'status' => 'completed',
-            ]);
+            ];
+
+            if ($this->jobTitle !== null) {
+                $updateData['job_title'] = $this->jobTitle;
+            }
+
+            $this->jobRating->update($updateData);
 
             if ($this->isCron && $this->shouldNotify($this->jobRating, $this->user)) {
                 Mail::to($this->user)->queue(new JobMatchNotification($this->jobRating, $this->user));
