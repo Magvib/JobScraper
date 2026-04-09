@@ -28,5 +28,5 @@ after('deploy:update_code', function () {
 });
 
 before('provision:update', function () {
-    run('apt install -y gh npm');
+    run('apt install -y gh npm'); // TODO add fnm install 23 && fnm use 23
 });
