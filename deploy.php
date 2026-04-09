@@ -15,7 +15,7 @@ add('writable_dirs', []);
 // Hosts
 
 host('jobscraper.work')
-    ->set('remote_user', 'root')
+    ->set('remote_user', 'deployer')
     ->set('hostname', '46.225.146.106')
     ->set('deploy_path', '~/JobScraper');
 
