@@ -154,35 +154,4 @@ class AutoMatchNewJobs extends Command
             return [];
         }
     }
-
-    private function fetchJobBody(string $jobUrl): string
-    {
-        try {
-            $response = Http::retry(2, 200)
-                ->connectTimeout(5)
-                ->timeout(15)
-                ->withHeaders([
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                ])
-                ->get($jobUrl);
-
-            if (! $response->successful()) {
-                Log::warning('Auto-match job fetch failed.', [
-                    'job_url' => $jobUrl,
-                    'status' => $response->status(),
-                ]);
-
-                return '';
-            }
-
-            return $response->body();
-        } catch (\Throwable $th) {
-            Log::warning('Auto-match job fetch exception.', [
-                'job_url' => $jobUrl,
-                'error' => $th->getMessage(),
-            ]);
-
-            return '';
-        }
-    }
 }

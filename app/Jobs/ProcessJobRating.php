@@ -10,6 +10,7 @@ use DOMDocument;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Ai\Files\Document;
@@ -99,6 +100,37 @@ class ProcessJobRating implements ShouldQueue
 
             return trim($text);
         });
+    }
+
+    private function fetchJobBody(string $jobUrl): string
+    {
+        try {
+            $response = Http::retry(2, 200)
+                ->connectTimeout(5)
+                ->timeout(15)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                ])
+                ->get($jobUrl);
+
+            if (! $response->successful()) {
+                Log::warning('Auto-match job fetch failed.', [
+                    'job_url' => $jobUrl,
+                    'status' => $response->status(),
+                ]);
+
+                return '';
+            }
+
+            return $response->body();
+        } catch (\Throwable $th) {
+            Log::warning('Auto-match job fetch exception.', [
+                'job_url' => $jobUrl,
+                'error' => $th->getMessage(),
+            ]);
+
+            return '';
+        }
     }
 
     private function shouldNotify(JobRating $jobRating, User $user): bool
