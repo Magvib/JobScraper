@@ -30,6 +30,8 @@ new class extends Component
 
     public string $newKeyword = '';
 
+    public bool $autoMatchNewJobs = false;
+
     public function mount(): void
     {
         $user = auth()->user();
@@ -40,6 +42,7 @@ new class extends Component
         $this->maxDistance = $user->max_distance ?? 50;
         $this->existingCv = $user->cv;
         $this->keywords = $user->keywords ?? [];
+        $this->autoMatchNewJobs = (bool) $user->auto_match_new_jobs;
     }
 
     public function save(): void
@@ -51,6 +54,7 @@ new class extends Component
             'city' => ['nullable', 'string', 'max:100'],
             'maxDistance' => ['required', 'integer', 'min:1', 'max:500'],
             'cvFile' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx'],
+            'autoMatchNewJobs' => ['boolean'],
         ]);
 
         $user = auth()->user();
@@ -59,6 +63,7 @@ new class extends Component
         $user->zip = $this->zip ?: null;
         $user->city = $this->city ?: null;
         $user->max_distance = $this->maxDistance;
+        $user->auto_match_new_jobs = $this->autoMatchNewJobs;
 
         if ($this->cvFile) {
             if ($user->cv) {
@@ -280,6 +285,15 @@ new class extends Component
                             {{ __('Generate from CV') }}
                         </button>
                     </div>
+                </fieldset>
+
+                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">{{ __('Auto-match New Jobs') }}</legend>
+                    <label class="label cursor-pointer justify-between gap-4">
+                        <span class="label-text">{{ __('Fetch and auto-rate the newest 20 matching jobs each morning.') }}</span>
+                        <input type="checkbox" wire:model="autoMatchNewJobs" class="toggle toggle-primary" />
+                    </label>
+                    <p class="fieldset-label">{{ __('When enabled, new matches are queued automatically.') }}</p>
                 </fieldset>
 
                 <div class="flex items-center justify-end gap-3">

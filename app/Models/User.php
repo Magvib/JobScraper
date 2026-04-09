@@ -11,7 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'password', 'avatar', 'cv', 'address', 'zip', 'city', 'max_distance', 'keywords'])]
+#[Fillable(['name', 'email', 'password', 'avatar', 'cv', 'address', 'zip', 'city', 'max_distance', 'keywords', 'auto_match_new_jobs'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -29,6 +29,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'keywords' => 'array',
+            'auto_match_new_jobs' => 'boolean',
         ];
     }
 
