@@ -248,7 +248,7 @@ new class extends Component
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 @foreach($jobs as $job)
                     @php
-                        $companyName = $job['company']['name'] ?? __('Unknown Company');
+                        $companyName = $job['companytext'] ?? __('Unknown Company');
                         $location = $job['area'] ?? __('Remote');
                         $postedDate = $this->formatDate($job['firstdate'] ?? date('Y-m-d'));
                         $distance = isset($job['distance']) ? $this->formatDistance($job['distance']) : null;
