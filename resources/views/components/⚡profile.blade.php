@@ -32,6 +32,16 @@ new class extends Component
 
     public bool $autoMatchNewJobs = false;
 
+    public ?float $notifySkillsMatchThreshold = null;
+
+    public ?float $notifyExperienceRelevanceThreshold = null;
+
+    public ?float $notifySeniorityFitThreshold = null;
+
+    public ?float $notifyKeywordMatchThreshold = null;
+
+    public string $notifyMatchMode = 'any';
+
     public function mount(): void
     {
         $user = auth()->user();
@@ -43,6 +53,11 @@ new class extends Component
         $this->existingCv = $user->cv;
         $this->keywords = $user->keywords ?? [];
         $this->autoMatchNewJobs = (bool) $user->auto_match_new_jobs;
+        $this->notifySkillsMatchThreshold = $user->notify_skills_match_threshold;
+        $this->notifyExperienceRelevanceThreshold = $user->notify_experience_relevance_threshold;
+        $this->notifySeniorityFitThreshold = $user->notify_seniority_fit_threshold;
+        $this->notifyKeywordMatchThreshold = $user->notify_keyword_match_threshold;
+        $this->notifyMatchMode = $user->notify_match_mode ?? 'any';
     }
 
     public function save(): void
@@ -55,6 +70,11 @@ new class extends Component
             'maxDistance' => ['required', 'integer', 'min:1', 'max:500'],
             'cvFile' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx'],
             'autoMatchNewJobs' => ['boolean'],
+            'notifySkillsMatchThreshold' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'notifyExperienceRelevanceThreshold' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'notifySeniorityFitThreshold' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'notifyKeywordMatchThreshold' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'notifyMatchMode' => ['required', 'in:any,all'],
         ]);
 
         $user = auth()->user();
@@ -64,6 +84,11 @@ new class extends Component
         $user->city = $this->city ?: null;
         $user->max_distance = $this->maxDistance;
         $user->auto_match_new_jobs = $this->autoMatchNewJobs;
+        $user->notify_skills_match_threshold = $this->notifySkillsMatchThreshold;
+        $user->notify_experience_relevance_threshold = $this->notifyExperienceRelevanceThreshold;
+        $user->notify_seniority_fit_threshold = $this->notifySeniorityFitThreshold;
+        $user->notify_keyword_match_threshold = $this->notifyKeywordMatchThreshold;
+        $user->notify_match_mode = $this->notifyMatchMode;
 
         if ($this->cvFile) {
             if ($user->cv) {
@@ -294,6 +319,81 @@ new class extends Component
                         <input type="checkbox" wire:model="autoMatchNewJobs" class="toggle toggle-primary" />
                     </label>
                     <p class="fieldset-label">{{ __('When enabled, new matches are queued automatically.') }}</p>
+                </fieldset>
+
+                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">{{ __('Match Notifications') }}</legend>
+                    <p class="text-sm text-base-content/60 mb-3">{{ __('Only send emails when a score meets your threshold. Leave a field empty to ignore that score.') }}</p>
+
+                    <label class="label">
+                        <span class="label-text">{{ __('Notify when') }}</span>
+                    </label>
+                    <select wire:model="notifyMatchMode" class="select select-bordered w-full">
+                        <option value="any">{{ __('Any selected score meets its threshold') }}</option>
+                        <option value="all">{{ __('All selected scores meet their thresholds') }}</option>
+                    </select>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="label">
+                                <span class="label-text">{{ __('Skills match threshold (%)') }}</span>
+                            </label>
+                            <input
+                                type="number"
+                                wire:model="notifySkillsMatchThreshold"
+                                class="input w-full"
+                                min="0"
+                                max="100"
+                                step="0.1"
+                                placeholder="40"
+                            />
+                        </div>
+
+                        <div>
+                            <label class="label">
+                                <span class="label-text">{{ __('Experience relevance threshold (%)') }}</span>
+                            </label>
+                            <input
+                                type="number"
+                                wire:model="notifyExperienceRelevanceThreshold"
+                                class="input w-full"
+                                min="0"
+                                max="100"
+                                step="0.1"
+                                placeholder="40"
+                            />
+                        </div>
+
+                        <div>
+                            <label class="label">
+                                <span class="label-text">{{ __('Seniority fit threshold (%)') }}</span>
+                            </label>
+                            <input
+                                type="number"
+                                wire:model="notifySeniorityFitThreshold"
+                                class="input w-full"
+                                min="0"
+                                max="100"
+                                step="0.1"
+                                placeholder="40"
+                            />
+                        </div>
+
+                        <div>
+                            <label class="label">
+                                <span class="label-text">{{ __('Keyword match threshold (%)') }}</span>
+                            </label>
+                            <input
+                                type="number"
+                                wire:model="notifyKeywordMatchThreshold"
+                                class="input w-full"
+                                min="0"
+                                max="100"
+                                step="0.1"
+                                placeholder="40"
+                            />
+                        </div>
+                    </div>
                 </fieldset>
 
                 <div class="flex items-center justify-end gap-3">

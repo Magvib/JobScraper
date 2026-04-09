@@ -11,7 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'password', 'avatar', 'cv', 'address', 'zip', 'city', 'max_distance', 'keywords', 'auto_match_new_jobs'])]
+#[Fillable(['name', 'email', 'password', 'avatar', 'cv', 'address', 'zip', 'city', 'max_distance', 'keywords', 'auto_match_new_jobs', 'notify_skills_match_threshold', 'notify_experience_relevance_threshold', 'notify_seniority_fit_threshold', 'notify_keyword_match_threshold', 'notify_match_mode'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -30,6 +30,10 @@ class User extends Authenticatable
             'password' => 'hashed',
             'keywords' => 'array',
             'auto_match_new_jobs' => 'boolean',
+            'notify_skills_match_threshold' => 'float',
+            'notify_experience_relevance_threshold' => 'float',
+            'notify_seniority_fit_threshold' => 'float',
+            'notify_keyword_match_threshold' => 'float',
         ];
     }
 

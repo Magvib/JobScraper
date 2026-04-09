@@ -104,7 +104,7 @@ class AutoMatchNewJobs extends Command
                     continue;
                 }
 
-                ProcessJobRating::dispatch($jobRating, $user, $text);
+                ProcessJobRating::dispatch($jobRating, $user, $text, true);
             }
         }
 
@@ -122,7 +122,7 @@ class AutoMatchNewJobs extends Command
         ];
 
         if ($user->address && $user->max_distance) {
-            $data['address'] = $user->address . ', ' . $user->zip . ' ' . $user->city;
+            $data['address'] = $user->address.', '.$user->zip.' '.$user->city;
             $data['radius'] = $user->max_distance;
         }
 
@@ -156,7 +156,7 @@ class AutoMatchNewJobs extends Command
 
     private function fetchJobDescription(string $jobUrl): string
     {
-        return Cache::remember('job_description_' . md5($jobUrl), now()->addHours(6), function () use ($jobUrl) {
+        return Cache::remember('job_description_'.md5($jobUrl), now()->addHours(6), function () use ($jobUrl) {
             $body = $this->fetchJobBody($jobUrl);
 
             if ($body === '') {
