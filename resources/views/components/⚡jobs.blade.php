@@ -86,7 +86,7 @@ new class extends Component
 
     public function formatDistance(float $distance): string
     {
-        return round($distance).' km';
+        return round($distance).' '.__('km');
     }
 
     public function aiScore($jobId)
@@ -111,7 +111,7 @@ new class extends Component
 
         if (! $job) {
             $this->dispatch('toast',
-                message: 'Job not found.',
+                message: __('Job not found.'),
                 type: 'error'
             );
 
@@ -122,7 +122,7 @@ new class extends Component
 
         if (! $jobUrl) {
             $this->dispatch('toast',
-                message: 'Job URL not found.',
+                message: __('Job URL not found.'),
                 type: 'error'
             );
 
@@ -158,7 +158,7 @@ new class extends Component
 
         if (Storage::missing($user->cv)) {
             $this->dispatch('toast',
-                message: 'CV not found.',
+                message: __('CV not found.'),
                 type: 'error'
             );
 
@@ -175,7 +175,7 @@ new class extends Component
         $this->getRatings();
 
         $this->dispatch('toast',
-            message: 'AI score is being calculated. Please check back in a few moments.',
+            message: __('AI score is being calculated. Please check back in a few moments.'),
             type: 'success'
         );
     }
@@ -186,58 +186,80 @@ new class extends Component
     <div class="max-w-7xl mx-auto">
         <div class="flex items-center justify-between mb-6">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Job Listings</h1>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ __('Job Listings') }}</h1>
                 <div class="flex items-center gap-2">
-                    <p class="text-gray-600 dark:text-gray-400 mt-1">{{ number_format($jobCount) }} jobs found</p>
+                    <p class="text-gray-600 dark:text-gray-400 mt-1">{{ number_format($jobCount) }} {{ __('jobs found') }}</p>
                     <a class="btn btn-xs mt-2" href="{{ route('profile') }}" wire:navigate>
-                        Change keywords or location
+                        {{ __('Change keywords or location') }}
                     </a>
                 </div>
             </div>
             <div class="badge badge-primary badge-outline">
                 <span class="w-2 h-2 bg-primary rounded-full animate-pulse mr-2"></span>
-                Live results
+                {{ __('Live results') }}
             </div>
         </div>
 
-        <div class="alert bg-base-200 border border-base-300 mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0 mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 16v-4"/>
-                <path d="M12 8h.01"/>
-            </svg>
-            <div class="space-y-3">
-                <p class="text-sm font-medium">AI Rating Scores (0-100%)</p>
-                <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-                    <div class="flex items-center gap-2">
+        <div class="card bg-base-100 shadow-sm mb-6">
+            <div class="card-body gap-4">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 16v-4"/>
+                            <path d="M12 8h.01"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-base-content">{{ __('AI Ratings Guide') }}</p>
+                        <p class="text-sm text-base-content/60">{{ __('Scores compare your CV with each job posting. Click "AI Score" on a job to start the analysis. Tooltips on the badges explain the reasoning.') }}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="rounded-box bg-base-200/50 p-3 text-sm flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current text-success" viewBox="0 0 24 24">
                             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                         </svg>
-                        <span class="text-base-content/70">Skills Match</span>
-                        <span class="badge badge-success badge-xs">80%+</span>
+                        <div class="grow">
+                            <div class="font-medium">{{ __('Skills Match') }}</div>
+                            <div class="text-base-content/60">{{ __('80%+ = strong alignment') }}</div>
+                        </div>
+                        <span class="badge badge-success badge-xs">{{ __('80%+') }}</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="rounded-box bg-base-200/50 p-3 text-sm flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current text-warning" viewBox="0 0 24 24">
                             <path d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.2 0-2 .8-2 2v11c0 1.2.8 2 2 2h16c1.2 0 2-.8 2-2V9c0-1.2-.8-2-2-2zM10 4h4v3h-4V4z"/>
                         </svg>
-                        <span class="text-base-content/70">Experience Relevance</span>
-                        <span class="badge badge-warning badge-xs">50-79%</span>
+                        <div class="grow">
+                            <div class="font-medium">{{ __('Experience Relevance') }}</div>
+                            <div class="text-base-content/60">{{ __('50–79% = partial match') }}</div>
+                        </div>
+                        <span class="badge badge-warning badge-xs">{{ __('50–79%') }}</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="rounded-box bg-base-200/50 p-3 text-sm flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current text-error" viewBox="0 0 24 24">
                             <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                         </svg>
-                        <span class="text-base-content/70">Seniority Fit</span>
-                        <span class="badge badge-error badge-xs">&lt;50%</span>
+                        <div class="grow">
+                            <div class="font-medium">{{ __('Seniority Fit') }}</div>
+                            <div class="text-base-content/60">{{ __('Under 50% = mismatch') }}</div>
+                        </div>
+                        <span class="badge badge-error badge-xs">{{ __('<50%') }}</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="rounded-box bg-base-200/50 p-3 text-sm flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current text-info" viewBox="0 0 24 24">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
                         </svg>
-                        <span class="text-base-content/70">Keyword Match (ATS)</span>
+                        <div class="grow">
+                            <div class="font-medium">{{ __('Keyword Match (ATS)') }}</div>
+                            <div class="text-base-content/60">{{ __('Checks required terms') }}</div>
+                        </div>
+                        <span class="badge badge-info badge-xs">{{ __('ATS') }}</span>
                     </div>
                 </div>
-                <p class="text-xs text-base-content/50">Click "AI Score" on any job to analyze it. Hover over ratings for detailed reasoning.</p>
+                <div class="text-xs text-base-content/60">
+                    {{ __('New scores appear as "Calculating..." and update automatically. Re-run "AI Score" if you update your CV or keywords.') }}
+                </div>
             </div>
         </div>
 
@@ -250,22 +272,22 @@ new class extends Component
                             <path d="m21 21-4.3-4.3"/>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold">No jobs found</h3>
-                    <p class="text-base-content/60">Try updating your search keywords in your profile.</p>
-                    <a href="{{ route('profile') }}" class="btn btn-primary mt-4">Update Profile</a>
+                    <h3 class="text-lg font-semibold">{{ __('No jobs found') }}</h3>
+                    <p class="text-base-content/60">{{ __('Try updating your search keywords in your profile.') }}</p>
+                    <a href="{{ route('profile') }}" class="btn btn-primary mt-4">{{ __('Update Profile') }}</a>
                 </div>
             </div>
         @else
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 @foreach($jobs as $job)
                     @php
-                        $companyName = $job['company']['name'] ?? 'Unknown Company';
-                        $location = $job['area'] ?? 'Remote';
+                        $companyName = $job['company']['name'] ?? __('Unknown Company');
+                        $location = $job['area'] ?? __('Remote');
                         $postedDate = $this->formatDate($job['firstdate'] ?? date('Y-m-d'));
                         $distance = isset($job['distance']) ? $this->formatDistance($job['distance']) : null;
                         // $rating = $job['rating']['score'] ?? null;
                         $jobUrl = $job['url'] ?? '#';
-                        $headline = $job['headline'] ?? 'No title';
+                        $headline = $job['headline'] ?? __('No title');
                         $jobId = $job['tid'] ?? null;
 
                         # Ratings
@@ -293,11 +315,11 @@ new class extends Component
                                 </div>
                                 @if ($ratingStatus === 'pending')
                                     <div class="badge badge-info badge-sm" wire:poll.5000ms>
-                                        Calculating...
+                                        {{ __('Calculating...') }}
                                     </div>
                                 @elseif ($ratingStatus === 'failed')
                                     <div class="badge badge-error badge-sm">
-                                        Failed
+                                        {{ __('Failed') }}
                                     </div>
                                 @elseif($ratingStatus === 'completed')
                                     <div class="flex items-center gap-1 shrink-0">
@@ -357,13 +379,13 @@ new class extends Component
                             </div>
                             <div class="card-actions justify-end mt-4">
                                 <button class="btn btn-secondary btn-sm gap-2" wire:click="aiScore('{{ $jobId }}')">
-                                    AI Score
+                                    {{ __('AI Score') }}
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                     </svg>
                                 </button>
                                 <a href="{{ $jobUrl }}" target="_blank" class="btn btn-primary btn-sm gap-2">
-                                    View Job
+                                    {{ __('View Job') }}
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                                         <polyline points="15 3 21 3 21 9"/>

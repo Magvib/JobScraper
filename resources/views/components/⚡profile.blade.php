@@ -110,6 +110,31 @@ new class extends Component
             $this->keywords = array_values($this->keywords);
         }
     }
+
+    public function generateKeywords(): void
+    {
+        if (! $this->existingCv) {
+            $this->addError('cvFile', __('Upload a CV to generate keywords.'));
+            return;
+        }
+
+        if (! Storage::disk('local')->exists($this->existingCv)) {
+            $this->addError('cvFile', __('We could not find your CV file. Please re-upload it.'));
+            return;
+        }
+
+        $keywords = (new KeywordSpecialist)->prompt('Give me the keywords for this CV',
+            attachments: [
+                Document::fromStorage($this->existingCv),
+            ]
+        );
+        $this->keywords = $keywords->structured['keywords'] ?? [];
+
+        $this->dispatch('toast',
+            message: __('Keywords are being generated. Please check back in a few moments.'),
+            type: 'success'
+        );
+    }
 }
 ?>
 
@@ -240,7 +265,7 @@ new class extends Component
                         @endforeach
                     </div>
 
-                    <div class="flex gap-2">
+                    <div class="flex flex-wrap gap-2">
                         <input 
                             type="text" 
                             wire:model="newKeyword" 
@@ -250,6 +275,9 @@ new class extends Component
                         />
                         <button type="button" wire:click="addKeyword" class="btn btn-secondary">
                             {{ __('Add') }}
+                        </button>
+                        <button type="button" wire:click="generateKeywords" class="btn">
+                            {{ __('Generate from CV') }}
                         </button>
                     </div>
                 </fieldset>
