@@ -7,6 +7,7 @@ require 'recipe/laravel.php';
 
 set('repository', 'https://github.com/Magvib/JobScraper.git');
 set('node_version', '23');
+set('http_user', 'www-data');
 
 add('shared_files', []);
 add('shared_dirs', []);
