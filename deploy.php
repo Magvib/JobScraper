@@ -31,3 +31,9 @@ after('deploy:update_code', function () {
 before('provision:update', function () {
     run('apt install -y gh npm'); // TODO add fnm install 23 && fnm use 23
 });
+
+after('deploy:symlink', function () {
+    run('php {{deploy_path}}/current/artisan queue:restart');
+    run('nohup php {{deploy_path}}/current/artisan queue:work --daemon --quiet > {{deploy_path}}/current/storage/logs/queue.log 2>&1 &');
+});
+
