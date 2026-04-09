@@ -90,12 +90,6 @@ class AutoMatchNewJobs extends Command
                     continue;
                 }
 
-                $text = $this->fetchJobDescription($jobUrl);
-
-                if ($text === '') {
-                    continue;
-                }
-
                 $jobRating = JobRating::firstOrCreate(
                     [
                         'user_id' => $user->id,
@@ -103,6 +97,7 @@ class AutoMatchNewJobs extends Command
                     ],
                     [
                         'job_title' => $jobTitle,
+                        'job_url' => $jobUrl,
                     ],
                 );
 
@@ -110,7 +105,7 @@ class AutoMatchNewJobs extends Command
                     continue;
                 }
 
-                ProcessJobRating::dispatch($jobRating, $user, $text, $jobTitle, true);
+                ProcessJobRating::dispatch($jobRating, $user, true);
             }
         }
 
@@ -158,35 +153,6 @@ class AutoMatchNewJobs extends Command
 
             return [];
         }
-    }
-
-    private function fetchJobDescription(string $jobUrl): string
-    {
-        return Cache::remember('job_description_'.md5($jobUrl), now()->addHours(6), function () use ($jobUrl) {
-            $body = $this->fetchJobBody($jobUrl);
-
-            if ($body === '') {
-                return '';
-            }
-
-            $dom = new DOMDocument;
-            @$dom->loadHTML($body);
-
-            $scriptTags = $dom->getElementsByTagName('script');
-            for ($i = $scriptTags->length - 1; $i >= 0; $i--) {
-                $scriptTags->item($i)->parentNode->removeChild($scriptTags->item($i));
-            }
-
-            $styleTags = $dom->getElementsByTagName('style');
-            for ($i = $styleTags->length - 1; $i >= 0; $i--) {
-                $styleTags->item($i)->parentNode->removeChild($styleTags->item($i));
-            }
-
-            $text = $dom->textContent ?? '';
-            $text = preg_replace('/\s+/', ' ', $text) ?? '';
-
-            return trim($text);
-        });
     }
 
     private function fetchJobBody(string $jobUrl): string

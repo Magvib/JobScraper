@@ -6,8 +6,10 @@ use App\Ai\Agents\ResumeToJobSpecialistPro;
 use App\Mail\JobMatchNotification;
 use App\Models\JobRating;
 use App\Models\User;
+use DOMDocument;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Ai\Files\Document;
@@ -22,8 +24,6 @@ class ProcessJobRating implements ShouldQueue
     public function __construct(
         protected JobRating $jobRating,
         protected User $user,
-        protected string $text,
-        protected ?string $jobTitle = null,
         protected bool $isCron = false
     ) {}
 
@@ -33,8 +33,14 @@ class ProcessJobRating implements ShouldQueue
     public function handle(): void
     {
         try {
+            $text = $this->fetchJobDescription($this->jobRating->job_url);
+
+            if ($text === '') {
+                throw new \Exception('Failed to fetch job description.');
+            }
+            
             $response = (new ResumeToJobSpecialistPro)->prompt(
-                'Here is the job description: '.$this->text,
+                'Here is the job description: '.$text,
                 attachments: [
                     Document::fromStorage($this->user->cv),
                 ]
@@ -52,10 +58,6 @@ class ProcessJobRating implements ShouldQueue
                 'status' => 'completed',
             ];
 
-            if ($this->jobTitle !== null) {
-                $updateData['job_title'] = $this->jobTitle;
-            }
-
             $this->jobRating->update($updateData);
 
             if ($this->isCron && $this->shouldNotify($this->jobRating, $this->user)) {
@@ -68,6 +70,35 @@ class ProcessJobRating implements ShouldQueue
                 'status' => 'failed',
             ]);
         }
+    }
+
+    private function fetchJobDescription(string $jobUrl): string
+    {
+        return Cache::remember('job_description_'.md5($jobUrl), now()->addHours(6), function () use ($jobUrl) {
+            $body = $this->fetchJobBody($jobUrl);
+
+            if ($body === '') {
+                return '';
+            }
+
+            $dom = new DOMDocument();
+            @$dom->loadHTML($body);
+
+            $scriptTags = $dom->getElementsByTagName('script');
+            for ($i = $scriptTags->length - 1; $i >= 0; $i--) {
+                $scriptTags->item($i)->parentNode->removeChild($scriptTags->item($i));
+            }
+
+            $styleTags = $dom->getElementsByTagName('style');
+            for ($i = $styleTags->length - 1; $i >= 0; $i--) {
+                $styleTags->item($i)->parentNode->removeChild($styleTags->item($i));
+            }
+
+            $text = $dom->textContent ?? '';
+            $text = preg_replace('/\s+/', ' ', $text) ?? '';
+
+            return trim($text);
+        });
     }
 
     private function shouldNotify(JobRating $jobRating, User $user): bool

@@ -95,15 +95,6 @@ new class extends Component
         $jobRating = JobRating::where('user_id', $user->id)->where('job_id', $jobId)->first();
 
         if ($jobRating) {
-            // if ($jobRating->rating >= 1) {
-            //     $this->dispatch('toast',
-            //         message: 'You have already calculated the AI score for this job.',
-            //         type: 'error'
-            //     );
-            //     return;
-            // } else {
-            //     $jobRating->delete();
-            // }
             $jobRating->delete();
         }
 
@@ -130,33 +121,6 @@ new class extends Component
             return;
         }
 
-        $text = Cache::remember('job_description_'.md5($jobUrl), now()->addHours(6), function () use ($jobUrl) {
-            $body = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            ])->get($jobUrl)->body();
-
-            $dom = new DOMDocument;
-            @$dom->loadHTML($body);
-
-            // Remove script and style tags
-            $scriptTags = $dom->getElementsByTagName('script');
-            for ($i = $scriptTags->length - 1; $i >= 0; $i--) {
-                $scriptTags->item($i)->parentNode->removeChild($scriptTags->item($i));
-            }
-            $styleTags = $dom->getElementsByTagName('style');
-            for ($i = $styleTags->length - 1; $i >= 0; $i--) {
-                $styleTags->item($i)->parentNode->removeChild($styleTags->item($i));
-            }
-
-            $text = $dom->textContent;
-            $text = preg_replace('/\s+/', ' ', $text); // Replace multiple whitespace with single space
-            $text = trim($text);
-
-            return $text;
-        });
-
-        $user = auth()->user();
-
         if (Storage::missing($user->cv)) {
             $this->dispatch('toast',
                 message: __('CV not found.'),
@@ -170,9 +134,10 @@ new class extends Component
             'user_id' => $user->id,
             'job_id' => $jobId,
             'job_title' => $headline,
+            'job_url' => $jobUrl,
         ]);
 
-        ProcessJobRating::dispatch($jobRating, $user, $text, $headline);
+        ProcessJobRating::dispatch($jobRating, $user);
 
         $this->getRatings();
 
