@@ -41,6 +41,7 @@ after('provision:node', function () {
 after('deploy:symlink', function () {
     $alias = currentHost()->get('alias') ?? 'default';
     $pm2Process = 'queue-worker' . '-' . md5($alias);
+    $cronProcess = 'scheduler' . '-' . md5($alias);
 
     // Check if PM2 process exists
     $exists = run("pm2 list | grep {$pm2Process} || true");
@@ -57,5 +58,18 @@ after('deploy:symlink', function () {
 
     // Save PM2 process list so it restarts on reboot
     run("pm2 save");
+
+    $cronLine = "* * * * * cd {{deploy_path}}/current && php artisan schedule:run >> /dev/null 2>&1 # $cronProcess";
+
+    // Check if this specific scheduler already exists
+    $cronExists = run("crontab -l | grep '$cronProcess' || true");
+
+    if (empty($cronExists)) {
+        writeln("Adding Laravel scheduler to crontab for $cronProcess...");
+
+        run("(crontab -l 2>/dev/null; echo \"$cronLine\") | crontab -");
+    } else {
+        writeln("Laravel scheduler already exists for $cronProcess.");
+    }
 });
 
