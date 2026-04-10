@@ -29,11 +29,33 @@ after('deploy:update_code', function () {
 });
 
 before('provision:update', function () {
-    run('apt install -y gh npm'); // TODO add fnm install 23 && fnm use 23
+    run('apt install -y gh npm');
+});
+
+after('provision:node', function () {
+    run('fnm install 23');
+    run('fnm use 23');
+    run('npm install pm2@latest -g');
 });
 
 after('deploy:symlink', function () {
-    run('php {{deploy_path}}/current/artisan queue:restart');
-    run('nohup php {{deploy_path}}/current/artisan queue:work --daemon --quiet > {{deploy_path}}/current/storage/logs/queue.log 2>&1 &');
+    $alias = currentHost()->get('alias') ?? 'default';
+    $pm2Process = 'queue-worker' . '-' . md5($alias);
+
+    // Check if PM2 process exists
+    $exists = run("pm2 list | grep {$pm2Process} || true");
+
+    if (empty($exists)) {
+        writeln("PM2 process not found. Starting new queue worker...");
+
+        run("cd {{deploy_path}}/current && pm2 start artisan --name {$pm2Process} --interpreter php -- queue:work --quiet");
+    } else {
+        writeln("PM2 process exists. Restarting queue worker...");
+
+        run("pm2 restart {$pm2Process}");
+    }
+
+    // Save PM2 process list so it restarts on reboot
+    run("pm2 save");
 });
 
