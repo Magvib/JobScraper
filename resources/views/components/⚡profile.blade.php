@@ -252,14 +252,14 @@ new class extends Component
                     
                     @if ($existingCv)
                         <div class="mb-4 flex items-center gap-3 p-3 bg-base-100 rounded-lg">
-                            <svg class="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-8 h-8 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <div class="flex-1">
-                                <p class="font-medium">{{ __('CV uploaded') }}</p>
-                                <p class="text-sm text-base-content/60">{{ Str::afterLast($existingCv, '/') }}</p>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium truncate">{{ __('CV uploaded') }}</p>
+                                <p class="text-sm text-base-content/60 truncate">{{ Str::afterLast($existingCv, '/') }}</p>
                             </div>
-                            <button type="button" wire:click="showCV" class="btn btn-sm btn-ghost">
+                            <button type="button" wire:click="showCV" class="btn btn-sm btn-ghost flex-shrink-0">
                                 {{ __('View') }}
                             </button>
                         </div>
