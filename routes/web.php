@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\CvPdfController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Socialite;
 
@@ -11,11 +13,15 @@ Route::livewire('/cv', 'cv')->name('cv')->middleware('auth');
 
 Route::get('/template/{name}', function ($name) {
     try {
-        return view('templates.' . $name);
-    } catch (\Throwable $th) {
+        return view('templates.'.$name);
+    } catch (Throwable $th) {
         return view('templates.temp1');
     }
 })->middleware('auth')->name('template');
+
+Route::get('/cv/{template}/pdf', [CvPdfController::class, 'download'])
+    ->middleware('auth')
+    ->name('cv.download');
 
 Route::get('/login', function () {
     if (auth()->check()) {
@@ -29,18 +35,18 @@ Route::get('/auth/redirect', function () {
     if (auth()->check()) {
         return redirect()->route('dashboard');
     }
-    
+
     return Socialite::driver('github')->redirect();
 });
 
 Route::get('/auth/callback', function () {
     $githubUser = Socialite::driver('github')->user();
 
-    if (!str_ends_with($githubUser->email, '@p13.dk')) {
+    if (! str_ends_with($githubUser->email, '@p13.dk')) {
         return redirect()->route('home')->with('error', 'You must use a p13.dk email to login.');
     }
-    
-    $user = \App\Models\User::firstOrCreate([
+
+    $user = User::firstOrCreate([
         'email' => $githubUser->email,
     ], [
         'name' => $githubUser->name,

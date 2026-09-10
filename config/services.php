@@ -41,4 +41,14 @@ return [
         'redirect' => env('GITHUB_REDIRECT_URI'),
     ],
 
+    'browsershot' => [
+        // The web server's PATH doesn't include node (PhpWebStudy keeps it
+        // in ~/Library/PhpWebStudy/env/node/bin), so Browsershot needs the
+        // absolute binary path spelled out.
+        'node_binary' => env(
+            'BROWSERSHOT_NODE_BINARY',
+            getenv('HOME').'/Library/PhpWebStudy/env/node/bin/node',
+        ),
+    ],
+
 ];

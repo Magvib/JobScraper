@@ -131,8 +131,12 @@ new class extends Component
                     </span>
                     <div class="flex flex-row gap-2">
                         <button class="btn flex-1" wire:click="close">Close</button>
-                        <a class="btn btn-primary flex-1" href="{{ route('template', $selected) }}" target="_blank">
+                        <a class="btn flex-1" href="{{ route('template', $selected) }}" target="_blank">
                             Open full page ↗
+                        </a>
+                        <a class="btn btn-primary flex-1" href="{{ route('cv.download', $selected) }}"
+                            title="Download as PDF (single page, no breaks)">
+                            Download PDF ⬇
                         </a>
                     </div>
                 </div>
