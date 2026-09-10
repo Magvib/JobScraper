@@ -39,6 +39,10 @@ new class extends Component
 
     public string $newKeyword = '';
 
+    public array $skills = [];
+
+    public string $newSkill = '';
+
     public bool $autoMatchNewJobs = false;
 
     public ?float $notifySkillsMatchThreshold = null;
@@ -67,6 +71,7 @@ new class extends Component
         $this->birthdate = $user->birthdate?->format('Y-m-d');
         $this->jobTitle = $user->job_title ?? '';
         $this->keywords = $user->keywords ?? [];
+        $this->skills = $user->skills ?? [];
         $this->autoMatchNewJobs = (bool) $user->auto_match_new_jobs;
         $this->notifySkillsMatchThreshold = $user->notify_skills_match_threshold;
         $this->notifyExperienceRelevanceThreshold = $user->notify_experience_relevance_threshold;
@@ -156,6 +161,7 @@ new class extends Component
         }
 
         $user->keywords = $this->keywords;
+        $user->skills = $this->skills;
         $user->save();
         $this->dispatch('toast',
             message: __('Profile saved successfully.'),
@@ -185,6 +191,23 @@ new class extends Component
         if (isset($this->keywords[$index])) {
             unset($this->keywords[$index]);
             $this->keywords = array_values($this->keywords);
+        }
+    }
+
+    public function addSkill(): void
+    {
+        $skill = trim($this->newSkill);
+        if ($skill && ! in_array($skill, $this->skills)) {
+            $this->skills[] = $skill;
+            $this->newSkill = '';
+        }
+    }
+
+    public function removeSkill(int $index): void
+    {
+        if (isset($this->skills[$index])) {
+            unset($this->skills[$index]);
+            $this->skills = array_values($this->skills);
         }
     }
 
@@ -487,7 +510,38 @@ new class extends Component
                         </button>
                     </div>
                 </fieldset>
-    
+
+                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4 mt-4">
+                    <legend class="fieldset-legend">{{ __('Skills') }}</legend>
+                    <p class="text-sm text-base-content/60 mb-3">{{ __('Add the skills you have. These are displayed on your CV.') }}</p>
+
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        @foreach($skills as $index => $skill)
+                            <div class="badge badge-secondary badge-lg gap-2">
+                                {{ $skill }}
+                                <button type="button" wire:click="removeSkill({{ $index }})" class="hover:text-error">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <input
+                            type="text"
+                            wire:model="newSkill"
+                            wire:keydown.enter="addSkill"
+                            class="input input-bordered w-full"
+                            placeholder="{{ __('Add a skill') }}"
+                        />
+                        <button type="button" wire:click="addSkill" class="btn btn-secondary">
+                            {{ __('Add') }}
+                        </button>
+                    </div>
+                </fieldset>
+
                 <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
                     <legend class="fieldset-legend">{{ __('Auto-match New Jobs') }}</legend>
                     <label class="label cursor-pointer justify-between gap-4">

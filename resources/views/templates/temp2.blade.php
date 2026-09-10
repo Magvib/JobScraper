@@ -17,7 +17,7 @@
 @php
     $user = auth()->user();
     $jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
-    $keywords = is_string($user->keywords) ? json_decode($user->keywords, true) : ($user->keywords ?? []);
+    $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
     $photo = $user->image ? '/storage/' . $user->image : $user->avatar;
 @endphp
 <body class="bg-white min-h-screen py-8 px-4">
@@ -54,12 +54,12 @@
             </section>
 
             {{-- Kompetencer --}}
-            @if ($keywords)
+            @if ($skills)
                 <section>
                     <h2 class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 border-b border-white/10 pb-2">Kompetencer</h2>
                     <div class="mt-4 flex flex-wrap gap-2">
-                        @foreach ($keywords as $keyword)
-                            <span class="text-xs font-medium bg-white/10 px-3 py-1 rounded-full">{{ $keyword }}</span>
+                        @foreach ($skills as $skill)
+                            <span class="text-xs font-medium bg-white/10 px-3 py-1 rounded-full">{{ $skill }}</span>
                         @endforeach
                     </div>
                 </section>

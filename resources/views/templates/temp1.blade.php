@@ -16,7 +16,7 @@
 @php
     $user = auth()->user();
     $jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
-    $keywords = $user->keywords ?? [];
+    $skills = $user->skills ?? [];
 @endphp
 <body class="bg-white min-h-screen py-8 px-4">
     <div class="cv-page max-w-[210mm] mx-auto bg-white shadow-md px-16 py-14 font-serif text-gray-900">
@@ -57,10 +57,10 @@
         @endif
 
         {{-- Kompetencer --}}
-        @if ($keywords)
+        @if ($skills)
             <section class="mt-8">
                 <h2 class="text-sm font-bold uppercase tracking-widest border-b border-gray-900 pb-1">Kompetencer</h2>
-                <p class="mt-3 text-sm">{{ implode(', ', $keywords) }}</p>
+                <p class="mt-3 text-sm">{{ implode(', ', $skills) }}</p>
             </section>
         @endif
 
