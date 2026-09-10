@@ -53,7 +53,12 @@ class AutoMatchNewJobs extends Command
                 continue;
             }
 
-            $jobs = array_slice($this->fetchJobsForUser($user), 0, 20);
+            $jobs = collect($this->fetchJobsForUser($user))
+                ->unique(fn ($job) => $job['url'] ? rtrim(strtolower($job['url']), '/') : 'tid:'.$job['tid'])
+                ->sortByDesc(fn ($job) => $job['firstdate'] ?? '')
+                ->values()
+                ->slice(0, 20)
+                ->all();
 
             if ($jobs === []) {
                 continue;
@@ -127,6 +132,8 @@ class AutoMatchNewJobs extends Command
             $data['radius'] = $user->max_distance;
         }
 
+        $jobs = [];
+
         try {
             $response = Http::retry(2, 200)
                 ->connectTimeout(5)
@@ -138,20 +145,58 @@ class AutoMatchNewJobs extends Command
                     'user_id' => $user->id,
                     'status' => $response->status(),
                 ]);
+            } else {
+                $results = $response->json()['results'] ?? [];
 
-                return [];
+                $jobs = collect(is_array($results) ? $results : [])
+                    ->map(fn ($job) => $job + ['source' => 'Jobindex'])
+                    ->all();
             }
-
-            $results = $response->json()['results'] ?? [];
-
-            return is_array($results) ? $results : [];
         } catch (\Throwable $th) {
             Log::warning('Auto-match job search exception.', [
                 'user_id' => $user->id,
                 'error' => $th->getMessage(),
             ]);
-
-            return [];
         }
+
+        // Jobnet only supports one search string per request, so one request per keyword.
+        foreach (collect($user->keywords)->take(5) as $keyword) {
+            try {
+                $response = Http::retry(2, 200)
+                    ->connectTimeout(5)
+                    ->timeout(15)
+                    ->withHeaders([
+                        'x-csrf' => 1,
+                    ])
+                    ->get('https://jobnet.dk/bff/FindJob/Search', [
+                        'resultsPerPage' => 20,
+                        'pageNumber' => 1,
+                        'orderType' => 'BestMatch',
+                        'searchString' => $keyword,
+                    ])->json() ?? [];
+            } catch (\Throwable $th) {
+                continue;
+            }
+
+            $ads = collect($response['jobAds'] ?? [])
+                ->map(fn ($ad) => $this->normalizeJobnetAd($ad));
+
+            $jobs = [...$jobs, ...$ads->all()];
+        }
+
+        return $jobs;
+    }
+
+    private function normalizeJobnetAd(array $ad): array
+    {
+        return [
+            'tid' => $ad['jobAdId'] ?? null,
+            'headline' => $ad['title'] ?? null,
+            'url' => $ad['jobAdUrl'] ?? null,
+            'companytext' => $ad['hiringOrgName'] ?? null,
+            'area' => $ad['municipality'] ?? $ad['postalDistrictName'] ?? $ad['country'] ?? null,
+            'firstdate' => $ad['publicationDate'] ?? null,
+            'source' => 'Jobnet',
+        ];
     }
 }
