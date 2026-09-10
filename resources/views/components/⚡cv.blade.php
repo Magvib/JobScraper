@@ -95,9 +95,9 @@ new class extends Component
             @foreach ($this->filteredTemplates as $template)
                 <div wire:key="tpl-{{ $template['slug'] }}"
                     class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow overflow-hidden">
-                    <div class="cursor-pointer group" wire:click="select('{{ $template['slug'] }}')">
+                    <div class="cursor-pointer" wire:click="select('{{ $template['slug'] }}')">
                         <div class="cv-thumb" wire:ignore>
-                            <iframe src="{{ route('template', $template['slug']) }}" loading="lazy"
+                            <iframe src="{{ route('template', $template['slug']) }}" loading="lazy" scrolling="no"
                                 title="{{ $template['name'] }}"></iframe>
                         </div>
                     </div>
@@ -148,6 +148,8 @@ new class extends Component
         height: 374px;
         overflow: hidden;
         background: #fff;
+        transition: transform 0.15s ease;
+        transform-origin: top left;
     }
 
     .cv-thumb iframe {
@@ -160,10 +162,6 @@ new class extends Component
         transform: scale(0.333);
         transform-origin: top left;
         pointer-events: none; /* let the parent div handle clicks */
-    }
-
-    .group:hover .cv-thumb iframe {
-        transform: scale(0.342);
     }
 
     .cv-modal-thumb {
