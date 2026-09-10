@@ -95,7 +95,7 @@
                     <div class="mt-5 border-l-2 border-slate-200 space-y-6">
                         @foreach ($jobs as $job)
                             <div class="relative pl-6">
-                                <span class="absolute -left-0.75 top-1.5 w-2 h-2 rounded-full bg-teal-500"></span>
+                                <span class="absolute -left-1.25 top-1.5 w-2 h-2 rounded-full bg-teal-500"></span>
                                 <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                                     {{ \Carbon\Carbon::parse($job['startDate'])->format('m/Y') }}
                                     –
