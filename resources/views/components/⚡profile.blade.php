@@ -42,6 +42,8 @@ new class extends Component
 
     public string $notifyMatchMode = 'any';
 
+    public array $jobs = [];
+
     public function mount(): void
     {
         $user = auth()->user();
@@ -58,6 +60,19 @@ new class extends Component
         $this->notifySeniorityFitThreshold = $user->notify_seniority_fit_threshold;
         $this->notifyKeywordMatchThreshold = $user->notify_keyword_match_threshold;
         $this->notifyMatchMode = $user->notify_match_mode ?? 'any';
+        $this->jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
+
+        // Sort jobs with startDate, endDate, title in a ascending order
+        usort($this->jobs, function ($a, $b) {
+            // Check that they have startDate and endDate
+            if (!isset($a['startDate'], $a['endDate'], $b['startDate'], $b['endDate'])) {
+                return 0;
+            }
+            
+            return strtotime($a['startDate']) <=> strtotime($b['startDate'])
+                ?: strtotime($a['endDate']) <=> strtotime($b['endDate'])
+                ?: strcmp($a['title'], $b['title']);
+        });
     }
 
     public function save(): void
@@ -162,6 +177,17 @@ new class extends Component
 
         $this->dispatch('toast',
             message: __('Keywords are being generated. Please check back in a few moments.'),
+            type: 'success'
+        );
+    }
+
+    public function saveCv(array $jobs): void
+    {
+        $user = auth()->user();
+        $user->cv_json = json_encode($jobs);
+        $user->save();
+        $this->dispatch('toast',
+            message: __('CV saved successfully.'),
             type: 'success'
         );
     }
@@ -276,6 +302,39 @@ new class extends Component
                         @error('cvFile')
                             <p class="text-error text-sm mt-1">{{ $message }}</p>
                         @enderror
+                    </fieldset>
+
+                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4" x-data='{
+                        jobs: @json($jobs),
+                        init() {
+                            console.log(9);
+                        },
+                        addJobSection() {
+                            this.jobs.push({
+                                title: "",
+                                company: "",
+                                startDate: "",
+                                endDate: "",
+                                description: ""
+                            });
+                        }
+                    }'>
+                        <legend class="fieldset-legend">{{ __('CV Creator') }}</legend>
+
+                        <template x-for="(job, index) in jobs" :key="index">
+                            <div class="mb-4">
+                                <input type="text" x-model="job.title" placeholder="Job Title" class="input input-bordered w-full mb-2" />
+                                <input type="text" x-model="job.company" placeholder="Company" class="input input-bordered w-full mb-2" />
+                                <input type="date" x-model="job.startDate" placeholder="Start Date" class="input input-bordered w-full mb-2" />
+                                <input type="date" x-model="job.endDate" placeholder="End Date" class="input input-bordered w-full mb-2" />
+                                <textarea x-model="job.description" placeholder="Description" class="textarea textarea-bordered w-full mb-2"></textarea>
+                                <button type="button" @click="jobs.splice(index, 1)" class="btn btn-error">Remove</button>
+                            </div>
+                        </template>
+                        <div class="flex justify-end mb-4">
+                            <button type="button" @click="addJobSection()" class="btn btn-primary">Add Job</button>
+                            <button type="button" wire:click="saveCv(jobs)" class="btn btn-warning ml-2">Save</button>
+                        </div>
                     </fieldset>
             </div>
 
