@@ -2,6 +2,7 @@
 
 use App\Ai\Agents\KeywordSpecialist;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Laravel\Ai\Files\Document;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -24,7 +25,15 @@ new class extends Component
 
     public ?string $existingCv = null;
 
-    public bool $saved = false;
+    public string $email = '';
+
+    public string $phone = '';
+
+    public ?string $birthdate = null;
+
+    public string $jobTitle = '';
+
+    public $image = null;
 
     public array $keywords = [];
 
@@ -53,6 +62,10 @@ new class extends Component
         $this->city = $user->city ?? '';
         $this->maxDistance = $user->max_distance ?? 50;
         $this->existingCv = $user->cv;
+        $this->email = $user->email ?? '';
+        $this->phone = $user->phone ?? '';
+        $this->birthdate = $user->birthdate?->format('Y-m-d');
+        $this->jobTitle = $user->job_title ?? '';
         $this->keywords = $user->keywords ?? [];
         $this->autoMatchNewJobs = (bool) $user->auto_match_new_jobs;
         $this->notifySkillsMatchThreshold = $user->notify_skills_match_threshold;
@@ -83,6 +96,11 @@ new class extends Component
             'zip' => ['nullable', 'string', 'max:10'],
             'city' => ['nullable', 'string', 'max:100'],
             'maxDistance' => ['required', 'integer', 'min:1', 'max:500'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . auth()->id()],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'birthdate' => ['nullable', 'date', 'before:today'],
+            'jobTitle' => ['nullable', 'string', 'max:100'],
+            'image' => ['nullable', 'image', 'max:5120'],
             'cvFile' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx'],
             'autoMatchNewJobs' => ['boolean'],
             'notifySkillsMatchThreshold' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -94,9 +112,22 @@ new class extends Component
 
         $user = auth()->user();
         $user->name = $this->username;
+        $user->email = $this->email;
         $user->address = $this->address ?: null;
         $user->zip = $this->zip ?: null;
         $user->city = $this->city ?: null;
+        $user->phone = $this->phone ?: null;
+        $user->birthdate = $this->birthdate ?: null;
+        $user->job_title = $this->jobTitle ?: null;
+
+        if ($this->image) {
+            if ($user->image) {
+                Storage::disk('public')->delete($user->image);
+            }
+
+            $path = $this->image->store('avatars', 'public');
+            $user->image = $path;
+        }
         $user->max_distance = $this->maxDistance;
         $user->auto_match_new_jobs = $this->autoMatchNewJobs;
         $user->notify_skills_match_threshold = $this->notifySkillsMatchThreshold;
@@ -126,15 +157,16 @@ new class extends Component
 
         $user->keywords = $this->keywords;
         $user->save();
-        $this->saved = true;
-        $this->dispatch('saved');
+        $this->dispatch('toast',
+            message: __('Profile saved successfully.'),
+            type: 'success'
+        );
     }
 
     public function showCV(): void
     {
         if ($this->existingCv) {
             $url = Storage::temporaryUrl($this->existingCv, now()->addMinutes(5));
-            // redirect()->away($url);
             $this->js("window.open('{$url}', '_blank')");
         }
     }
@@ -203,139 +235,221 @@ new class extends Component
                     @auth
                     <div class="avatar ml-2">
                         <div class="ring-primary ring-offset-base-100 w-12 rounded-full ring-2 ring-offset-2">
-                            <img src="{{ auth()->user()->avatar }}" />
+                            <img src="{{ auth()->user()->image ? '/storage/' . auth()->user()->image : auth()->user()->avatar }}" />
                         </div>
                     </div>
                     @endauth
                     {{ __('Profile Settings') }}
                 </h1>
-    
-                @if ($saved)
-                    <div class="alert alert-success mt-4">
-                        <span>{{ __('Profile updated successfully!') }}</span>
-                    </div>
-                @endif
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                        <legend class="fieldset-legend">{{ __('Username') }}</legend>
-                        <input 
-                            type="text" 
-                            wire:model="username" 
-                            class="input validator w-full" 
-                            placeholder="{{ __('Enter your username') }}"
-                            required 
-                            minlength="2" 
-                            maxlength="50"
-                        />
-                        <p class="fieldset-label">{{ __('This is how you appear to others') }}</p>
-                    </fieldset>
-    
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                        <legend class="fieldset-legend">{{ __('Location') }}</legend>
-                        <label class="label">
-                            <span class="label-text">{{ __('Street Address') }}</span>
-                        </label>
-                        <input 
-                            type="text" 
-                            wire:model="address" 
-                            class="input w-full" 
-                            placeholder="{{ __('123 Main St') }}"
-                            maxlength="255"
-                        />
-                        <label class="label mt-2">
-                            <span class="label-text">{{ __('Zip / Postal Code') }}</span>
-                        </label>
-                        <input 
-                            type="text" 
-                            wire:model="zip" 
-                            class="input w-full" 
-                            placeholder="{{ __('8800') }}"
-                            maxlength="10"
-                        />
-                        <label class="label mt-2">
-                            <span class="label-text">{{ __('City') }}</span>
-                        </label>
-                        <input 
-                            type="text" 
-                            wire:model="city" 
-                            class="input w-full" 
-                            placeholder="{{ __('Viborg') }}"
-                            maxlength="100"
-                        />
-                        <label class="label mt-2">
-                            <span class="label-text">{{ __('Max Distance (km)') }}</span>
-                        </label>
-                        <input 
-                            type="number" 
-                            wire:model="maxDistance" 
-                            class="input w-full" 
-                            min="1"
-                            max="500"
-                        />
-                    </fieldset>
-    
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                        <legend class="fieldset-legend">{{ __('Resume / CV') }}</legend>
-                        
-                        @if ($existingCv)
-                            <div class="mb-4 flex items-center gap-3 p-3 bg-base-100 rounded-lg">
-                                <svg class="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <div class="flex-1">
-                                    <p class="font-medium">{{ __('CV uploaded') }}</p>
-                                    <p class="text-sm text-base-content/60">{{ Str::afterLast($existingCv, '/') }}</p>
-                                </div>
-                                <button type="button" wire:click="showCV" class="btn btn-sm btn-ghost">
-                                    {{ __('View') }}
-                                </button>
-                            </div>
-                        @endif
-    
-                        <input 
-                            type="file" 
-                            wire:model="cvFile" 
-                            class="file-input file-input-bordered w-full"
-                            accept=".pdf,.doc,.docx"
-                        />
-                        <p class="fieldset-label">{{ __('PDF, DOC, or DOCX up to 10MB') }}</p>
-                        
-                        @error('cvFile')
-                            <p class="text-error text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </fieldset>
 
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4" x-data='{
-                        jobs: @json($jobs),
-                        init() {
-                            console.log(9);
-                        },
-                        addJobSection() {
-                            this.jobs.push({
-                                title: "",
-                                company: "",
-                                startDate: "",
-                                endDate: "",
-                                description: ""
-                            });
-                        }
-                    }'>
-                        <legend class="fieldset-legend">{{ __('CV Creator') }}</legend>
+                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">{{ __('Username') }}</legend>
+                    <input 
+                        type="text" 
+                        wire:model="username" 
+                        class="input validator w-full" 
+                        placeholder="{{ __('Enter your username') }}"
+                        required 
+                        minlength="2" 
+                        maxlength="50"
+                    />
+                    <p class="fieldset-label">{{ __('This is how you appear to others') }}</p>
+                </fieldset>
 
-                        <template x-for="(job, index) in jobs" :key="index">
-                            <div class="mb-4">
-                                <input type="text" x-model="job.title" placeholder="Job Title" class="input input-bordered w-full mb-2" />
-                                <input type="text" x-model="job.company" placeholder="Company" class="input input-bordered w-full mb-2" />
-                                <input type="date" x-model="job.startDate" placeholder="Start Date" class="input input-bordered w-full mb-2" />
-                                <input type="date" x-model="job.endDate" placeholder="End Date" class="input input-bordered w-full mb-2" />
-                                <textarea x-model="job.description" placeholder="Description" class="textarea textarea-bordered w-full mb-2"></textarea>
-                                <button type="button" @click="jobs.splice(index, 1)" class="btn btn-error">Remove</button>
+                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">{{ __('Information') }}</legend>
+
+                    <label class="label">
+                        <span class="label-text">{{ __('Profile Image') }}</span>
+                    </label>
+                    @if ($image)
+                        <div class="avatar mb-2">
+                            <div class="w-16 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-base-200">
+                                <img src="{{ $image->temporaryUrl() }}" alt="{{ __('New profile image preview') }}" />
                             </div>
-                        </template>
-                        <div class="flex justify-end mb-4">
-                            <button type="button" @click="addJobSection()" class="btn btn-primary">Add Job</button>
-                            <button type="button" wire:click="saveCv(jobs)" class="btn btn-warning ml-2">Save</button>
                         </div>
-                    </fieldset>
+                    @elseif (auth()->user()->image)
+                        <div class="avatar mb-2">
+                            <div class="w-16 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-base-200">
+                                <img src="/storage/{{ auth()->user()->image }}" alt="{{ __('Profile image') }}" />
+                            </div>
+                        </div>
+                    @endif
+                    <input
+                        type="file"
+                        wire:model="image"
+                        class="file-input file-input-bordered w-full"
+                        accept="image/*"
+                    />
+                    <p class="fieldset-label">{{ __('JPG or PNG up to 5MB') }}</p>
+                    @error('image')
+                        <p class="text-error text-sm mt-1">{{ $message }}</p>
+                    @enderror
+
+                    <label class="label mt-2">
+                        <span class="label-text">{{ __('Email') }}</span>
+                    </label>
+                    <input
+                        type="email"
+                        wire:model="email"
+                        class="input w-full"
+                        placeholder="{{ __('name@p13.dk') }}"
+                        required
+                        maxlength="255"
+                    />
+                    @error('email')
+                        <p class="text-error text-sm mt-1">{{ $message }}</p>
+                    @enderror
+
+                    <label class="label mt-2">
+                        <span class="label-text">{{ __('Phone Number') }}</span>
+                    </label>
+                    <input
+                        type="tel"
+                        wire:model="phone"
+                        class="input w-full"
+                        placeholder="{{ __('+45 12 34 56 78') }}"
+                        maxlength="20"
+                    />
+                    @error('phone')
+                        <p class="text-error text-sm mt-1">{{ $message }}</p>
+                    @enderror
+
+                    <label class="label mt-2">
+                        <span class="label-text">{{ __('Birthdate') }}</span>
+                    </label>
+                    <input
+                        type="date"
+                        wire:model="birthdate"
+                        class="input w-full"
+                        max="{{ now()->format('Y-m-d') }}"
+                    />
+                    @error('birthdate')
+                        <p class="text-error text-sm mt-1">{{ $message }}</p>
+                    @enderror
+
+                    <label class="label mt-2">
+                        <span class="label-text">{{ __('Job Title') }}</span>
+                    </label>
+                    <input
+                        type="text"
+                        wire:model="jobTitle"
+                        class="input w-full"
+                        placeholder="{{ __('Software Developer') }}"
+                        maxlength="100"
+                    />
+                    @error('jobTitle')
+                        <p class="text-error text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </fieldset>
+
+                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">{{ __('Location') }}</legend>
+                    <label class="label">
+                        <span class="label-text">{{ __('Street Address') }}</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        wire:model="address" 
+                        class="input w-full" 
+                        placeholder="{{ __('123 Main St') }}"
+                        maxlength="255"
+                    />
+                    <label class="label mt-2">
+                        <span class="label-text">{{ __('Zip / Postal Code') }}</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        wire:model="zip" 
+                        class="input w-full" 
+                        placeholder="{{ __('8800') }}"
+                        maxlength="10"
+                    />
+                    <label class="label mt-2">
+                        <span class="label-text">{{ __('City') }}</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        wire:model="city" 
+                        class="input w-full" 
+                        placeholder="{{ __('Viborg') }}"
+                        maxlength="100"
+                    />
+                    <label class="label mt-2">
+                        <span class="label-text">{{ __('Max Distance (km)') }}</span>
+                    </label>
+                    <input 
+                        type="number" 
+                        wire:model="maxDistance" 
+                        class="input w-full" 
+                        min="1"
+                        max="500"
+                    />
+                </fieldset>
+
+                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">{{ __('Resume / CV') }}</legend>
+                    
+                    @if ($existingCv)
+                        <div class="mb-4 flex items-center gap-3 p-3 bg-base-100 rounded-lg">
+                            <svg class="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="flex-1">
+                                <p class="font-medium">{{ __('CV uploaded') }}</p>
+                                <p class="text-sm text-base-content/60">{{ Str::afterLast($existingCv, '/') }}</p>
+                            </div>
+                            <button type="button" wire:click="showCV" class="btn btn-sm btn-ghost">
+                                {{ __('View') }}
+                            </button>
+                        </div>
+                    @endif
+
+                    <input 
+                        type="file" 
+                        wire:model="cvFile" 
+                        class="file-input file-input-bordered w-full"
+                        accept=".pdf,.doc,.docx"
+                    />
+                    <p class="fieldset-label">{{ __('PDF, DOC, or DOCX up to 10MB') }}</p>
+                    
+                    @error('cvFile')
+                        <p class="text-error text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </fieldset>
+
+                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4" x-data='{
+                    jobs: @json($jobs),
+                    init() {
+                        console.log(9);
+                    },
+                    addJobSection() {
+                        this.jobs.push({
+                            title: "",
+                            company: "",
+                            startDate: "",
+                            endDate: "",
+                            description: ""
+                        });
+                    }
+                }'>
+                    <legend class="fieldset-legend">{{ __('CV Creator') }}</legend>
+
+                    <template x-for="(job, index) in jobs" :key="index">
+                        <div class="mb-4">
+                            <input type="text" x-model="job.title" placeholder="Job Title" class="input input-bordered w-full mb-2" />
+                            <input type="text" x-model="job.company" placeholder="Company" class="input input-bordered w-full mb-2" />
+                            <input type="date" x-model="job.startDate" placeholder="Start Date" class="input input-bordered w-full mb-2" />
+                            <input type="date" x-model="job.endDate" placeholder="End Date" class="input input-bordered w-full mb-2" />
+                            <textarea x-model="job.description" placeholder="Description" class="textarea textarea-bordered w-full mb-2"></textarea>
+                            <button type="button" @click="jobs.splice(index, 1)" class="btn btn-error">Remove</button>
+                        </div>
+                    </template>
+                    <div class="flex justify-end mb-4">
+                        <button type="button" @click="addJobSection()" class="btn btn-primary">Add Job</button>
+                        <button type="button" wire:click="saveCv(jobs)" class="btn btn-warning ml-2">Save CV</button>
+                    </div>
+                </fieldset>
             </div>
 
             <div>
