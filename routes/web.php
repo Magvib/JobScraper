@@ -9,7 +9,11 @@ Route::livewire('/jobs', 'jobs')->name('jobs')->middleware('auth');
 Route::livewire('/profile', 'profile')->name('profile')->middleware('auth');
 
 Route::get('/template/{name}', function ($name) {
-    return view('templates.' . $name);
+    try {
+        return view('templates.' . $name);
+    } catch (\Throwable $th) {
+        return view('templates.temp1');
+    }
 })->middleware('auth')->name('template');
 
 Route::get('/login', function () {
