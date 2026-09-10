@@ -82,7 +82,7 @@ new class extends Component
 }
 ?>
 
-<div class="py-8">
+<div class="py-10 mx-4">
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">

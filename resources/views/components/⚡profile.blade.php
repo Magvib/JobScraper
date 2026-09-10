@@ -168,116 +168,119 @@ new class extends Component
 }
 ?>
 
-<div class="py-10">
-    <div class="max-w-2xl mx-auto card bg-base-100 shadow-sm mt-4">
-        <div class="card-body">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-4">
-                @auth
-                <div class="avatar ml-2">
-                    <div class="ring-primary ring-offset-base-100 w-12 rounded-full ring-2 ring-offset-2">
-                        <img src="{{ auth()->user()->avatar }}" />
-                    </div>
-                </div>
-                @endauth
-                {{ __('Profile Settings') }}
-            </h1>
-
-            @if ($saved)
-                <div class="alert alert-success mt-4">
-                    <span>{{ __('Profile updated successfully!') }}</span>
-                </div>
-            @endif
-
-            <form wire:submit="save" class="mt-6 space-y-6">
-                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                    <legend class="fieldset-legend">{{ __('Username') }}</legend>
-                    <input 
-                        type="text" 
-                        wire:model="username" 
-                        class="input validator w-full" 
-                        placeholder="{{ __('Enter your username') }}"
-                        required 
-                        minlength="2" 
-                        maxlength="50"
-                    />
-                    <p class="fieldset-label">{{ __('This is how you appear to others') }}</p>
-                </fieldset>
-
-                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                    <legend class="fieldset-legend">{{ __('Location') }}</legend>
-                    <label class="label">
-                        <span class="label-text">{{ __('Street Address') }}</span>
-                    </label>
-                    <input 
-                        type="text" 
-                        wire:model="address" 
-                        class="input w-full" 
-                        placeholder="{{ __('123 Main St') }}"
-                        maxlength="255"
-                    />
-                    <label class="label mt-2">
-                        <span class="label-text">{{ __('Zip / Postal Code') }}</span>
-                    </label>
-                    <input 
-                        type="text" 
-                        wire:model="zip" 
-                        class="input w-full" 
-                        placeholder="{{ __('8800') }}"
-                        maxlength="10"
-                    />
-                    <label class="label mt-2">
-                        <span class="label-text">{{ __('City') }}</span>
-                    </label>
-                    <input 
-                        type="text" 
-                        wire:model="city" 
-                        class="input w-full" 
-                        placeholder="{{ __('Viborg') }}"
-                        maxlength="100"
-                    />
-                    <label class="label mt-2">
-                        <span class="label-text">{{ __('Max Distance (km)') }}</span>
-                    </label>
-                    <input 
-                        type="number" 
-                        wire:model="maxDistance" 
-                        class="input w-full" 
-                        min="1"
-                        max="500"
-                    />
-                </fieldset>
-
-                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                    <legend class="fieldset-legend">{{ __('Resume / CV') }}</legend>
-                    
-                    @if ($existingCv)
-                        <div class="mb-4 flex items-center gap-3 p-3 bg-base-100 rounded-lg">
-                            <svg class="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div class="flex-1">
-                                <p class="font-medium">{{ __('CV uploaded') }}</p>
-                                <p class="text-sm text-base-content/60">{{ Str::afterLast($existingCv, '/') }}</p>
-                            </div>
-                            <button type="button" wire:click="showCV" class="btn btn-sm btn-ghost">
-                                {{ __('View') }}
-                            </button>
+<div class="py-10 mx-4">
+    <div class="max-w-7xl mx-auto card bg-base-100 shadow-sm mt-4">
+        <form wire:submit="save" class="mt-6 space-y-6">
+        <div class="card-body flex flex-col lg:flex-row gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-4 mb-2">
+                    @auth
+                    <div class="avatar ml-2">
+                        <div class="ring-primary ring-offset-base-100 w-12 rounded-full ring-2 ring-offset-2">
+                            <img src="{{ auth()->user()->avatar }}" />
                         </div>
-                    @endif
+                    </div>
+                    @endauth
+                    {{ __('Profile Settings') }}
+                </h1>
+    
+                @if ($saved)
+                    <div class="alert alert-success mt-4">
+                        <span>{{ __('Profile updated successfully!') }}</span>
+                    </div>
+                @endif
+                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+                        <legend class="fieldset-legend">{{ __('Username') }}</legend>
+                        <input 
+                            type="text" 
+                            wire:model="username" 
+                            class="input validator w-full" 
+                            placeholder="{{ __('Enter your username') }}"
+                            required 
+                            minlength="2" 
+                            maxlength="50"
+                        />
+                        <p class="fieldset-label">{{ __('This is how you appear to others') }}</p>
+                    </fieldset>
+    
+                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+                        <legend class="fieldset-legend">{{ __('Location') }}</legend>
+                        <label class="label">
+                            <span class="label-text">{{ __('Street Address') }}</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            wire:model="address" 
+                            class="input w-full" 
+                            placeholder="{{ __('123 Main St') }}"
+                            maxlength="255"
+                        />
+                        <label class="label mt-2">
+                            <span class="label-text">{{ __('Zip / Postal Code') }}</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            wire:model="zip" 
+                            class="input w-full" 
+                            placeholder="{{ __('8800') }}"
+                            maxlength="10"
+                        />
+                        <label class="label mt-2">
+                            <span class="label-text">{{ __('City') }}</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            wire:model="city" 
+                            class="input w-full" 
+                            placeholder="{{ __('Viborg') }}"
+                            maxlength="100"
+                        />
+                        <label class="label mt-2">
+                            <span class="label-text">{{ __('Max Distance (km)') }}</span>
+                        </label>
+                        <input 
+                            type="number" 
+                            wire:model="maxDistance" 
+                            class="input w-full" 
+                            min="1"
+                            max="500"
+                        />
+                    </fieldset>
+    
+                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+                        <legend class="fieldset-legend">{{ __('Resume / CV') }}</legend>
+                        
+                        @if ($existingCv)
+                            <div class="mb-4 flex items-center gap-3 p-3 bg-base-100 rounded-lg">
+                                <svg class="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div class="flex-1">
+                                    <p class="font-medium">{{ __('CV uploaded') }}</p>
+                                    <p class="text-sm text-base-content/60">{{ Str::afterLast($existingCv, '/') }}</p>
+                                </div>
+                                <button type="button" wire:click="showCV" class="btn btn-sm btn-ghost">
+                                    {{ __('View') }}
+                                </button>
+                            </div>
+                        @endif
+    
+                        <input 
+                            type="file" 
+                            wire:model="cvFile" 
+                            class="file-input file-input-bordered w-full"
+                            accept=".pdf,.doc,.docx"
+                        />
+                        <p class="fieldset-label">{{ __('PDF, DOC, or DOCX up to 10MB') }}</p>
+                        
+                        @error('cvFile')
+                            <p class="text-error text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </fieldset>
+            </div>
 
-                    <input 
-                        type="file" 
-                        wire:model="cvFile" 
-                        class="file-input file-input-bordered w-full"
-                        accept=".pdf,.doc,.docx"
-                    />
-                    <p class="fieldset-label">{{ __('PDF, DOC, or DOCX up to 10MB') }}</p>
-                    
-                    @error('cvFile')
-                        <p class="text-error text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </fieldset>
-
+            <div>
+                <div class="lg:mb-14"></div>
                 <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
                     <legend class="fieldset-legend">{{ __('Search Keywords') }}</legend>
                     <p class="text-sm text-base-content/60 mb-3">{{ __('These keywords are used to find matching jobs based on your CV. You can add or remove keywords.') }}</p>
@@ -294,7 +297,7 @@ new class extends Component
                             </div>
                         @endforeach
                     </div>
-
+    
                     <div class="flex flex-wrap gap-2">
                         <input 
                             type="text" 
@@ -311,7 +314,7 @@ new class extends Component
                         </button>
                     </div>
                 </fieldset>
-
+    
                 <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
                     <legend class="fieldset-legend">{{ __('Auto-match New Jobs') }}</legend>
                     <label class="label cursor-pointer justify-between gap-4">
@@ -320,11 +323,11 @@ new class extends Component
                     </label>
                     <p class="fieldset-label">{{ __('When enabled, new matches are queued automatically.') }}</p>
                 </fieldset>
-
+    
                 <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
                     <legend class="fieldset-legend">{{ __('Match Notifications') }}</legend>
                     <p class="text-sm text-base-content/60 mb-3">{{ __('Only send emails when a score meets your threshold. Leave a field empty to ignore that score.') }}</p>
-
+    
                     <label class="label">
                         <span class="label-text">{{ __('Notify when') }}</span>
                     </label>
@@ -332,7 +335,7 @@ new class extends Component
                         <option value="any">{{ __('Any selected score meets its threshold') }}</option>
                         <option value="all">{{ __('All selected scores meet their thresholds') }}</option>
                     </select>
-
+    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
                             <label class="label">
@@ -348,7 +351,7 @@ new class extends Component
                                 placeholder="40"
                             />
                         </div>
-
+    
                         <div>
                             <label class="label">
                                 <span class="label-text">{{ __('Experience relevance threshold (%)') }}</span>
@@ -363,7 +366,7 @@ new class extends Component
                                 placeholder="40"
                             />
                         </div>
-
+    
                         <div>
                             <label class="label">
                                 <span class="label-text">{{ __('Seniority fit threshold (%)') }}</span>
@@ -378,7 +381,7 @@ new class extends Component
                                 placeholder="40"
                             />
                         </div>
-
+    
                         <div>
                             <label class="label">
                                 <span class="label-text">{{ __('Keyword match threshold (%)') }}</span>
@@ -395,13 +398,14 @@ new class extends Component
                         </div>
                     </div>
                 </fieldset>
-
-                <div class="flex items-center justify-end gap-3">
+    
+                <div class="flex items-center justify-end gap-3 mt-4">
                     <button type="submit" class="btn btn-primary">
                         {{ __('Save Changes') }}
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
+    </form>
     </div>
 </div>

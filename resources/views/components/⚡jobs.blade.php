@@ -256,7 +256,7 @@ new class extends Component
 };
 ?>
 
-<div class="py-10">
+<div class="py-10 mx-4">
     <div class="max-w-7xl mx-auto">
         <div class="flex items-center justify-between mb-6">
             <div>
