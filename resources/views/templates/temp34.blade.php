@@ -70,7 +70,7 @@
                 <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-emerald-700 border-b-2 border-emerald-600 pb-2">Rutebeskrivelse — Erhvervserfaring &amp; Uddannelse</h2>
                 <div class="relative mt-6 pl-2">
                     {{-- stiplet rute --}}
-                    <span class="absolute left-[9px] top-2 bottom-2 border-l-2 border-dashed border-emerald-400"></span>
+                    <span class="absolute left-4.25 top-2 bottom-2 border-l-2 border-dashed border-emerald-400"></span>
                     <div class="space-y-7">
                         @foreach ($jobs as $i => $job)
                             <div class="relative pl-8">
