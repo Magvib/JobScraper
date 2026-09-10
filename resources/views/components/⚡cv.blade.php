@@ -118,21 +118,23 @@ new class extends Component
 
     @if ($selected)
         <div class="modal modal-open" wire:keydown.escape.window="close">
-            <div class="modal-box max-w-none p-4 flex flex-col items-center gap-3">
+            <div class="modal-box max-w-2xl p-4 flex flex-col items-center gap-3">
                 <div class="cv-modal-thumb" wire:key="modal-frame-{{ $selected }}" wire:ignore>
                     <iframe src="{{ route('template', $selected) }}" title="Preview"></iframe>
                 </div>
-                <div class="modal-action w-full justify-center">
+                <div class="modal-action w-full justify-center flex flex-col">
                     @php
                         $selectedTemplate = collect($this->templates)->firstWhere('slug', $selected);
                     @endphp
-                    <span class="self-center text-sm opacity-70">
+                    <span class="self-center card-title text-base leading-tight mb-2">
                         {{ $selectedTemplate['name'] ?? $selected }}
                     </span>
-                    <a class="btn btn-primary" href="{{ route('template', $selected) }}" target="_blank">
-                        Open full page ↗
-                    </a>
-                    <button class="btn" wire:click="close">Close</button>
+                    <div class="flex flex-row gap-2">
+                        <button class="btn flex-1" wire:click="close">Close</button>
+                        <a class="btn btn-primary flex-1" href="{{ route('template', $selected) }}" target="_blank">
+                            Open full page ↗
+                        </a>
+                    </div>
                 </div>
             </div>
             <div class="modal-backdrop bg-black/60" wire:click="close"></div>
