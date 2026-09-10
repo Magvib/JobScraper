@@ -1,3 +1,4 @@
+{{-- Infographic Bars --}}
 <!DOCTYPE html>
 <html lang="da">
 <head>

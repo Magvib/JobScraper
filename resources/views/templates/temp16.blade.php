@@ -1,3 +1,4 @@
+{{-- Hacker Terminal --}}
 <!DOCTYPE html>
 <html lang="da">
 <head>

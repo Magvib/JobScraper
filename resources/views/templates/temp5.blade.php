@@ -1,3 +1,4 @@
+{{-- Bold Amber --}}
 <!DOCTYPE html>
 <html lang="da">
 <head>

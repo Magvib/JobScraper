@@ -1,3 +1,4 @@
+{{-- Navy Gold --}}
 <!DOCTYPE html>
 <html lang="da">
 <head>

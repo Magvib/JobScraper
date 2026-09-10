@@ -1,3 +1,4 @@
+{{-- Dark Sidebar --}}
 <!DOCTYPE html>
 <html lang="da">
 <head>

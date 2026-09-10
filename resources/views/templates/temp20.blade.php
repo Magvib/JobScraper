@@ -1,3 +1,4 @@
+{{-- Editorial Chapters --}}
 <!DOCTYPE html>
 <html lang="da">
 <head>

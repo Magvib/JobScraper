@@ -1,3 +1,4 @@
+{{-- Warm Magazine --}}
 <!DOCTYPE html>
 <html lang="da">
 <head>

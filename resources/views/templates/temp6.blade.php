@@ -1,3 +1,4 @@
+{{-- Swiss Editorial --}}
 <!DOCTYPE html>
 <html lang="da">
 <head>
