@@ -86,6 +86,7 @@ new class extends Component
             $this->jobCount += $jobnet['count'];
 
             $this->jobs = collect($this->jobs)
+                ->map(fn ($job) => $job + ['source' => 'Jobindex'])
                 ->merge(collect($jobnet['jobs'])->map(fn ($ad) => $this->normalizeJobnetAd($ad)))
                 ->unique(fn ($job) => $job['url'] ? rtrim(strtolower($job['url']), '/') : 'tid:'.$job['tid'])
                 ->sortByDesc(fn ($job) => $job['firstdate'] ?? '')
@@ -105,6 +106,7 @@ new class extends Component
             'companytext' => $ad['hiringOrgName'] ?? null,
             'area' => $ad['municipality'] ?? $ad['postalDistrictName'] ?? $ad['country'] ?? null,
             'firstdate' => $ad['publicationDate'] ?? null,
+            'source' => 'Jobnet',
         ];
     }
 
@@ -475,6 +477,7 @@ new class extends Component
                                 @endif
                             </div>
                             <div class="flex flex-wrap items-center gap-3 mt-4 text-sm">
+                                <span class="badge badge-ghost badge-sm">{{ $job['source'] ?? 'Jobindex' }}</span>
                                 <div class="flex items-center gap-1.5 text-base-content/60">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
