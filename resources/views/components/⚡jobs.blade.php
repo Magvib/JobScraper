@@ -82,6 +82,7 @@ new class extends Component
 
                 return ['count' => $count, 'jobs' => $ads->all()];
             });
+            // dd($jobnet);
 
             $this->jobCount += $jobnet['count'];
 
@@ -102,7 +103,7 @@ new class extends Component
         return [
             'tid' => $ad['jobAdId'] ?? null,
             'headline' => $ad['title'] ?? null,
-            'url' => $ad['jobAdUrl'] ?? null,
+            'url' => $ad['jobAdUrl'] ?: "https://jobnet.dk/find-job/" . ($ad['jobAdId'] ?: ''),
             'companytext' => $ad['hiringOrgName'] ?? null,
             'area' => $ad['municipality'] ?? $ad['postalDistrictName'] ?? $ad['country'] ?? null,
             'firstdate' => $ad['publicationDate'] ?? null,

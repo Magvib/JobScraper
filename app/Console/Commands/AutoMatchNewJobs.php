@@ -192,7 +192,7 @@ class AutoMatchNewJobs extends Command
         return [
             'tid' => $ad['jobAdId'] ?? null,
             'headline' => $ad['title'] ?? null,
-            'url' => $ad['jobAdUrl'] ?? null,
+            'url' => $ad['jobAdUrl'] ?: "https://jobnet.dk/find-job/" . ($ad['jobAdId'] ?: ''),
             'companytext' => $ad['hiringOrgName'] ?? null,
             'area' => $ad['municipality'] ?? $ad['postalDistrictName'] ?? $ad['country'] ?? null,
             'firstdate' => $ad['publicationDate'] ?? null,
