@@ -30,6 +30,7 @@
                 <ul tabindex="-1" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
                     <li><a wire:navigate href="{{ route('dashboard') }}" wire:current="bg-primary">Home</a></li>
                     <li><a wire:navigate href="{{ route('profile') }}" wire:current="bg-primary">Profile</a></li>
+                    <li><a wire:navigate href="{{ route('cv') }}" wire:current="bg-primary">CV</a></li>
                     <li><a wire:navigate href="{{ route('jobs') }}" wire:current="bg-primary">Jobs</a></li>
                 </ul>
             </div>
@@ -39,6 +40,7 @@
             <ul class="menu menu-horizontal px-1 gap-2">
                 <li><a wire:navigate href="{{ route('dashboard') }}" wire:current="bg-primary text-white">Home</a></li>
                 <li><a wire:navigate href="{{ route('profile') }}" wire:current="bg-primary text-white">Profile</a></li>
+                <li><a wire:navigate href="{{ route('cv') }}" wire:current="bg-primary text-white">CV</a></li>
                 <li><a wire:navigate href="{{ route('jobs') }}" wire:current="bg-primary text-white">Jobs</a></li>
             </ul>
         </div>

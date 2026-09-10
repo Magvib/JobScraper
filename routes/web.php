@@ -7,6 +7,7 @@ Route::view('/', 'welcome')->name('home');
 Route::livewire('/dashboard', 'dashboard')->name('dashboard')->middleware('auth');
 Route::livewire('/jobs', 'jobs')->name('jobs')->middleware('auth');
 Route::livewire('/profile', 'profile')->name('profile')->middleware('auth');
+Route::livewire('/cv', 'cv')->name('cv')->middleware('auth');
 
 Route::get('/template/{name}', function ($name) {
     try {
