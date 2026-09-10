@@ -17,7 +17,7 @@ use Laravel\Ai\Promptable;
 use Stringable;
 
 #[Provider(Lab::OpenRouter)]
-#[Model('xiaomi/mimo-v2-pro')]
+#[Model('z-ai/glm-5.3-flash')]
 #[Timeout(200)]
 class ResumeToJobSpecialistPro implements Agent, Conversational, HasStructuredOutput, HasTools
 {

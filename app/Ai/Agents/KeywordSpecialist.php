@@ -16,7 +16,7 @@ use Laravel\Ai\Promptable;
 use Stringable;
 
 #[Provider(Lab::OpenRouter)]
-#[Model('deepseek/deepseek-v3.2')]
+#[Model('z-ai/glm-5.3-flash')]
 class KeywordSpecialist implements Agent, Conversational, HasStructuredOutput, HasTools
 {
     use Promptable;
