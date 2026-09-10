@@ -20,6 +20,10 @@ new class extends Component
 
     public array $ratings = [];
 
+    public string $search = '';
+
+    public string $sort = 'date';
+
     public function mount()
     {
         $user = auth()->user();
@@ -108,8 +112,52 @@ new class extends Component
     {
         $this->getRatings();
 
+        $ratings = $this->ratings;
+
+        // Annotate each job with its average AI score (null when not rated yet).
+        $jobs = collect($this->jobs)->map(function ($job) use ($ratings) {
+            $rating = $ratings[$job['tid']] ?? null;
+
+            $scores = $rating && ($rating['status'] ?? null) === 'completed'
+                ? array_filter([
+                    $rating['skills_match'] ?? null,
+                    $rating['experience_relevance'] ?? null,
+                    $rating['seniority_fit'] ?? null,
+                    $rating['keyword_match'] ?? null,
+                ], fn ($value) => $value !== null)
+                : [];
+
+            $job['avg_score'] = count($scores) ? round(array_sum($scores) / count($scores)) : null;
+
+            return $job;
+        });
+
+        $term = mb_strtolower(trim($this->search));
+
+        if ($term !== '') {
+            $jobs = $jobs->filter(function ($job) use ($term) {
+                $haystack = mb_strtolower(
+                    ($job['headline'] ?? '').' '.($job['companytext'] ?? '').' '.($job['area'] ?? '')
+                );
+
+                return str_contains($haystack, $term);
+            });
+        }
+
+        $jobs = match ($this->sort) {
+            'az' => $jobs->sortBy(fn ($job) => mb_strtolower($job['headline'] ?? ''), SORT_NATURAL | SORT_FLAG_CASE),
+            // Jobs without a distance (e.g. Jobnet) sort last.
+            'distance' => $jobs->sortBy(fn ($job) => $job['distance'] ?? PHP_FLOAT_MAX),
+            // Unrated jobs sort last.
+            'score' => $jobs->sortByDesc(fn ($job) => $job['avg_score'] ?? -1),
+            default => $jobs->sortByDesc(fn ($job) => $job['firstdate'] ?? ''),
+        };
+
         return [
-            'ratings' => $this->ratings,
+            'ratings' => $ratings,
+            'jobs' => $jobs->values()->all(),
+            'hasJobs' => ! empty($this->jobs),
+            'totalCount' => count($this->jobs),
         ];
     }
 
@@ -286,7 +334,7 @@ new class extends Component
             </div>
         </div>
 
-        @if(empty($jobs))
+        @if(! $hasJobs)
             <div class="card bg-base-100 shadow-sm mt-4">
                 <div class="card-body items-center text-center py-16">
                     <div class="w-16 h-16 rounded-full bg-base-200 flex items-center justify-center mb-4">
@@ -301,6 +349,45 @@ new class extends Component
                 </div>
             </div>
         @else
+            <div class="card bg-base-100 shadow-sm mb-4">
+                <div class="card-body p-4 flex flex-col sm:flex-row gap-3 sm:items-center">
+                    <label class="input input-sm flex items-center gap-2 grow">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-base-content/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.3-4.3"/>
+                        </svg>
+                        <input
+                            type="text"
+                            wire:model.live.debounce.300ms="search"
+                            placeholder="{{ __('Search title, company or location...') }}"
+                            class="grow"
+                        />
+                    </label>
+                    <div class="join">
+                        @foreach(['date' => __('Date'), 'az' => __('A-Z'), 'distance' => __('Distance'), 'score' => __('AI score')] as $sortKey => $sortLabel)
+                            <button
+                                class="btn btn-sm join-item {{ $sort === $sortKey ? 'btn-primary' : 'btn-ghost' }}"
+                                wire:click="$set('sort', '{{ $sortKey }}')"
+                            >
+                                {{ $sortLabel }}
+                            </button>
+                        @endforeach
+                    </div>
+                    @if(trim($search) !== '')
+                        <span class="text-xs text-base-content/60 whitespace-nowrap">
+                            {{ number_format(count($jobs)) }} / {{ number_format($totalCount) }} {{ __('shown') }}
+                        </span>
+                    @endif
+                </div>
+            </div>
+
+            @if(empty($jobs))
+                <div class="card bg-base-100 shadow-sm">
+                    <div class="card-body items-center text-center py-10">
+                        <p class="text-base-content/60">{{ __('No jobs match your search or filters.') }}</p>
+                    </div>
+                </div>
+            @else
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 @foreach($jobs as $job)
                     @php
@@ -378,6 +465,12 @@ new class extends Component
                                                 {{ number_format($keywordMatch, 0) }}%
                                             </div>
                                         </div>
+                                        <div class="divider divider-horizontal mx-0.5"></div>
+                                        <div class="tooltip" data-tip="{{ __('Average of the scores above') }}">
+                                            <div class="badge {{ $job['avg_score'] >= 80 ? 'badge-success' : ($job['avg_score'] >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm badge-outline gap-1">
+                                                {{ __('Avg') }} {{ number_format($job['avg_score'], 0) }}%
+                                            </div>
+                                        </div>
                                     </div>
                                 @endif
                             </div>
@@ -420,6 +513,7 @@ new class extends Component
                     </div>
                 @endforeach
             </div>
+            @endif
         @endif
     </div>
 </div>

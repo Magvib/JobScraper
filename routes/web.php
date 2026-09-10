@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Socialite;
 
 Route::view('/', 'welcome')->name('home');
-Route::livewire('/dashboard', 'dashboard-new')->name('dashboard')->middleware('auth');
+Route::livewire('/dashboard', 'dashboard')->name('dashboard')->middleware('auth');
 Route::livewire('/jobs', 'jobs')->name('jobs')->middleware('auth');
 Route::livewire('/profile', 'profile')->name('profile')->middleware('auth');
 
