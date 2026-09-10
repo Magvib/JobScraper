@@ -12,6 +12,7 @@ new class extends Component
 {
     // https://www.jobindex.dk/api/jobsearch/v3/jobcount?subid=1&radius=60&address=Svinglen+24%2C+8800+Viborg&q=php
     // https://www.jobindex.dk/api/jobsearch/v3?q=php&radius=60&address=Svinglen+24%2C+8800+Viborg
+    // https://jobnet.dk/bff/FindJob/Search?resultsPerPage=20&pageNumber=1&orderType=BestMatch&searchString=php
 
     public int $jobCount = 0;
 
@@ -44,8 +45,63 @@ new class extends Component
                 return Http::get('https://www.jobindex.dk/api/jobsearch/v3', $data)->json()['results'] ?? [];
             });
 
+            // Jobnet only supports one search string per request, so one request per keyword.
+            $jobnetKey = 'jobnet_'.md5(json_encode($user->keywords));
+
+            $jobnet = Cache::remember($jobnetKey, now()->addMinutes(30), function () use ($user) {
+                $ads = collect();
+                $count = 0;
+
+                $keywords = collect($user->keywords)->take(5);
+
+                foreach ($keywords as $keyword) {
+                    try {
+                        $response = Http::retry(2, 200)
+                            ->connectTimeout(5)
+                            ->timeout(15)
+                            ->withHeaders([
+                                'x-csrf' => 1,
+                            ])
+                            ->get('https://jobnet.dk/bff/FindJob/Search', [
+                                'resultsPerPage' => 20,
+                                'pageNumber' => 1,
+                                'orderType' => 'BestMatch',
+                                'searchString' => $keyword,
+                            ])->json() ?? [];
+                    } catch (\Throwable $th) {
+                        continue;
+                    }
+
+                    $count += $response['totalJobAdsCount'] ?? count($response['jobAds'] ?? []);
+                    $ads = $ads->merge($response['jobAds'] ?? []);
+                }
+
+                return ['count' => $count, 'jobs' => $ads->all()];
+            });
+
+            $this->jobCount += $jobnet['count'];
+
+            $this->jobs = collect($this->jobs)
+                ->merge(collect($jobnet['jobs'])->map(fn ($ad) => $this->normalizeJobnetAd($ad)))
+                ->unique(fn ($job) => $job['url'] ? rtrim(strtolower($job['url']), '/') : 'tid:'.$job['tid'])
+                ->sortByDesc(fn ($job) => $job['firstdate'] ?? '')
+                ->values()
+                ->all();
+
             $this->getRatings();
         }
+    }
+
+    protected function normalizeJobnetAd(array $ad): array
+    {
+        return [
+            'tid' => $ad['jobAdId'] ?? null,
+            'headline' => $ad['title'] ?? null,
+            'url' => $ad['jobAdUrl'] ?? null,
+            'companytext' => $ad['hiringOrgName'] ?? null,
+            'area' => $ad['municipality'] ?? $ad['postalDistrictName'] ?? $ad['country'] ?? null,
+            'firstdate' => $ad['publicationDate'] ?? null,
+        ];
     }
 
     public function with()
