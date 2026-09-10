@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 Schedule::command('jobs:auto-match')
     ->dailyAt('07:00')
     ->withoutOverlapping();
+
+Schedule::command('queue:work --stop-when-empty')
+    ->everyMinute()
+    ->withoutOverlapping();
