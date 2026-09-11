@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('job_ratings', function (Blueprint $table) {
-            $table->string('source')->nullable();
+            if (!Schema::hasColumn('job_ratings', 'source')) {
+                $table->string('source')->nullable();
+            }
             $table->dropUnique(['user_id', 'job_id']);
         });
     }
