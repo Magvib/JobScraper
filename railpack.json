@@ -2,29 +2,18 @@
   "$schema": "https://schema.railpack.com",
   "provider": "php",
   "buildAptPackages": [
-    "curl",
-    "ca-certificates",
-    "gnupg"
+    "nodejs",
+    "npm"
   ],
-  "steps": {
-    "setup-node": {
-      "commands": [
-        "curl -fsSL https://nodesource.com | bash -",
-        "apt-get install -y nodejs"
-      ]
-    }
-  },
   "deploy": {
     "aptPackages": [
+      "nodejs",
+      "npm",
       "chromium",
       "libgbm1",
       "libnss3",
       "libatk-bridge2.0-0",
       "libasound2"
-    ],
-    "commands": [
-      "curl -fsSL https://nodesource.com | bash -",
-      "apt-get install -y nodejs"
     ]
   }
 }
