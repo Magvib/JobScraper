@@ -7,7 +7,6 @@
     <title>CV - {{ $user->name }}</title>
     @vite(['resources/css/app.css'])
     <style>
-        @page { size: A4; margin: 0; }
         @media print {
             body { background: white !important; padding: 0 !important; }
             .cv-page { box-shadow: none !important; margin: 0 !important; max-width: 100% !important; }
@@ -22,7 +21,7 @@
     $firstJob = collect($jobs)->filter(fn ($j) => !empty($j['startDate']))->sortBy('startDate')->first();
     $years = $firstJob ? max(0, \Carbon\Carbon::parse($firstJob['startDate'])->diffInYears(now())) : 0;
 @endphp
-<body class="bg-slate-200 min-h-screen py-8 px-4">
+<body class="bg-slate-200 min-h-screen">
     <div class="cv-page max-w-[210mm] mx-auto bg-white shadow-lg min-h-[297mm] font-mono text-slate-800 px-12 py-10 flex flex-col">
 
         {{-- Rapportheader --}}

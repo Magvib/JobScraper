@@ -7,7 +7,6 @@
     <title>CV - {{ $user->name }}</title>
     @vite(['resources/css/app.css'])
     <style>
-        @page { size: A4; margin: 0; }
         @media print {
             body { background: white !important; padding: 0 !important; }
             .cv-page { box-shadow: none !important; margin: 0 !important; max-width: 100% !important; }
@@ -21,7 +20,7 @@
     $photo = $user->getImage();
     $initials = collect(explode(' ', trim($user->name ?? '')))->map(fn ($w) => strtoupper(mb_substr($w, 0, 1)))->implode('');
 @endphp
-<body class="bg-stone-200 min-h-screen py-8 px-4">
+<body class="bg-stone-200 min-h-screen">
     <div class="cv-page max-w-[210mm] mx-auto bg-[#faf7ef] shadow-lg min-h-[297mm] font-serif text-stone-800 px-16 py-14 flex flex-col">
 
         {{-- Brevhoved med monogram --}}

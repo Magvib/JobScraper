@@ -7,7 +7,6 @@
     <title>CV - {{ $user->name }}</title>
     @vite(['resources/css/app.css'])
     <style>
-        @page { size: A4; margin: 0; }
         @media print {
             body { background: white; padding: 0 !important; }
             .cv-page { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; max-width: 100% !important; }
@@ -18,7 +17,7 @@
     $jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
     $skills = $user->skills ?? [];
 @endphp
-<body class="bg-white min-h-screen py-8 px-4">
+<body class="bg-white min-h-screen">
     <div class="cv-page max-w-[210mm] mx-auto bg-white shadow-md px-16 py-14 font-serif text-gray-900">
         {{-- Navn og kontakt --}}
         <header class="text-center pb-6 border-b-2 border-gray-900">

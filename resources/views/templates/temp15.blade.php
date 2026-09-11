@@ -7,7 +7,6 @@
     <title>CV - {{ $user->name }}</title>
     @vite(['resources/css/app.css'])
     <style>
-        @page { size: A4; margin: 0; }
         @media print {
             body { background: white !important; padding: 0 !important; }
             .cv-page { box-shadow: none !important; margin: 0 !important; max-width: 100% !important; }
@@ -21,7 +20,7 @@
     $photo = $user->getImage();
     $barWidths = [88, 76, 94, 68, 82, 72];
 @endphp
-<body class="bg-white min-h-screen py-8 px-4">
+<body class="bg-white min-h-screen">
     <div class="cv-page max-w-[210mm] mx-auto bg-slate-50 shadow-lg min-h-[297mm] font-sans text-gray-900 px-12 py-12 flex flex-col">
 
         {{-- Kompakt header med statistik-felt --}}

@@ -11,7 +11,7 @@ Route::livewire('/jobs', 'jobs')->name('jobs')->middleware('auth');
 Route::livewire('/profile', 'profile')->name('profile')->middleware('auth');
 Route::livewire('/cv', 'cv')->name('cv')->middleware('auth');
 
-Route::get('/template/{name}', function ($name) {
+Route::get('/template/{name}', function ($name, Request $request) {
     $user = auth()->user();
     
     try {
@@ -23,7 +23,7 @@ Route::get('/template/{name}', function ($name) {
 
 Route::get('/signed/template/{slug}', function ($slug, Request $request) {
     if (! $request->hasValidSignature()) {
-        // abort(401);
+        abort(401);
     }
 
     // Get user from praams user
