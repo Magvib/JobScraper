@@ -335,12 +335,6 @@ new class extends Component
                                                 {{ number_format($job->rating?->keyword_match, 0) }}%
                                             </div>
                                         </div>
-                                        <div class="divider divider-horizontal mx-0.5"></div>
-                                        <div class="tooltip" data-tip="{{ __('Average of the scores above') }}">
-                                            <div class="badge {{ $job['avg_score'] >= 80 ? 'badge-success' : ($job['avg_score'] >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm badge-outline gap-1">
-                                                {{ __('Avg') }} {{ number_format($job['avg_score'], 0) }}%
-                                            </div>
-                                        </div>
                                     </div>
                                 @endif
                             </div>
