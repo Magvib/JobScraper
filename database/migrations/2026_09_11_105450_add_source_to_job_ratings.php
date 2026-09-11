@@ -16,6 +16,7 @@ return new class extends Migration
                 $table->string('source')->nullable();
             }
             $table->dropUnique(['user_id', 'job_id']);
+            $table->unique(['user_id', 'source', 'job_id']);
         });
     }
 
@@ -26,7 +27,7 @@ return new class extends Migration
     {
         Schema::table('job_ratings', function (Blueprint $table) {
             $table->dropColumn('source');
-            $table->unique(['user_id', 'source', 'job_id']);
+            $table->dropUnique(['user_id', 'source', 'job_id']);
         });
     }
 };
