@@ -55,6 +55,10 @@ class CvPdfController
             ->windowSize(self::A4_WIDTH_PX, self::A4_HEIGHT_PX)
             ->emulateMedia('print')
             ->waitUntilNetworkIdle()
+            ->addChromiumArguments([
+                '--no-sandbox',
+                '--disable-setuid-sandbox'
+            ])
             // node isn't on the web server's PATH, so point at it explicitly
             // (see config/services.php) and use the project's own node_modules
             // for puppeteer — there is no global install.
