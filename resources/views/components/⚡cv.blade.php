@@ -60,7 +60,7 @@ new class extends Component
     {
         $this->selected = $slug;
         $this->signedRoute = URL::temporarySignedRoute('signed-template', now()->addMinutes(100), ['slug' => $slug, 'user' => auth()->id()]);
-        dd($this->signedRoute);
+        // dd($this->signedRoute);
     }
 
     public function close(): void
