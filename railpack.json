@@ -3,7 +3,8 @@
   "provider": "php",
   "buildAptPackages": [
     "curl",
-    "ca-certificates"
+    "ca-certificates",
+    "gnupg"
   ],
   "steps": {
     "setup-node": {
