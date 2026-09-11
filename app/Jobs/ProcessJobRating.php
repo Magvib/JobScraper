@@ -45,7 +45,7 @@ class ProcessJobRating implements ShouldQueue
                 "Current date: ". now() . "\n" .
                 "Here is the job description: ". $text . "\n" .
                 "And here is the users CV in json: " . $this->user->cv_json . "\n" .
-                "And here is his skills in json: " . $this->user->skills,
+                "And here is his skills in json: " . json_encode($this->user->skills),
             );
 
             $updateData = [
