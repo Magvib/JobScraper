@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Ai\Agents\ResumeToJobSpecialistPro;
 use App\Mail\JobMatchNotification;
 use App\Models\JobRating;
+use App\Models\Post;
 use App\Models\User;
 use DOMDocument;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,7 +24,7 @@ class ProcessJobRating implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        protected JobRating $jobRating,
+        protected Post $post,
         protected User $user,
         protected bool $isCron = false
     ) {}
@@ -34,17 +35,16 @@ class ProcessJobRating implements ShouldQueue
     public function handle(): void
     {
         try {
-            $text = $this->fetchJobDescription($this->jobRating->job_url);
+            $text = $this->post->description ?? $this->fetchJobDescription($this->post->canonical_url);
 
             if ($text === '') {
                 throw new \Exception('Failed to fetch job description.');
             }
             
             $response = (new ResumeToJobSpecialistPro)->prompt(
-                'Here is the job description: '.$text,
-                attachments: [
-                    Document::fromStorage($this->user->cv),
-                ]
+                "Current date: ". now() . "\n" .
+                "Here is the job description: ". $text . "\n" .
+                "And here is the users CV in json: " . $this->user->cv_json
             );
 
             $updateData = [
@@ -59,15 +59,15 @@ class ProcessJobRating implements ShouldQueue
                 'status' => 'completed',
             ];
 
-            $this->jobRating->update($updateData);
+            $this->post->ratingFor($this->user)->update($updateData);
 
-            if ($this->isCron && $this->shouldNotify($this->jobRating, $this->user)) {
-                Mail::to($this->user)->queue(new JobMatchNotification($this->jobRating, $this->user));
+            if ($this->isCron && ($rating = $this->post->ratingFor($this->user)->first()) && $this->shouldNotify($rating, $this->user)) {
+                Mail::to($this->user)->queue(new JobMatchNotification($rating, $this->user));
             }
         } catch (\Throwable $th) {
-            Log::error("Failed to process job rating for JobRating ID {$this->jobRating->id}: ".$th->getMessage());
+            Log::error("Failed to process job rating for Post ID {$this->post->id}: ".$th->getMessage());
 
-            $this->jobRating->update([
+            $this->post->ratingFor($this->user)->update([
                 'status' => 'failed',
             ]);
         }

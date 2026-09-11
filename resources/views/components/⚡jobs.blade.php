@@ -2,6 +2,8 @@
 
 use App\Jobs\ProcessJobRating;
 use App\Models\JobRating;
+use App\Models\Post;
+use App\Models\PostSource;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -14,11 +16,7 @@ new class extends Component
     // https://www.jobindex.dk/api/jobsearch/v3?q=php&radius=60&address=Svinglen+24%2C+8800+Viborg
     // https://jobnet.dk/bff/FindJob/Search?resultsPerPage=20&pageNumber=1&orderType=BestMatch&searchString=php
 
-    public int $jobCount = 0;
-
-    public array $jobs = [];
-
-    public array $ratings = [];
+    public $jobs;
 
     public string $search = '';
 
@@ -41,13 +39,13 @@ new class extends Component
 
             $cacheKey = 'jobindex_'.md5(json_encode($data));
 
-            $this->jobCount = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($data) {
-                return Http::get('https://www.jobindex.dk/api/jobsearch/v3/jobcount', $data)->json()['hitcount'] ?? 0;
-            });
-
-            $this->jobs = Cache::remember($cacheKey.'_results', now()->addMinutes(30), function () use ($data) {
+            $jobs = Cache::remember($cacheKey.'_results', now()->addMinutes(30), function () use ($data) {
                 return Http::get('https://www.jobindex.dk/api/jobsearch/v3', $data)->json()['results'] ?? [];
             });
+
+            foreach ($jobs as $job) {
+                Post::savePost($job, PostSource::JOBINDEX);
+            }
 
             // Jobnet only supports one search string per request, so one request per keyword.
             $jobnetKey = 'jobnet_'.md5(json_encode($user->keywords));
@@ -82,98 +80,17 @@ new class extends Component
 
                 return ['count' => $count, 'jobs' => $ads->all()];
             });
-            // dd($jobnet);
 
-            $this->jobCount += $jobnet['count'];
+            foreach ($jobnet['jobs'] as $job) {
+                Post::savePost($job, PostSource::JOBNET);
+            }
 
-            $this->jobs = collect($this->jobs)
-                ->map(fn ($job) => $job + ['source' => 'Jobindex'])
-                ->merge(collect($jobnet['jobs'])->map(fn ($ad) => $this->normalizeJobnetAd($ad)))
-                ->unique(fn ($job) => $job['url'] ? rtrim(strtolower($job['url']), '/') : 'tid:'.$job['tid'])
-                ->sortByDesc(fn ($job) => $job['firstdate'] ?? '')
-                ->values()
-                ->all();
-
-            $this->getRatings();
+            $this->jobs = Post::query()->active()->get();
         }
-    }
-
-    protected function normalizeJobnetAd(array $ad): array
-    {
-        return [
-            'tid' => $ad['jobAdId'] ?? null,
-            'headline' => $ad['title'] ?? null,
-            'url' => $ad['jobAdUrl'] ?: "https://jobnet.dk/find-job/" . ($ad['jobAdId'] ?: ''),
-            'companytext' => $ad['hiringOrgName'] ?? null,
-            'area' => $ad['municipality'] ?? $ad['postalDistrictName'] ?? $ad['country'] ?? null,
-            'firstdate' => $ad['publicationDate'] ?? null,
-            'source' => 'Jobnet',
-        ];
     }
 
     public function with()
     {
-        $this->getRatings();
-
-        $ratings = $this->ratings;
-
-        // Annotate each job with its average AI score (null when not rated yet).
-        $jobs = collect($this->jobs)->map(function ($job) use ($ratings) {
-            $rating = $ratings[$job['tid']] ?? null;
-
-            $scores = $rating && ($rating['status'] ?? null) === 'completed'
-                ? array_filter([
-                    $rating['skills_match'] ?? null,
-                    $rating['experience_relevance'] ?? null,
-                    $rating['seniority_fit'] ?? null,
-                    $rating['keyword_match'] ?? null,
-                ], fn ($value) => $value !== null)
-                : [];
-
-            $job['avg_score'] = count($scores) ? round(array_sum($scores) / count($scores)) : null;
-
-            return $job;
-        });
-
-        $term = mb_strtolower(trim($this->search));
-
-        if ($term !== '') {
-            $jobs = $jobs->filter(function ($job) use ($term) {
-                $haystack = mb_strtolower(
-                    ($job['headline'] ?? '').' '.($job['companytext'] ?? '').' '.($job['area'] ?? '')
-                );
-
-                return str_contains($haystack, $term);
-            });
-        }
-
-        $jobs = match ($this->sort) {
-            'az' => $jobs->sortBy(fn ($job) => mb_strtolower($job['headline'] ?? ''), SORT_NATURAL | SORT_FLAG_CASE),
-            // Jobs without a distance (e.g. Jobnet) sort last.
-            'distance' => $jobs->sortBy(fn ($job) => $job['distance'] ?? PHP_FLOAT_MAX),
-            // Unrated jobs sort last.
-            'score' => $jobs->sortByDesc(fn ($job) => $job['avg_score'] ?? -1),
-            default => $jobs->sortByDesc(fn ($job) => $job['firstdate'] ?? ''),
-        };
-
-        return [
-            'ratings' => $ratings,
-            'jobs' => $jobs->values()->all(),
-            'hasJobs' => ! empty($this->jobs),
-            'totalCount' => count($this->jobs),
-        ];
-    }
-
-    public function getRatings()
-    {
-        if (empty($this->jobs)) {
-            $this->ratings = [];
-
-            return;
-        }
-
-        $user = auth()->user();
-        $this->ratings = JobRating::where('user_id', $user->id)->whereIn('job_id', collect($this->jobs)->pluck('tid'))->get()->keyBy('job_id')->toArray();
     }
 
     public function companyInitials(string $name): string
@@ -196,57 +113,28 @@ new class extends Component
         return round($distance).' '.__('km');
     }
 
-    public function aiScore($jobId)
+    public function aiScore($postId)
     {
+        $post = Post::find($postId);
         $user = auth()->user();
-        $jobRating = JobRating::where('user_id', $user->id)->where('job_id', $jobId)->first();
-
-        if ($jobRating) {
-            $jobRating->delete();
+        
+        if (!$post) {
+            return null;
         }
 
-        $job = collect($this->jobs)->firstWhere('tid', $jobId);
-
-        if (! $job) {
-            $this->dispatch('toast',
-                message: __('Job not found.'),
-                type: 'error'
-            );
-
-            return;
+        if ($post->rating) {
+            $post->rating->delete();
         }
 
-        $headline = $job['headline'] ?? null;
-        $jobUrl = $job['url'] ?? null;
-
-        if (! $jobUrl) {
-            $this->dispatch('toast',
-                message: __('Job URL not found.'),
-                type: 'error'
-            );
-
-            return;
-        }
-
-        if (Storage::missing($user->cv)) {
-            $this->dispatch('toast',
-                message: __('CV not found.'),
-                type: 'error'
-            );
-
-            return;
-        }
-
-        $jobRating = JobRating::create([
+        $post->rating()->create([
             'user_id' => $user->id,
-            'job_id' => $jobId,
-            'job_title' => $headline,
-            'job_url' => $jobUrl,
+            'job_id' => $post->source_id,
+            'source' => $post->source,
+            'job_title' => $post->title,
+            'job_url' => $post->canonical_url,
         ]);
 
-        ProcessJobRating::dispatch($jobRating, $user);
-
-        $this->getRatings();
+        ProcessJobRating::dispatch($post, $user);
 
         $this->dispatch('toast',
             message: __('AI score is being calculated. Please check back in a few moments.'),
@@ -262,7 +150,7 @@ new class extends Component
             <div>
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ __('Job Listings') }}</h1>
                 <div class="flex items-center gap-2">
-                    <p class="text-gray-600 dark:text-gray-400 mt-1">{{ number_format($jobCount) }} {{ __('jobs found') }}</p>
+                    <p class="text-gray-600 dark:text-gray-400 mt-1">{{ number_format(count($jobs)) }} {{ __('jobs found') }}</p>
                     <a class="btn btn-xs mt-2" href="{{ route('profile') }}" wire:navigate>
                         {{ __('Change keywords or location') }}
                     </a>
@@ -337,7 +225,7 @@ new class extends Component
             </div>
         </div>
 
-        @if(! $hasJobs)
+        @if(count($jobs) === 0)
             <div class="card bg-base-100 shadow-sm mt-4">
                 <div class="card-body items-center text-center py-16">
                     <div class="w-16 h-16 rounded-full bg-base-200 flex items-center justify-center mb-4">
@@ -378,7 +266,7 @@ new class extends Component
                     </div>
                     @if(trim($search) !== '')
                         <span class="text-xs text-base-content/60 whitespace-nowrap">
-                            {{ number_format(count($jobs)) }} / {{ number_format($totalCount) }} {{ __('shown') }}
+                            {{ number_format(count($jobs)) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
                         </span>
                     @endif
                 </div>
@@ -393,79 +281,58 @@ new class extends Component
             @else
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 @foreach($jobs as $job)
-                    @php
-                        $companyName = $job['companytext'] ?? __('Unknown Company');
-                        $location = $job['area'] ?? __('Remote');
-                        $postedDate = $this->formatDate($job['firstdate'] ?? date('Y-m-d'));
-                        $distance = isset($job['distance']) ? $this->formatDistance($job['distance']) : null;
-                        // $rating = $job['rating']['score'] ?? null;
-                        $jobUrl = $job['url'] ?? '#';
-                        $headline = $job['headline'] ?? __('No title');
-                        $jobId = $job['tid'] ?? null;
-
-                        # Ratings
-                        $ratingStatus = $this->ratings[$job['tid']]['status'] ?? null;
-                        $skillsMatch = $this->ratings[$job['tid']]['skills_match'] ?? null;
-                        $skillsMatchDesc = $this->ratings[$job['tid']]['skills_match_reasoning'] ?? '';
-                        $experienceRelevance = $this->ratings[$job['tid']]['experience_relevance'] ?? null;
-                        $experienceRelevanceDesc = $this->ratings[$job['tid']]['experience_relevance_reasoning'] ?? '';
-                        $seniorityFit = $this->ratings[$job['tid']]['seniority_fit'] ?? null;
-                        $seniorityFitDesc = $this->ratings[$job['tid']]['seniority_fit_reasoning'] ?? '';
-                        $keywordMatch = $this->ratings[$job['tid']]['keyword_match'] ?? null;
-                        $keywordMatchDesc = $this->ratings[$job['tid']]['keyword_match_reasoning'] ?? '';
-                    @endphp
                     <div class="card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors duration-300">
                         <div class="card-body p-5">
                             <div class="flex items-start gap-4">
                                 <div class="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">
-                                    {{ $this->companyInitials($companyName) }}
+                                    {{ $this->companyInitials($job->company_name) }}
                                 </div>
                                 <div class="grow min-w-0">
-                                    <a href="{{ $jobUrl }}" target="_blank" class="font-semibold text-base hover:text-primary transition-colors line-clamp-2">
-                                        {{ $headline }}
+                                    <a href="{{ $job->canonical_url }}" target="_blank" class="font-semibold text-base hover:text-primary transition-colors line-clamp-2">
+                                        {{ $job->title }}
                                     </a>
-                                    <div class="text-sm text-base-content/60 mt-1">{{ $companyName }}</div>
+                                    <div class="text-sm text-base-content/60 mt-1">{{ $job->company_name }}</div>
                                 </div>
-                                @if ($ratingStatus === 'pending')
+                                @if ($job->rating?->status === 'pending')
                                     <div class="badge badge-info badge-sm" wire:poll.5000ms>
                                         {{ __('Calculating...') }}
                                     </div>
-                                @elseif ($ratingStatus === 'failed')
+                                @elseif ($job->rating?->status === 'failed')
                                     <div class="badge badge-error badge-sm">
                                         {{ __('Failed') }}
                                     </div>
-                                @elseif($ratingStatus === 'completed')
+                                @elseif($job->rating?->status === 'completed')
                                     <div class="flex items-center gap-1 shrink-0">
-                                        <div class="tooltip tooltip-info" data-tip="{{ $skillsMatchDesc }}">
-                                            <div class="badge {{ $skillsMatch >= 80 ? 'badge-success' : ($skillsMatch >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
+                                        <div class="tooltip tooltip-info" data-tip="{{ $job->rating?->skills_match_reasoning }}">
+                                            <div class="badge {{ $job->rating?->skills_match >= 80 ? 'badge-success' : ($job->rating?->skills_match >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
                                                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                                 </svg>
-                                                {{ number_format($skillsMatch, 0) }}%
+                                                {{ number_format($job->rating?->skills_match, 0) }}%
                                             </div>
                                         </div>
-                                        <div class="tooltip tooltip-info" data-tip="{{ $experienceRelevanceDesc }}">
-                                            <div class="badge {{ $experienceRelevance >= 80 ? 'badge-success' : ($experienceRelevance >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
+                                        <div class="tooltip tooltip-info" data-tip="{{ $job->rating?->experience_relevance_reasoning }}">
+                                            <div class="badge {{ $job->rating?->experience_relevance >= 80 ? 'badge-success' : ($job->rating?->experience_relevance >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
                                                     <path d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.2 0-2 .8-2 2v11c0 1.2.8 2 2 2h16c1.2 0 2-.8 2-2V9c0-1.2-.8-2-2-2zM10 4h4v3h-4V4z"/>
                                                 </svg>
-                                                {{ number_format($experienceRelevance, 0) }}%
+                                                {{ number_format($job->rating?->experience_relevance, 0) }}%
                                             </div>
                                         </div>
-                                        <div class="tooltip tooltip-info" data-tip="{{ $seniorityFitDesc }}">
-                                            <div class="badge {{ $seniorityFit >= 80 ? 'badge-success' : ($seniorityFit >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
+                                        <div class="tooltip tooltip-info" data-tip="{{ $job->rating?->seniority_fit_reasoning }}">
+                                            <div class="badge {{ $job->rating?->seniority_fit >= 80 ? 'badge-success' : ($job->rating?->seniority_fit >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
                                                     <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                                                 </svg>
-                                                {{ number_format($seniorityFit, 0) }}%
+                                                {{ number_format($job->rating?->seniority_fit, 0) }}%
                                             </div>
                                         </div>
-                                        <div class="tooltip tooltip-info" data-tip="{{ $keywordMatchDesc }}">
-                                            <div class="badge {{ $keywordMatch >= 80 ? 'badge-success' : ($keywordMatch >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
+                                        <div class="tooltip tooltip-info" data-tip="{{ $job->rating?->keyword_match_reasoning }}">
+                                            <div class="badge {{ $job->rating?->keyword_match >= 80 ? 'badge-success' : ($job->rating?->keyword_match >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
                                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
                                                 </svg>
-                                                {{ number_format($keywordMatch, 0) }}%
+                                                {{ number_format($job->rating?->keyword_match, 0) }}%
                                             </div>
                                         </div>
                                         <div class="divider divider-horizontal mx-0.5"></div>
@@ -484,8 +351,8 @@ new class extends Component
                                         <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
                                         <circle cx="12" cy="10" r="3"/>
                                     </svg>
-                                    {{ $location }}
-                                    @if($distance)
+                                    {{ $job->getLocation() }}
+                                    @if(false)
                                         <span class="text-base-content/40">({{ $distance }})</span>
                                     @endif
                                 </div>
@@ -494,17 +361,17 @@ new class extends Component
                                         <circle cx="12" cy="12" r="10"/>
                                         <polyline points="12 6 12 12 16 14"/>
                                     </svg>
-                                    {{ $postedDate }}
+                                    {{ $job->published_at->diffForHumans() }}
                                 </div>
                             </div>
                             <div class="card-actions justify-end mt-4">
-                                <button class="btn btn-secondary btn-sm gap-2" wire:click="aiScore('{{ $jobId }}')">
+                                <button class="btn btn-secondary btn-sm gap-2" wire:click="aiScore('{{ $job->id }}')">
                                     {{ __('AI Score') }}
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                     </svg>
                                 </button>
-                                <a href="{{ $jobUrl }}" target="_blank" class="btn btn-primary btn-sm gap-2">
+                                <a href="{{ $job->canonical_url }}" target="_blank" class="btn btn-primary btn-sm gap-2">
                                     {{ __('View Job') }}
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
