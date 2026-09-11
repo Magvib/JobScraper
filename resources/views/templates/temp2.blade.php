@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CV - {{ auth()->user()->name }}</title>
+    <title>CV - {{ $user->name }}</title>
     @vite(['resources/css/app.css'])
     <style>
         @page { size: A4; margin: 0; }
@@ -16,7 +16,6 @@
     </style>
 </head>
 @php
-    $user = auth()->user();
     $jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
     $photo = $user->getImage();
@@ -90,6 +89,50 @@
             </header>
 
             {{-- Erhvervserfaring & uddannelse --}}
+            @if ($jobs)
+                <section class="mt-10">
+                    <h2 class="text-sm font-bold uppercase tracking-[0.2em] text-teal-600 border-b-2 border-slate-900 pb-2">Erhvervserfaring &amp; uddannelse</h2>
+                    <div class="mt-5 border-l-2 border-slate-200 space-y-6">
+                        @foreach ($jobs as $job)
+                            <div class="relative pl-6">
+                                <span class="absolute -left-1.25 top-1.5 w-2 h-2 rounded-full bg-teal-500"></span>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                    {{ \Carbon\Carbon::parse($job['startDate'])->format('m/Y') }}
+                                    –
+                                    {{ !empty($job['endDate']) ? \Carbon\Carbon::parse($job['endDate'])->format('m/Y') : 'nu' }}
+                                </p>
+                                <h3 class="mt-1 font-bold text-lg leading-snug">{{ $job['title'] }}</h3>
+                                <p class="text-sm font-medium text-slate-500">{{ $job['company'] }}</p>
+                                @if (!empty($job['description']))
+                                    <p class="mt-2 text-sm leading-relaxed text-slate-700">{{ $job['description'] }}</p>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+            @if ($jobs)
+                <section class="mt-10">
+                    <h2 class="text-sm font-bold uppercase tracking-[0.2em] text-teal-600 border-b-2 border-slate-900 pb-2">Erhvervserfaring &amp; uddannelse</h2>
+                    <div class="mt-5 border-l-2 border-slate-200 space-y-6">
+                        @foreach ($jobs as $job)
+                            <div class="relative pl-6">
+                                <span class="absolute -left-1.25 top-1.5 w-2 h-2 rounded-full bg-teal-500"></span>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                    {{ \Carbon\Carbon::parse($job['startDate'])->format('m/Y') }}
+                                    –
+                                    {{ !empty($job['endDate']) ? \Carbon\Carbon::parse($job['endDate'])->format('m/Y') : 'nu' }}
+                                </p>
+                                <h3 class="mt-1 font-bold text-lg leading-snug">{{ $job['title'] }}</h3>
+                                <p class="text-sm font-medium text-slate-500">{{ $job['company'] }}</p>
+                                @if (!empty($job['description']))
+                                    <p class="mt-2 text-sm leading-relaxed text-slate-700">{{ $job['description'] }}</p>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
             @if ($jobs)
                 <section class="mt-10">
                     <h2 class="text-sm font-bold uppercase tracking-[0.2em] text-teal-600 border-b-2 border-slate-900 pb-2">Erhvervserfaring &amp; uddannelse</h2>

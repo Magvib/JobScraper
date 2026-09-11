@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\CvPdfController;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Socialite;
 
@@ -12,16 +12,33 @@ Route::livewire('/profile', 'profile')->name('profile')->middleware('auth');
 Route::livewire('/cv', 'cv')->name('cv')->middleware('auth');
 
 Route::get('/template/{name}', function ($name) {
+    $user = auth()->user();
+    
     try {
-        return view('templates.'.$name);
+        return view('templates.' . $name, ['user' => $user]);
     } catch (Throwable $th) {
-        return view('templates.temp1');
+        return view('templates.temp1', ['user' => $user]);
     }
 })->middleware('auth')->name('template');
 
-Route::get('/cv/{template}/pdf', [CvPdfController::class, 'download'])
-    ->middleware('auth')
-    ->name('cv.download');
+Route::get('/signed/template/{slug}', function ($slug, Request $request) {
+    if (! $request->hasValidSignature()) {
+        // abort(401);
+    }
+
+    // Get user from praams user
+    $user = User::find($request->query('user'));
+
+    if (! $user) {
+        abort(404);
+    }
+    
+    try {
+        return view('templates.' . $slug, ['user' => $user]);
+    } catch (Throwable $th) {
+        return view('templates.temp1', ['user' => $user]);
+    }
+})->name('signed-template');
 
 Route::get('/login', function () {
     if (auth()->check()) {

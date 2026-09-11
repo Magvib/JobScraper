@@ -1,6 +1,7 @@
 <?php
 
 use Livewire\Component;
+use Illuminate\Support\Facades\URL;
 
 new class extends Component
 {
@@ -9,6 +10,8 @@ new class extends Component
     public ?string $selected = null;
 
     public array $templates = [];
+
+    public string $signedRoute = '';
 
     public function mount()
     {
@@ -56,6 +59,8 @@ new class extends Component
     public function select(string $slug): void
     {
         $this->selected = $slug;
+        $this->signedRoute = URL::temporarySignedRoute('signed-template', now()->addMinutes(100), ['slug' => $slug, 'user' => auth()->id()]);
+        dd($this->signedRoute);
     }
 
     public function close(): void
@@ -133,10 +138,6 @@ new class extends Component
                         <button class="btn flex-1" wire:click="close">Close</button>
                         <a class="btn flex-1" href="{{ route('template', $selected) }}" target="_blank">
                             Open full page ↗
-                        </a>
-                        <a class="btn btn-primary flex-1" href="{{ route('cv.download', $selected) }}"
-                            title="Download as PDF (single page, no breaks)">
-                            Download PDF ⬇
                         </a>
                     </div>
                 </div>

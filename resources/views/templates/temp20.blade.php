@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CV - {{ auth()->user()->name }}</title>
+    <title>CV - {{ $user->name }}</title>
     @vite(['resources/css/app.css'])
     <style>
         @page { size: A4; margin: 0; }
@@ -20,7 +20,6 @@
     </style>
 </head>
 @php
-    $user = auth()->user();
     $jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
     $photo = $user->getImage();
