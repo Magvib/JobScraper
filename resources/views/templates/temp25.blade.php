@@ -27,7 +27,7 @@
     $user = auth()->user();
     $jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
-    $photo = $user->image ? '/storage/' . $user->image : $user->avatar;
+    $photo = $user->getImage();
 @endphp
 <body class="bg-amber-50 min-h-screen py-8 px-4">
     <div class="cv-page max-w-[210mm] mx-auto bg-linear-to-br from-orange-50 via-amber-50 to-lime-50 shadow-lg min-h-[297mm] px-12 py-12 handwritten text-stone-800 relative overflow-hidden">

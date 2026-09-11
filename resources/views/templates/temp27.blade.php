@@ -19,7 +19,7 @@
     $user = auth()->user();
     $jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
-    $photo = $user->image ? '/storage/' . $user->image : $user->avatar;
+    $photo = $user->getImage();
     $initials = collect(explode(' ', trim($user->name ?? '')))->map(fn ($w) => strtoupper(mb_substr($w, 0, 1)))->implode('');
 @endphp
 <body class="bg-stone-200 min-h-screen py-8 px-4">

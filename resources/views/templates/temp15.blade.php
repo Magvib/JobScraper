@@ -19,7 +19,7 @@
     $user = auth()->user();
     $jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
-    $photo = $user->image ? '/storage/' . $user->image : $user->avatar;
+    $photo = $user->getImage();
     $barWidths = [88, 76, 94, 68, 82, 72];
 @endphp
 <body class="bg-white min-h-screen py-8 px-4">

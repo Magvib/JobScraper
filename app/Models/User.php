@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 #[Fillable(['name', 'email', 'password', 'avatar', 'cv', 'address', 'zip', 'city', 'phone', 'birthdate', 'job_title', 'max_distance', 'keywords', 'skills', 'auto_match_new_jobs', 'notify_skills_match_threshold', 'notify_experience_relevance_threshold', 'notify_seniority_fit_threshold', 'notify_keyword_match_threshold', 'notify_match_mode'])]
@@ -49,5 +50,14 @@ class User extends Authenticatable
             ->take(2)
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
+    }
+
+    public function getImage(): ?string
+    {
+        if (!$this->image) {
+            return $this->avatar;
+        }
+
+        return Storage::url($this->image);
     }
 }

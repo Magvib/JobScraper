@@ -19,7 +19,7 @@
     $user = auth()->user();
     $jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
-    $photo = $user->image ? '/storage/' . $user->image : $user->avatar;
+    $photo = $user->getImage();
     $firstJob = collect($jobs)->filter(fn ($j) => !empty($j['startDate']))->sortBy('startDate')->first();
     $years = $firstJob ? max(0, \Carbon\Carbon::parse($firstJob['startDate'])->diffInYears(now())) : 0;
 @endphp

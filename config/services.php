@@ -42,10 +42,9 @@ return [
     ],
 
     'browsershot' => [
-        // The web server's PATH doesn't include node (PhpWebStudy keeps it
-        // in ~/Library/PhpWebStudy/env/node/bin), so Browsershot needs the
-        // absolute binary path spelled out.
-        'node_binary' => env('BROWSERSHOT_NODE_BINARY', getenv('HOME').'/Library/PhpWebStudy/env/node/bin/node'),
+        // getenv('HOME').'/Library/PhpWebStudy/env/node/bin/node'
+        // Node will be available globally via standard PATH
+        'node_binary' => env('BROWSERSHOT_NODE_BINARY', '/usr/bin/node'),
     ],
 
 ];
