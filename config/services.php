@@ -41,4 +41,10 @@ return [
         'redirect' => env('GITHUB_REDIRECT_URI'),
     ],
 
+    'gotenberg' => [
+        'api_url' => env('GOTENBERG_API_URL'),
+        'basic_auth_username' => env('GOTENBERG_API_BASIC_AUTH_USERNAME'),
+        'basic_auth_password' => env('GOTENBERG_API_BASIC_AUTH_PASSWORD'),
+    ],
+
 ];

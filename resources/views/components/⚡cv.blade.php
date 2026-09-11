@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use Illuminate\Support\Facades\URL;
 
@@ -10,8 +11,6 @@ new class extends Component
     public ?string $selected = null;
 
     public array $templates = [];
-
-    public string $signedRoute = '';
 
     public function mount()
     {
@@ -59,8 +58,34 @@ new class extends Component
     public function select(string $slug): void
     {
         $this->selected = $slug;
-        $this->signedRoute = URL::temporarySignedRoute('signed-template', now()->addMinutes(100), ['slug' => $slug, 'user' => auth()->id()]);
-        // dd($this->signedRoute);
+    }
+
+    public function download(string $slug)
+    {
+        $signedRoute = URL::temporarySignedRoute('signed-template', now()->addMinutes(2), ['slug' => $slug, 'user' => auth()->id()]);
+        $gotenbergApiUrl = config('services.gotenberg.api_url');
+        $gotenbergApiBasicAuthUsername = config('services.gotenberg.basic_auth_username');
+        $gotenbergApiBasicAuthPassword = config('services.gotenberg.basic_auth_password');
+
+        $response = Http::withBasicAuth($gotenbergApiBasicAuthUsername, $gotenbergApiBasicAuthPassword)
+            ->attach('url', $signedRoute)
+            ->attach('paperWidth', '210mm')
+            ->attach('singlePage', 'true')
+            ->attach('marginTop', '0')
+            ->attach('marginBottom', '0')
+            ->attach('marginLeft', '0')
+            ->attach('marginRight', '0')
+            ->post("{$gotenbergApiUrl}/forms/chromium/convert/url");
+
+        $pdf = $response->body();
+
+        if (! str_starts_with($pdf, '%PDF')) {
+            abort(500, 'Gotenberg did not return a PDF: ' . substr($pdf, 0, 500));
+        }
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf;
+        }, 'template.pdf', ['Content-Type' => 'application/pdf']);
     }
 
     public function close(): void
@@ -111,10 +136,9 @@ new class extends Component
                             <h2 class="card-title text-base leading-tight">{{ $template['name'] }}</h2>
                             <p class="text-xs opacity-60">#{{ $template['number'] }}</p>
                         </div>
-                        <a class="btn btn-sm btn-ghost" href="{{ route('template', $template['slug']) }}"
-                            target="_blank" title="Open full page in new tab">
-                            Full page ↗
-                        </a>
+                        <button class="btn btn-sm btn-ghost" wire:click="download('{{ $template['slug'] }}')" title="Download PDF">
+                            Download
+                        </button>
                     </div>
                 </div>
             @endforeach
@@ -136,9 +160,9 @@ new class extends Component
                     </span>
                     <div class="flex flex-row gap-2">
                         <button class="btn flex-1" wire:click="close">Close</button>
-                        <a class="btn flex-1" href="{{ route('template', $selected) }}" target="_blank">
-                            Open full page ↗
-                        </a>
+                        <button class="btn flex-1" wire:click="download('{{ $selected }}')">
+                            Download
+                        </button>
                     </div>
                 </div>
             </div>
