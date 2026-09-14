@@ -88,9 +88,9 @@ new class extends Component
     x-data="{
         letter: @entangle('content'),
         saved: '',
+        savedTitle: '',
         hasSaved: false,
         showDiff: true,
-        dirty: false,
         _cache: null,
         get words() { const t = this.letter.trim(); return t ? t.split(/\s+/).length : 0 },
         get paragraphs() { const t = this.letter.trim(); return t ? t.split(/\n{2,}/).length : 0 },
@@ -99,9 +99,15 @@ new class extends Component
                 $wire.delete();
             }
         },
-        get changed() { return this.hasSaved && this.letter !== this.saved },
+        // Real dirty check: current content/title vs. what is saved in the DB.
+        get changed() {
+            const savedContent = this.hasSaved ? this.saved : '';
+            const savedTitle = this.hasSaved ? this.savedTitle : '';
+            return this.letter !== savedContent || ($wire.title || '') !== savedTitle;
+        },
+        get contentChanged() { return this.hasSaved && this.letter !== this.saved },
         get diffData() {
-            if (!this.changed) return null;
+            if (!this.contentChanged) return null;
             if (this._cache && this._cache.a === this.saved && this._cache.b === this.letter) return this._cache.out;
             this._cache = { a: this.saved, b: this.letter, out: this.buildDiff(this.saved, this.letter) };
             return this._cache.out;
@@ -158,19 +164,20 @@ new class extends Component
             return { html, added, removed };
         },
     }"
-    x-on:cover-letter-saved.window="saved = $wire.content; hasSaved = saved.trim() !== ''; dirty = false"
-    x-on:cover-letter-loaded.window="letter = $event.detail.content; saved = $event.detail.content; hasSaved = saved.trim() !== ''; dirty = false; showDiff = true"
-    x-on:cover-letter-cleared.window="letter = ''; saved = ''; hasSaved = false; dirty = false; showDiff = true">
+    x-on:cover-letter-saved.window="saved = $wire.content; savedTitle = $wire.title; hasSaved = true"
+    x-on:cover-letter-loaded.window="letter = $event.detail.content; saved = $event.detail.content; savedTitle = $wire.title; hasSaved = true; showDiff = true"
+    x-on:cover-letter-cleared.window="letter = ''; saved = ''; savedTitle = ''; hasSaved = false; showDiff = true"
+    x-on:cover-letter-deleted.window="letter = ''; saved = ''; savedTitle = ''; hasSaved = false; showDiff = true">
     <div class="max-w-8xl mx-auto">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
                 <h1 class="text-3xl font-bold">Cover Letter Editor</h1>
                 <p class="mt-2 opacity-70">
-                    <span x-show="!dirty" x-cloak>All changes saved</span>
-                    <span x-show="dirty" class="text-warning flex items-center gap-2">
+                    <span x-show="changed" class="text-warning flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-warning inline-block"></span>
                         Unsaved changes
                     </span>
+                    <span x-show="!changed" x-cloak>All changes saved</span>
                 </p>
             </div>
 
@@ -235,7 +242,7 @@ new class extends Component
                 <div class="card-body gap-4">
                     <label class="form-control">
                         <span class="label-text mb-1 block text-sm opacity-70">{{ __('Title') }}</span>
-                        <input type="text" wire:model="title" x-on:input="dirty = true"
+                        <input type="text" wire:model="title"
                             class="input input-bordered w-full"
                             placeholder="{{ __('e.g. Frontend developer — Novo Nordisk') }}" />
                     </label>
@@ -244,7 +251,6 @@ new class extends Component
                         <textarea
                             x-ref="editor"
                             x-model="letter"
-                            x-on:input="dirty = true"
                             x-on:keydown.meta.s.prevent="$wire.save()"
                             x-on:keydown.ctrl.s.prevent="$wire.save()"
                             class="textarea textarea-bordered w-full min-h-152 leading-relaxed font-serif text-base"
