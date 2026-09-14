@@ -89,6 +89,6 @@ class Post extends Model
 
     public function getLocation()
     {
-        return $this->city . ($this->zipcode ? ', ' . $this->zipcode : '') . ($this->street ? ', ' . $this->street : '') . ($this->country ? ', ' . $this->country : '');
+        return join(', ', array_filter([$this->city, $this->zipcode, $this->street, $this->country]));
     }
 }
