@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CV - {{ $user->name }}</title>
-    @vite(['resources/css/app.css'])
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         @media print {
             body { background: white !important; padding: 0 !important; }
@@ -48,7 +48,7 @@
                     <h1 class="text-4xl font-bold tracking-tight text-slate-900">{{ $user->name }}</h1>
                     @if ($user->job_title)
                         <p class="mt-1.5 text-lg text-slate-400 font-light">{{ $user->job_title }}</p>
-                    @endif>
+                    @endif
                 </div>
             </header>
 
