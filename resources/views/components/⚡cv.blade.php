@@ -162,7 +162,13 @@ new class extends Component
         <div class="modal modal-open" wire:keydown.escape.window="close">
             <div class="modal-box max-w-7xl p-4 flex flex-col items-center gap-3"
                 x-data="{ letterId: {{ $firstLetterId ?? 'null' }}, letters: @entangle('letters') }">
-                <div class="flex flex-col lg:flex-row items-start gap-3">
+                @php
+                    $selectedTemplate = collect($this->templates)->firstWhere('slug', $selected);
+                @endphp
+                <span class="card-title text-base leading-tight">
+                    {{ $selectedTemplate['name'] ?? $selected }}
+                </span>
+                <div class="relative flex flex-col lg:flex-row items-start gap-3">
                     <div class="cv-modal-thumb" wire:key="modal-frame-{{ $selected }}" wire:ignore>
                         <iframe src="{{ route('template', $selected) }}" title="Preview"></iframe>
                     </div>
@@ -195,24 +201,33 @@ new class extends Component
                                 title="Preview"></iframe>
                         </div>
                     </div>
+                    {{-- Download CV / Download Letter, anchored to the bottom of the previews --}}
+                    <details class="dropdown dropdown-top dropdown-center absolute bottom-3 left-1/2 -translate-x-1/2 z-30">
+                        <summary class="btn btn-outline btn-sm bg-base-100/90 backdrop-blur-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download
+                        </summary>
+                        <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg border border-base-300 w-64 z-30">
+                            <li>
+                                <button @click="$el.closest('details').removeAttribute('open')"
+                                    wire:click="download('{{ $selected }}')">
+                                    Download CV
+                                </button>
+                            </li>
+                            <li>
+                                <button @click="$el.closest('details').removeAttribute('open')"
+                                    wire:click="download('{{ $selected }}', letterId)">
+                                    Download Letter
+                                </button>
+                            </li>
+                        </ul>
+                    </details>
                 </div>
-                <div class="modal-action w-full justify-center flex flex-col">
-                    @php
-                        $selectedTemplate = collect($this->templates)->firstWhere('slug', $selected);
-                    @endphp
-                    <span class="self-center card-title text-base leading-tight mb-2">
-                        {{ $selectedTemplate['name'] ?? $selected }}
-                    </span>
-                    <div class="flex flex-row gap-2">
-                        <button class="btn btn-error flex-1" wire:click="close">Close</button>
-                        <button class="btn flex-1" wire:click="download('{{ $selected }}')">
-                            Download CV
-                        </button>
-                        <button class="btn btn-primary flex-1" wire:click="download('{{ $selected }}', letterId)">
-                            Download Letter
-                        </button>
-                    </div>
-                </div>
+                <button class="btn btn-error w-full" wire:click="close">Close</button>
             </div>
             <div class="modal-backdrop bg-black/60" wire:click="close"></div>
         </div>
