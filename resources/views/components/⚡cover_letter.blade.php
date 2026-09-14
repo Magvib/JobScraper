@@ -457,6 +457,15 @@ new class extends Component
                             </p>
                         </div>
 
+                        {{-- Loading overlay shown while the AI prompt is running --}}
+                        <div wire:loading wire:target="aiPrompt" x-cloak
+                            class="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 rounded-lg bg-white/80">
+                            <div class="flex flex-col items-center gap-3">
+                                <span class="loading loading-bars loading-xl text-neutral-600"></span>
+                                <p class="text-sm text-neutral-500 italic">{{ __('The AI is working on your letter...') }}</p>
+                            </div>
+                        </div>
+
                         {{-- Popup shown above the selected text --}}
                         <div id="selection-popup" x-show="popup.open" x-cloak
                             x-transition:enter="transition ease-out duration-100"
