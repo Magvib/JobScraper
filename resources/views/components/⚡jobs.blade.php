@@ -27,35 +27,40 @@ new class extends Component
         $user = auth()->user();
 
         if ($user->keywords) {
-            $data = [
-                'q' => implode(' ', $user->keywords),
-                'sort' => 'date',
-            ];
+            $keywords = collect($user->keywords)->take(5);
 
-            if ($user->address && $user->max_distance) {
-                $data['address'] = $user->address.', '.$user->zip.' '.$user->city;
-                $data['radius'] = $user->max_distance;
-            }
+            $jobIndexKey = 'jobindex_'.md5(json_encode($keywords->toArray()));
+            Cache::remember($jobIndexKey, now()->addMinutes(30), function () use ($user, $keywords) {
+                $data = [
+                    'sort' => 'date',
+                ];
 
-            $cacheKey = 'jobindex_'.md5(json_encode($data));
+                if ($user->address && $user->max_distance) {
+                    $data['address'] = $user->address.', '.$user->zip.' '.$user->city;
+                    $data['radius'] = $user->max_distance;
+                }
 
-            $jobs = Cache::remember($cacheKey.'_results', now()->addMinutes(30), function () use ($data) {
-                return Http::get('https://www.jobindex.dk/api/jobsearch/v3', $data)->json()['results'] ?? [];
+                foreach ($keywords as $keyword) {
+                    $data['q'] = $keyword;
+                    try {
+                        $response = Http::retry(2, 200)
+                            ->connectTimeout(5)
+                            ->timeout(15)->get('https://www.jobindex.dk/api/jobsearch/v3', $data)->json()['results'] ?? [];
+
+                        foreach ($response as $job) {
+                            Post::savePost($job, PostSource::JOBINDEX, $keyword);
+                        }
+                    } catch (\Throwable $th) {
+                        continue;
+                    }
+                }
+
+                return 1;
             });
 
-            foreach ($jobs as $job) {
-                Post::savePost($job, PostSource::JOBINDEX);
-            }
-
             // Jobnet only supports one search string per request, so one request per keyword.
-            $jobnetKey = 'jobnet_'.md5(json_encode($user->keywords));
-
-            $jobnet = Cache::remember($jobnetKey, now()->addMinutes(30), function () use ($user) {
-                $ads = collect();
-                $count = 0;
-
-                $keywords = collect($user->keywords)->take(5);
-
+            $jobnetKey = 'jobnet_'.md5(json_encode($keywords->toArray()));
+            Cache::remember($jobnetKey, now()->addMinutes(30), function () use ($keywords) {
                 foreach ($keywords as $keyword) {
                     try {
                         $response = Http::retry(2, 200)
@@ -70,27 +75,20 @@ new class extends Component
                                 'orderType' => 'BestMatch',
                                 'searchString' => $keyword,
                             ])->json() ?? [];
+
+                        foreach ($response['jobAds'] ?? [] as $job) {
+                            Post::savePost($job, PostSource::JOBNET, $keyword);
+                        }
                     } catch (\Throwable $th) {
                         continue;
                     }
-
-                    $count += $response['totalJobAdsCount'] ?? count($response['jobAds'] ?? []);
-                    $ads = $ads->merge($response['jobAds'] ?? []);
                 }
 
-                return ['count' => $count, 'jobs' => $ads->all()];
+                return 1;
             });
 
-            foreach ($jobnet['jobs'] as $job) {
-                Post::savePost($job, PostSource::JOBNET);
-            }
-
-            $this->jobs = Post::query()->active()->get();
+            $this->jobs = Post::query()->active()->whereIn('keyword', $keywords->toArray())->get();
         }
-    }
-
-    public function with()
-    {
     }
 
     public function companyInitials(string $name): string

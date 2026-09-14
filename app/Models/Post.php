@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 enum PostSource: string
@@ -24,16 +26,18 @@ class Post extends Model
         'raw' => 'array',
     ];
 
-    public function scopeActive($query)
+    #[Scope]
+    protected function active(Builder $query)
     {
         return $query->where('is_archived', false)->where(fn ($q) => $q->whereNull('deadline_at')->orWhere('deadline_at', '>', now()));
     }
 
-    public static function savePost($data, PostSource $source)
+    public static function savePost($data, PostSource $source, $keyword = null)
     {
         if ($source === PostSource::JOBINDEX) {
             // Jobindex
             self::updateOrCreate(['source' => 'jobindex', 'source_id' => $data['tid']], [
+                'keyword'          => $keyword,
                 'title'            => $data['headline'],
                 'company_name'     => $data['workplace_company']['name'] ?? $data['companytext'],
                 'company_logo_url' => $data['workplace_company']['logo'] ?? null,
@@ -54,6 +58,7 @@ class Post extends Model
         } elseif ($source === PostSource::JOBNET) {
             // Jobnet
             self::updateOrCreate(['source' => 'jobnet', 'source_id' => $data['jobAdId']], [
+                'keyword'          => $keyword,
                 'title'            => $data['title'],
                 'description'      => $data['description'],
                 'company_name'     => $data['hiringOrgName'],
