@@ -128,6 +128,7 @@ new class extends Component
             // Flip below the selection when there is not enough room above it.
             this.popup.above = r.top - c.top > 130;
             this.popup.open = true;
+            this.$nextTick(() => this.$refs.popupInput?.focus());
             // Freeze the selection as a yellow span so it stays visible while the
             // popup is used (the browser clears the native selection on click).
             const span = document.createElement('span');
@@ -438,7 +439,7 @@ new class extends Component
                                 : `left:${popup.x}px; top:${popup.y + popup.h + 8}px; transform:translate(-50%, 0)`">
                             <p class="text-xs font-medium opacity-70 mb-2">{{ __('Rewrite selection') }}</p>
                             <div class="flex gap-1.5">
-                                <input type="text" x-model="popup.prompt"
+                                <input type="text" x-model="popup.prompt" x-ref="popupInput"
                                     x-on:keydown.enter.prevent="runPrompt(popup.prompt)"
                                     class="input input-bordered input-sm w-full"
                                     placeholder="{{ __('e.g. Make this more professional') }}" />
