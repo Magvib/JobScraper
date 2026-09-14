@@ -19,16 +19,23 @@ new class extends Component
         })->toArray();
     }
 
-    public function save(): void
+    public function save($asNew = false): void
     {
         $this->validate([
             'title' => 'nullable|string|max:255',
             'content' => 'required|string',
         ]);
-        auth()->user()->coverLetters()->updateOrCreate(
+
+        if ($asNew) {
+            $this->id = null;
+        }
+
+        $coverLetter = auth()->user()->coverLetters()->updateOrCreate(
             ['id' => $this->id ?? null],
             ['title' => $this->title, 'content' => $this->content]
         );
+
+        $this->id = $coverLetter->id;
 
         // Refresh the list of saved letters after saving.
         $this->letters = auth()->user()->coverLetters()->pluck('title', 'id')->map(function ($title, $id) {
@@ -209,6 +216,15 @@ new class extends Component
                     </svg>
                     Save
                     <span wire:loading wire:target="save" class="loading loading-spinner loading-xs"></span>
+                </button>
+                <button type="button" class="btn" wire:click="save(true)">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    Save as New
+                    <span wire:loading wire:target="save(true)" class="loading loading-spinner loading-xs"></span>
                 </button>
             </div>
         </div>
