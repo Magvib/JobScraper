@@ -340,8 +340,8 @@ new class extends Component
                     </div>
 
                     <div x-ref="preview" class="relative bg-white text-neutral-800 rounded-lg shadow-inner border border-base-300 p-8 font-serif min-h-152 max-h-192 overflow-y-auto"
-                        @mouseup="selectionChanged()"
-                        @keyup="selectionChanged()"
+                        @mouseup="$event.target.closest('#selection-popup') || selectionChanged()"
+                        @keyup="$event.target.closest('#selection-popup') || selectionChanged()"
                         @mousedown.window="$event.target.closest('#selection-popup') || (clearHighlight(), popup.open = false)"
                         @keydown.escape.window="clearHighlight(), popup.open = false">
                         <div class="flex justify-between items-start mb-8 gap-4 border-b border-neutral-200 pb-4">
