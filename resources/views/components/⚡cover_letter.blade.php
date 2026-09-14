@@ -145,6 +145,25 @@ new class extends Component
             this.popup.prompt = '';
             // The yellow highlight is kept so the selection stays visible.
         },
+        // Prompt panel that works on the whole letter, no selection needed.
+        whole: { open: false, prompt: '' },
+        toggleWhole() {
+            this.whole.prompt = '';
+            this.whole.open = !this.whole.open;
+            if (this.whole.open) {
+                this.popup.open = false;
+                this.clearHighlight();
+                // Defer until Alpine has applied x-show, else the input is
+                // still display:none and focus() is a silent no-op.
+                this.$nextTick(() => this.$refs.wholePrompt?.focus());
+            }
+        },
+        runWholePrompt(prompt) {
+            if (!prompt.trim() || !this.letter.trim()) return;
+            console.log('[AI] prompt:', prompt, '→ whole letter');
+            this.whole.open = false;
+            this.whole.prompt = '';
+        },
         // Real dirty check: current content/title vs. what is saved in the DB.
         get changed() {
             const savedContent = this.hasSaved ? this.saved : '';
@@ -327,6 +346,17 @@ new class extends Component
                     <div class="flex items-center justify-between">
                         <h2 class="card-title text-base">{{ __('Preview') }}</h2>
                         <div class="flex items-center gap-2">
+                            <button type="button" class="btn btn-outline btn-sm"
+                                :class="whole.open && 'btn-primary'"
+                                @click="toggleWhole()"
+                                title="{{ __('AI assistant for the whole letter') }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                </svg>
+                                {{ __('AI') }}
+                            </button>
                             <template x-if="diffData">
                                 <div class="flex items-center gap-2 text-xs">
                                     <span class="font-medium text-green-600" x-cloak>+<span x-text="diffData.added">0</span></span>
@@ -340,10 +370,10 @@ new class extends Component
                     </div>
 
                     <div x-ref="preview" class="relative bg-white text-neutral-800 rounded-lg shadow-inner border border-base-300 p-8 font-serif min-h-152 max-h-192 overflow-y-auto"
-                        @mouseup="$event.target.closest('#selection-popup') || selectionChanged()"
-                        @keyup="$event.target.closest('#selection-popup') || selectionChanged()"
-                        @mousedown.window="$event.target.closest('#selection-popup') || (clearHighlight(), popup.open = false)"
-                        @keydown.escape.window="clearHighlight(), popup.open = false">
+                        @mouseup="!$event.target.closest('#selection-popup, #whole-letter-popup') && selectionChanged()"
+                        @keyup="!$event.target.closest('#selection-popup, #whole-letter-popup') && selectionChanged()"
+                        @mousedown.window="!$event.target.closest('#selection-popup, #whole-letter-popup') && (clearHighlight(), popup.open = false)"
+                        @keydown.escape.window="clearHighlight(), popup.open = false, whole.open = false">
                         <div class="flex justify-between items-start mb-8 gap-4 border-b border-neutral-200 pb-4">
                             <div>
                                 <p class="font-bold text-base">@auth {{ auth()->user()->name }} @endauth</p>
@@ -366,6 +396,35 @@ new class extends Component
                             x-html="diff ? diff.html : escape(letter)"></div>
                         <div x-show="!letter.trim()" class="italic text-neutral-400 text-[15px]">
                             {{ __('Your cover letter will appear here as you type...') }}
+                        </div>
+
+                        {{-- Prompt panel for the whole letter, no selection needed --}}
+                        <div id="whole-letter-popup" x-show="whole.open" x-cloak
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            class="text-white absolute z-40 left-1/2 top-4 -translate-x-1/2 w-96 max-w-[calc(100%-2rem)] rounded-lg border border-base-300 bg-base-100 shadow-xl p-3">
+                            <p class="text-xs font-medium opacity-70 mb-2">{{ __('Improve the whole letter') }}</p>
+                            <div class="flex gap-1.5">
+                                <input type="text" x-ref="wholePrompt" x-model="whole.prompt"
+                                    x-on:keydown.enter.prevent="runWholePrompt(whole.prompt)"
+                                    class="input input-bordered input-sm w-full"
+                                    placeholder="{{ __('e.g. Make the whole letter shorter') }}" />
+                                <button type="button" class="btn btn-primary btn-sm"
+                                    :disabled="!letter.trim()"
+                                    @click="runWholePrompt(whole.prompt)">→</button>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 mt-2">
+                                <button type="button" class="btn btn-outline btn-xs" :disabled="!letter.trim()"
+                                    @click="runWholePrompt('Improve the whole letter')">{{ __('Improve letter') }}</button>
+                                <button type="button" class="btn btn-outline btn-xs" :disabled="!letter.trim()"
+                                    @click="runWholePrompt('Make the whole letter more concise')">{{ __('Make it shorter') }}</button>
+                                <button type="button" class="btn btn-outline btn-xs" :disabled="!letter.trim()"
+                                    @click="runWholePrompt('Tailor the letter to the job description')">{{ __('Tailor to job') }}</button>
+                            </div>
+                            <p x-show="!letter.trim()" class="text-xs text-warning mt-2">
+                                {{ __('Write something first — the AI works on the whole letter.') }}
+                            </p>
                         </div>
 
                         {{-- Popup shown above the selected text --}}
