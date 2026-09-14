@@ -51,7 +51,14 @@
         </div>
 
         {{-- Sagsliste: erhvervserfaring --}}
-        @if ($jobs)
+        @if (isset($coverLetter))
+            <section class="mt-10 flex-1">
+                <h2 class="text-sm font-bold uppercase tracking-[0.35em] text-stone-700 text-center">Sagsliste — Ansøgning</h2>
+                <div class="mt-6 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            </section>
+        @elseif ($jobs)
             <section class="mt-10 flex-1">
                 <h2 class="text-sm font-bold uppercase tracking-[0.35em] text-stone-700 text-center">Sagsliste — Erhvervserfaring &amp; Uddannelse</h2>
                 <div class="mt-6 space-y-7">

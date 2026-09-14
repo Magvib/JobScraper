@@ -62,7 +62,14 @@
             @endif
 
             {{-- Menusektion: erfaring --}}
-            @if ($jobs)
+            @if (isset($coverLetter))
+                <section class="mt-10">
+                    <h2 class="text-2xl font-bold text-center uppercase tracking-widest text-[#fbbf24]">Ansøgningen</h2>
+                    <div class="mt-6 space-y-4">
+                        {!! $coverLetter->renderContext() !!}
+                    </div>
+                </section>
+            @elseif ($jobs)
                 <section class="mt-10">
                     <h2 class="text-2xl font-bold text-center uppercase tracking-widest text-[#fbbf24]">Vores Erfaringer</h2>
                     <div class="mt-6 space-y-5">

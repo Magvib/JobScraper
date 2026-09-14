@@ -60,6 +60,12 @@
 
         {{-- Erfaring som mørke kort --}}
         <main class="flex-1 px-12 py-10 grid gap-5 content-start">
+            @if (isset($coverLetter))
+                <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-cyan-400">Ansøgning</h2>
+                <div class="space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            @elseif ($jobs)
             <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-cyan-400">Erhvervserfaring &amp; Uddannelse</h2>
             @foreach ($jobs as $job)
                 <article class="bg-white/5 border border-white/10 rounded-lg px-6 py-5">
@@ -77,6 +83,7 @@
                     @endif
                 </article>
             @endforeach
+            @endif
         </main>
 
         {{-- Diskret footer --}}

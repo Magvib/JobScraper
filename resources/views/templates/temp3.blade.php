@@ -48,7 +48,14 @@
         {{-- Hovedindhold: erfaring + sidebar --}}
         <div class="grid grid-cols-[1fr_58mm]">
             <main class="px-12 py-10">
-                @if ($jobs)
+                @if (isset($coverLetter))
+                    <section>
+                        <h2 class="text-sm font-bold uppercase tracking-[0.25em] text-indigo-600">Ansøgning</h2>
+                        <div class="mt-6 space-y-4">
+                            {!! $coverLetter->renderContext() !!}
+                        </div>
+                    </section>
+                @elseif ($jobs)
                     <section>
                         <h2 class="text-sm font-bold uppercase tracking-[0.25em] text-indigo-600">Erhvervserfaring &amp; uddannelse</h2>
                         <div class="mt-6 space-y-7">

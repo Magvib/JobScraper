@@ -65,6 +65,14 @@
         <div class="mt-10 grid grid-cols-[1fr_50mm] gap-12">
             {{-- Rutekort: erfaring --}}
             <main>
+                @if (isset($coverLetter))
+                    <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-emerald-700 border-b-2 border-emerald-600 pb-2">Ekspeditionsrapport — Ansøgning</h2>
+                    <div class="relative mt-6 pl-2">
+                        <div class="space-y-4">
+                            {!! $coverLetter->renderContext() !!}
+                        </div>
+                    </div>
+                @elseif ($jobs)
                 <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-emerald-700 border-b-2 border-emerald-600 pb-2">Rutebeskrivelse — Erhvervserfaring &amp; Uddannelse</h2>
                 <div class="relative mt-6 pl-2">
                     {{-- stiplet rute --}}
@@ -89,9 +97,10 @@
                         @endforeach
                     </div>
                 </div>
+                @endif
 
                 <p class="mt-8 text-[10px] italic text-slate-400">
-                    ^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^
+                    ^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~
                 </p>
             </main>
 

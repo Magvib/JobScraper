@@ -72,6 +72,12 @@
 
             {{-- Erhvervserfaring i gitter --}}
             <main>
+                @if (isset($coverLetter))
+                    <h2 class="text-[10px] font-bold uppercase tracking-[0.3em] text-cyan-600 border-b border-slate-300 pb-2">Ansøgning</h2>
+                    <div class="mt-5 space-y-4">
+                        {!! $coverLetter->renderContext() !!}
+                    </div>
+                @elseif ($jobs)
                 <h2 class="text-[10px] font-bold uppercase tracking-[0.3em] text-cyan-600 border-b border-slate-300 pb-2">Erhvervserfaring &amp; Uddannelse</h2>
                 <div class="mt-5 space-y-5">
                     @foreach ($jobs as $job)
@@ -91,6 +97,7 @@
                         </article>
                     @endforeach
                 </div>
+                @endif
             </main>
         </div>
     </div>

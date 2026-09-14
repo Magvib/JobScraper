@@ -42,7 +42,7 @@
             <div class="mt-6 bg-amber-100 border-2 border-zinc-800 px-7 py-6 relative">
                 <span class="absolute top-2.5 left-3 w-4 h-1.5 bg-zinc-800 rounded-full"></span>
                 <span class="absolute top-2.5 right-3 w-4 h-1.5 bg-zinc-800 rounded-full"></span>
-                <p class="text-[10px] font-bold uppercase tracking-[0.35em] text-zinc-500">Kassette — Side A · Erhvervserfaring</p>
+                <p class="text-[10px] font-bold uppercase tracking-[0.35em] text-zinc-500">Kassette — Side A · {{ isset($coverLetter) ? 'Ansøgning' : 'Erhvervserfaring' }}</p>
                 <div class="mt-2 flex items-center gap-5">
                     @if ($photo)
                         <img src="{{ $photo }}" alt="{{ $user->name }}"
@@ -59,6 +59,11 @@
                     <p>Tlf {{ $user->phone ?? '—' }} · {{ $user->email }}@if ($user->address || $user->city) · {{ collect([$user->address, trim(($user->zip ?? '') . ' ' . ($user->city ?? ''))])->filter()->implode(', ') }}@endif @if ($user->birthdate) · Født {{ $user->birthdate->format('d/m/Y') }}@endif</p>
                 </div>
                 <div class="mt-4 space-y-3">
+                    @if (isset($coverLetter))
+                        <div class="text-xs leading-5 space-y-3">
+                            {!! $coverLetter->renderContext() !!}
+                        </div>
+                    @elseif ($jobs)
                     @foreach ($jobs as $job)
                         <div class="grid grid-cols-[30mm_1fr] gap-3 text-xs">
                             <p class="text-zinc-500">
@@ -74,6 +79,7 @@
                             </div>
                         </div>
                     @endforeach
+                    @endif
                 </div>
             </div>
 

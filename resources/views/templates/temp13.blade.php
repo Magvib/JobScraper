@@ -78,7 +78,14 @@
         @endif
 
         {{-- Erhvervserfaring --}}
-        @if ($jobs)
+        @if (isset($coverLetter))
+            <section class="mt-8">
+                <h2 class="inline-block bg-black text-white text-sm font-black uppercase tracking-[0.25em] px-4 py-2">Ansøgning</h2>
+                <div class="mt-4 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            </section>
+        @elseif ($jobs)
             <section class="mt-8">
                 <h2 class="inline-block bg-black text-white text-sm font-black uppercase tracking-[0.25em] px-4 py-2">Erhvervserfaring &amp; Uddannelse</h2>
                 <div class="mt-4 space-y-4">

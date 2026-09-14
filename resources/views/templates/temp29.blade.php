@@ -71,7 +71,14 @@
         </p>
 
         {{-- Erhvervserfaring som hovedbog --}}
-        @if ($jobs)
+        @if (isset($coverLetter))
+            <section class="mt-8 flex-1">
+                <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-slate-900 border-b-2 border-slate-800 pb-2">Note 1 — Ansøgning</h2>
+                <div class="mt-4 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            </section>
+        @elseif ($jobs)
             <section class="mt-8 flex-1">
                 <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-slate-900 border-b-2 border-slate-800 pb-2">Note 1 — Erhvervserfaring &amp; Uddannelse</h2>
                 <div class="mt-4 divide-y divide-dotted divide-slate-300">

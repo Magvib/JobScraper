@@ -60,7 +60,12 @@
 
         {{-- Erhvervserfaring & uddannelse som kort --}}
         <main class="flex-1 px-12 py-12">
-            @if ($jobs)
+            @if (isset($coverLetter))
+                <h2 class="text-2xl font-black uppercase tracking-tight">Ansøgning</h2>
+                <div class="mt-6 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            @elseif ($jobs)
                 <h2 class="text-2xl font-black uppercase tracking-tight">Erfaring &amp; Uddannelse</h2>
                 <div class="mt-6 grid gap-5">
                     @foreach ($jobs as $job)

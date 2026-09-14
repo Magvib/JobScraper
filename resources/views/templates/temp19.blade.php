@@ -68,6 +68,12 @@
             <div class="mt-8 grid grid-cols-[1fr_54mm] gap-10 flex-1">
                 {{-- Erhvervserfaring --}}
                 <main>
+                    @if (isset($coverLetter))
+                        <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-sky-300 border-b border-sky-200/50 pb-2">Fig. 1 — Ansøgning</h2>
+                        <div class="mt-5 space-y-4">
+                            {!! $coverLetter->renderContext() !!}
+                        </div>
+                    @elseif ($jobs)
                     <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-sky-300 border-b border-sky-200/50 pb-2">Fig. 1 — Erhvervserfaring &amp; Uddannelse</h2>
                     <div class="mt-5 space-y-5">
                         @foreach ($jobs as $job)
@@ -85,6 +91,7 @@
                             </article>
                         @endforeach
                     </div>
+                    @endif
                 </main>
 
                 {{-- Kompetencer --}}

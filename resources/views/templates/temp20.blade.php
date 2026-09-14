@@ -33,7 +33,7 @@
                 <h1 class="mt-3 text-5xl font-black tracking-tighter leading-none">{{ $user->name }}</h1>
                 @if ($user->job_title)
                     <p class="mt-3 text-lg text-slate-500">{{ $user->job_title }}</p>
-                @endif>
+                @endif
                 <div class="mt-5 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-600">
                     @if ($user->phone)
                         <span>{{ $user->phone }}</span>
@@ -65,7 +65,12 @@
 
         {{-- Erhvervserfaring med kæmpenumre --}}
         <main class="flex-1 px-12 py-10">
-            @if ($jobs)
+            @if (isset($coverLetter))
+                <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Ansøgning</h2>
+                <div class="mt-6 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            @elseif ($jobs)
                 <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Erhvervserfaring &amp; Uddannelse</h2>
                 <div class="mt-6 space-y-7">
                     @foreach ($jobs as $i => $job)

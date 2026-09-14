@@ -62,7 +62,12 @@
 
         {{-- Erhvervserfaring som kampprogram --}}
         <main class="flex-1 px-12 py-10">
-            @if ($jobs)
+            @if (isset($coverLetter))
+                <h2 class="text-sm font-black uppercase tracking-[0.3em] text-orange-500 italic">Pressemøde — Ansøgning</h2>
+                <div class="mt-6 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            @elseif ($jobs)
                 <h2 class="text-sm font-black uppercase tracking-[0.3em] text-orange-500 italic">Kampprogram — Erfaring &amp; Uddannelse</h2>
                 <div class="mt-6 space-y-5">
                     @foreach ($jobs as $i => $job)

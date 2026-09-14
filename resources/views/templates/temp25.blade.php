@@ -69,7 +69,12 @@
         </div>
 
         {{-- Erhvervserfaring som index-kort --}}
-        @if ($jobs)
+        @if (isset($coverLetter))
+            <h2 class="mt-10 text-2xl font-bold text-stone-700 rotate-[-0.5deg] underline decoration-wavy decoration-orange-300 underline-offset-8">Ansøgning</h2>
+            <div class="mt-6 space-y-4">
+                {!! $coverLetter->renderContext() !!}
+            </div>
+        @elseif ($jobs)
             <h2 class="mt-10 text-2xl font-bold text-stone-700 rotate-[-0.5deg] underline decoration-wavy decoration-orange-300 underline-offset-8">Erhvervserfaring &amp; Uddannelse</h2>
             <div class="mt-6 space-y-5">
                 @foreach ($jobs as $i => $job)

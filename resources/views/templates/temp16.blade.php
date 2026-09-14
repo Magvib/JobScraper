@@ -61,7 +61,14 @@
         @endif
 
         {{-- Erhvervserfaring som commits --}}
-        @if ($jobs)
+        @if (isset($coverLetter))
+            <section class="mt-6 flex-1">
+                <p class="text-xs text-green-600">user@cv:~$ cat application.txt</p>
+                <div class="mt-2 border border-green-500/60 px-6 py-4 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            </section>
+        @elseif ($jobs)
             <section class="mt-6 flex-1">
                 <p class="text-xs text-green-600">user@cv:~$ git log --experience</p>
                 <div class="mt-2 border border-green-500/60 divide-y divide-green-500/25 divide-dashed">

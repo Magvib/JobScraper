@@ -52,7 +52,14 @@
         </header>
 
         {{-- Erhvervserfaring --}}
-        @if ($jobs)
+        @if (isset($coverLetter))
+            <section class="mt-10">
+                <h2 class="text-sm font-bold uppercase tracking-[0.3em] text-stone-700 border-b border-dashed border-stone-500 pb-2">§ 1 — Ansøgning</h2>
+                <div class="mt-6 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            </section>
+        @elseif ($jobs)
             <section class="mt-10">
                 <h2 class="text-sm font-bold uppercase tracking-[0.3em] text-stone-700 border-b border-dashed border-stone-500 pb-2">§ 1 — Erhvervserfaring &amp; Uddannelse</h2>
                 <div class="mt-6 space-y-6">

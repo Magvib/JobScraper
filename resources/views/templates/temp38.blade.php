@@ -52,7 +52,14 @@
         </div>
 
         {{-- Sporliste: erhvervserfaring --}}
-        @if ($jobs)
+        @if (isset($coverLetter))
+            <div class="mt-8 flex-1">
+                <p class="text-[10px] uppercase tracking-[0.25em] text-neutral-500 border-b border-neutral-800 pb-2">Liner notes — Ansøgning</p>
+                <div class="mt-5 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            </div>
+        @elseif ($jobs)
             <div class="mt-8 flex-1">
                 <div class="grid grid-cols-[10mm_1fr_60mm_24mm] gap-3 text-[10px] uppercase tracking-[0.25em] text-neutral-500 border-b border-neutral-800 pb-2 px-2">
                     <p>#</p>

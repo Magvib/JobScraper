@@ -49,6 +49,14 @@
         </header>
 
         {{-- Kolonner --}}
+        @if (isset($coverLetter))
+            <div class="mt-6 bg-white rounded-lg shadow px-6 py-6 flex-1">
+                <p class="text-[10px] font-black uppercase tracking-widest text-blue-600 border-b border-blue-200 pb-2">Ansøgning</p>
+                <div class="mt-4 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            </div>
+        @else
         <div class="mt-6 grid grid-cols-3 gap-4 flex-1">
 
             {{-- DOING --}}
@@ -117,6 +125,7 @@
                 </div>
             @endif
         </div>
+        @endif
 
         <footer class="mt-5 flex justify-between text-[10px] uppercase tracking-widest text-slate-400">
             <span>{{ $user->name }} · Kanban CV</span>

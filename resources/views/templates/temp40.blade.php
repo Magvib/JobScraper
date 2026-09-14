@@ -52,7 +52,14 @@
         </div>
 
         {{-- Afgangstavle: erhvervserfaring --}}
-        @if ($jobs)
+        @if (isset($coverLetter))
+            <main class="flex-1 px-10 py-8">
+                <p class="text-[10px] uppercase tracking-[0.4em] text-amber-400/60 border-b-2 border-amber-400/25 pb-2">Annonce — Ansøgning</p>
+                <div class="mt-5 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            </main>
+        @elseif ($jobs)
             <main class="flex-1 px-10 py-8">
                 <div class="grid grid-cols-[26mm_1fr_40mm_24mm] gap-3 text-[10px] uppercase tracking-[0.25em] text-amber-400/50 border-b-2 border-amber-400/25 pb-2">
                     <p>Tid</p>

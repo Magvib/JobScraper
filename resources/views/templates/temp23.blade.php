@@ -48,6 +48,11 @@
             <p class="first-letter:text-5xl first-letter:font-black first-letter:float-left first-letter:mr-1 first-letter:leading-[0.8]">
                 <span class="font-bold uppercase">{{ $user->name }}</span> er en dedikeret fagperson med dokumenteret erfaring inden for {{ strtolower($user->job_title ?? 'feltet') }}. Nedenfor følger den fulde kronik over vedkommendes erhvervserfaring og uddannelse, som vores redaktion har kunnet dokumentere.
             </p>
+            @if (isset($coverLetter))
+                <div class="mt-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            @elseif ($jobs)
             @foreach ($jobs as $job)
                 <div class="mt-4 break-inside-avoid">
                     <p class="text-[10px] uppercase tracking-widest text-neutral-500 border-b border-neutral-300 pb-0.5">
@@ -60,6 +65,7 @@
                     @endif
                 </div>
             @endforeach
+            @endif
         </div>
 
         {{-- Personale-annoncer: kompetencer --}}

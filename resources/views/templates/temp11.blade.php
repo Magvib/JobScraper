@@ -54,6 +54,12 @@
         <div class="px-12 py-10 grid grid-cols-[1fr_56mm] gap-10 flex-1">
             {{-- Erhvervserfaring --}}
             <main>
+                @if (isset($coverLetter))
+                    <h2 class="inline-block bg-lime-300 text-emerald-900 text-xs font-black uppercase tracking-[0.2em] px-3 py-1.5">Ansøgning</h2>
+                    <div class="mt-6 space-y-4">
+                        {!! $coverLetter->renderContext() !!}
+                    </div>
+                @elseif ($jobs)
                 <h2 class="inline-block bg-lime-300 text-emerald-900 text-xs font-black uppercase tracking-[0.2em] px-3 py-1.5">Erhvervserfaring &amp; Uddannelse</h2>
                 <div class="mt-6 space-y-6">
                     @foreach ($jobs as $job)
@@ -71,6 +77,7 @@
                         </article>
                     @endforeach
                 </div>
+                @endif
             </main>
 
             <aside class="flex flex-col gap-8">

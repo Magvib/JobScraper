@@ -63,7 +63,12 @@
 
         {{-- Centreret tidslinje --}}
         <main class="flex-1 px-12 py-10">
-            @if ($jobs)
+            @if (isset($coverLetter))
+                <h2 class="text-center text-xs font-bold uppercase tracking-[0.35em] text-sky-700">Ansøgning</h2>
+                <div class="mt-8 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            @elseif ($jobs)
                 <h2 class="text-center text-xs font-bold uppercase tracking-[0.35em] text-sky-700">Erhvervserfaring &amp; Uddannelse</h2>
                 <div class="relative mt-8">
                     {{-- Lodret linje --}}

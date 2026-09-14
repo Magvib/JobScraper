@@ -64,7 +64,14 @@
                     </div>
 
                     {{-- Erhvervserfaring --}}
-                    @if ($jobs)
+                    @if (isset($coverLetter))
+                        <div class="mt-8">
+                            <p class="text-[10px] uppercase tracking-[0.3em] text-slate-400 border-b border-slate-200 pb-2">Rejselog — Ansøgning</p>
+                            <div class="mt-4 space-y-4">
+                                {!! $coverLetter->renderContext() !!}
+                            </div>
+                        </div>
+                    @elseif ($jobs)
                         <div class="mt-8">
                             <p class="text-[10px] uppercase tracking-[0.3em] text-slate-400 border-b border-slate-200 pb-2">Rejselog — Erhvervserfaring &amp; Uddannelse</p>
                             <div class="mt-4 space-y-4">

@@ -53,6 +53,12 @@
         <div class="flex-1 px-10 py-12 grid grid-cols-[1fr_52mm] gap-12">
             {{-- Erhvervserfaring i rent gitter --}}
             <main>
+                @if (isset($coverLetter))
+                    <h2 class="text-2xl font-black uppercase tracking-tight border-b-4 border-neutral-900 pb-2">Ansøgning</h2>
+                    <div class="mt-6 space-y-4">
+                        {!! $coverLetter->renderContext() !!}
+                    </div>
+                @elseif ($jobs)
                 <h2 class="text-2xl font-black uppercase tracking-tight border-b-4 border-neutral-900 pb-2">Erfaring</h2>
                 <div class="mt-6 space-y-8">
                     @foreach ($jobs as $job)
@@ -70,6 +76,7 @@
                         </article>
                     @endforeach
                 </div>
+                @endif
             </main>
 
             {{-- Kompetencer nummereret --}}

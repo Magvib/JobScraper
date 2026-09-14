@@ -59,7 +59,12 @@
                     </div>
 
                     {{-- Erhvervserfaring som levels --}}
-                    @if ($jobs)
+                    @if (isset($coverLetter))
+                        <p class="mt-5 text-[10px] font-bold uppercase tracking-[0.3em] border-y-2 border-dashed border-[#0f380f] py-1">★ APPLICATION ★</p>
+                        <div class="mt-3 space-y-4 text-[11px]">
+                            {!! $coverLetter->renderContext() !!}
+                        </div>
+                    @elseif ($jobs)
                         <p class="mt-5 text-[10px] font-bold uppercase tracking-[0.3em] border-y-2 border-dashed border-[#0f380f] py-1">★ LEVEL LOG ★</p>
                         <div class="mt-3 space-y-4 text-[11px]">
                             @foreach ($jobs as $i => $job)

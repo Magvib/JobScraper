@@ -58,6 +58,15 @@
         <div class="flex-1 px-12 py-12 grid grid-cols-[1fr_56mm] gap-12">
             {{-- Erhvervserfaring med geometriske markører --}}
             <main>
+                @if (isset($coverLetter))
+                    <h2 class="flex items-center gap-3 text-sm font-black uppercase tracking-[0.25em] border-b-2 border-neutral-900 pb-3">
+                        <span class="w-4 h-4 rounded-full bg-red-500 inline-block"></span>
+                        Ansøgning
+                    </h2>
+                    <div class="mt-7 space-y-4">
+                        {!! $coverLetter->renderContext() !!}
+                    </div>
+                @elseif ($jobs)
                 <h2 class="flex items-center gap-3 text-sm font-black uppercase tracking-[0.25em] border-b-2 border-neutral-900 pb-3">
                     <span class="w-4 h-4 rounded-full bg-red-500 inline-block"></span>
                     Erhvervserfaring &amp; Uddannelse
@@ -81,6 +90,7 @@
                         </article>
                     @endforeach
                 </div>
+                @endif
             </main>
 
             {{-- Kompetencer i gitter --}}

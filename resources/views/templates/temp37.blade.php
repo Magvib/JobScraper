@@ -63,7 +63,12 @@
                     </div>
 
                     {{-- Erhvervserfaring som listview --}}
-                    @if ($jobs)
+                    @if (isset($coverLetter))
+                        <div class="mt-3 win-out bg-white win-in p-3 space-y-4">
+                            <p class="text-xs font-bold">📄 ansøgning.txt</p>
+                            {!! $coverLetter->renderContext() !!}
+                        </div>
+                    @elseif ($jobs)
                         <div class="mt-3 win-out bg-white win-in">
                             <div class="grid grid-cols-[36mm_1fr_30mm] text-[10px] font-bold bg-[#c0c0c0] border-b-2 border-neutral-300">
                                 <p class="px-2 py-1 border-r border-neutral-400">Startdato</p>

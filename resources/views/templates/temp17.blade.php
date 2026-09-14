@@ -57,6 +57,15 @@
         {{-- To-spaltet magasinindhold --}}
         <div class="flex-1 px-10 py-10 grid grid-cols-[1fr_54mm] gap-10">
             <main>
+                @if (isset($coverLetter))
+                    <h2 class="text-2xl font-black tracking-tight flex items-center gap-3">
+                        <span class="w-2 h-6 bg-red-600 inline-block"></span>
+                        Ansøgning
+                    </h2>
+                    <div class="mt-5 space-y-4">
+                        {!! $coverLetter->renderContext() !!}
+                    </div>
+                @elseif ($jobs)
                 <h2 class="text-2xl font-black tracking-tight flex items-center gap-3">
                     <span class="w-2 h-6 bg-red-600 inline-block"></span>
                     Erhvervserfaring
@@ -77,6 +86,7 @@
                         </article>
                     @endforeach
                 </div>
+                @endif
             </main>
 
             {{-- Kompetencer --}}

@@ -80,7 +80,12 @@
         </div>
 
         {{-- Erhvervserfaring som tegneserieruder --}}
-        @if ($jobs)
+        @if (isset($coverLetter))
+            <h2 class="mt-10 text-2xl font-black uppercase tracking-wide border-b-4 border-black pb-1">Kapitel 1: Ansøgningen!</h2>
+            <div class="mt-5 space-y-4">
+                {!! $coverLetter->renderContext() !!}
+            </div>
+        @elseif ($jobs)
             <h2 class="mt-10 text-2xl font-black uppercase tracking-wide border-b-4 border-black pb-1">Kapitel 1: Erhvervserfaring!</h2>
             <div class="mt-5 space-y-5">
                 @foreach ($jobs as $i => $job)

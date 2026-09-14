@@ -68,7 +68,12 @@
                     <p class="mt-3 text-xs text-red-800/80 break-all">{{ $user->email }}@if ($user->address || $user->city) · {{ collect([$user->address, trim(($user->zip ?? '') . ' ' . ($user->city ?? ''))])->filter()->implode(', ') }}@endif</p>
 
                     {{-- Showtimes = jobs --}}
-                    @if ($jobs)
+                    @if (isset($coverLetter))
+                        <p class="mt-6 text-[10px] font-bold uppercase tracking-[0.3em] text-red-700 border-b border-red-300 pb-1">Programnote — Ansøgning</p>
+                        <div class="mt-4 space-y-4 text-sm">
+                            {!! $coverLetter->renderContext() !!}
+                        </div>
+                    @elseif ($jobs)
                         <p class="mt-6 text-[10px] font-bold uppercase tracking-[0.3em] text-red-700 border-b border-red-300 pb-1">Spilleplan — Erhvervserfaring &amp; Uddannelse</p>
                         <div class="mt-4 space-y-4">
                             @foreach ($jobs as $job)

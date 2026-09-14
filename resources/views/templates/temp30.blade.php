@@ -37,12 +37,12 @@
                     <h1 class="chromatic text-5xl font-black uppercase tracking-tight text-white leading-none">{{ $user->name }}</h1>
                     @if ($user->job_title)
                         <p class="mt-3 text-lg text-cyan-300 font-medium">{{ $user->job_title }}</p>
-                    @endif>
+                    @endif
                 </div>
                 @if ($photo)
                     <img src="{{ $photo }}" alt="{{ $user->name }}"
                          class="w-24 h-24 object-cover shrink-0 border-2 border-fuchsia-500 glow-pink saturate-150 contrast-125">
-                @endif>
+                @endif
             </div>
             <div class="mt-6 flex flex-wrap gap-x-6 gap-y-1 text-xs text-neutral-400">
                 @if ($user->phone)
@@ -70,7 +70,12 @@
 
         {{-- Erhvervserfaring som datakort --}}
         <main class="flex-1 px-12 py-10">
-            @if ($jobs)
+            @if (isset($coverLetter))
+                <h2 class="text-[10px] font-bold uppercase tracking-[0.4em] text-cyan-400">// application.txt</h2>
+                <div class="mt-6 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            @elseif ($jobs)
                 <h2 class="text-[10px] font-bold uppercase tracking-[0.4em] text-cyan-400">// run_history.log</h2>
                 <div class="mt-6 space-y-5">
                     @foreach ($jobs as $job)

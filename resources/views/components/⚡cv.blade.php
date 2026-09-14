@@ -12,8 +12,14 @@ new class extends Component
 
     public array $templates = [];
 
+    public array $letters = [];
+
     public function mount()
     {
+        $this->letters = auth()->user()->coverLetters()->pluck('title', 'id')->map(function ($title, $id) {
+            return ['id' => $id, 'title' => $title];
+        })->values()->toArray();
+        
         $this->templates = collect(glob(resource_path('views/templates/temp*.blade.php')))
             ->map(function ($file) {
                 $slug = basename($file, '.blade.php');
@@ -60,9 +66,13 @@ new class extends Component
         $this->selected = $slug;
     }
 
-    public function download(string $slug)
+    public function download(string $slug, ?int $coverLetterId = null)
     {
-        $signedRoute = URL::temporarySignedRoute('signed-template', now()->addMinutes(2), ['slug' => $slug, 'user' => auth()->id()]);
+        $signedRoute = URL::temporarySignedRoute('signed-template', now()->addMinutes(2), array_filter([
+            'slug' => $slug,
+            'user' => auth()->id(),
+            'coverLetter' => $coverLetterId,
+        ]));
         $gotenbergApiUrl = config('services.gotenberg.api_url');
         $gotenbergApiBasicAuthUsername = config('services.gotenberg.basic_auth_username');
         $gotenbergApiBasicAuthPassword = config('services.gotenberg.basic_auth_password');
@@ -146,10 +156,45 @@ new class extends Component
     </div>
 
     @if ($selected)
+        @php
+            $firstLetterId = collect($letters)->first()['id'] ?? null;
+        @endphp
         <div class="modal modal-open" wire:keydown.escape.window="close">
-            <div class="modal-box max-w-2xl p-4 flex flex-col items-center gap-3">
-                <div class="cv-modal-thumb" wire:key="modal-frame-{{ $selected }}" wire:ignore>
-                    <iframe src="{{ route('template', $selected) }}" title="Preview"></iframe>
+            <div class="modal-box max-w-7xl p-4 flex flex-col items-center gap-3"
+                x-data="{ letterId: {{ $firstLetterId ?? 'null' }}, letters: @entangle('letters') }">
+                <div class="flex flex-col lg:flex-row items-start gap-3">
+                    <div class="cv-modal-thumb" wire:key="modal-frame-{{ $selected }}" wire:ignore>
+                        <iframe src="{{ route('template', $selected) }}" title="Preview"></iframe>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        {{-- Switch between saved cover letters --}}
+                        <details class="dropdown dropdown-end">
+                            <summary class="btn btn-outline btn-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                <span x-text="letters.find(l => l.id == letterId)?.title ?? 'No cover letter'">Cover letter</span>
+                            </summary>
+                            <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg border border-base-300 w-64 z-30">
+                                @forelse ($letters as $letter)
+                                    <li wire:key="modal-letter-{{ $letter['id'] }}">
+                                        <button @click="letterId = {{ $letter['id'] }}; $el.closest('details').removeAttribute('open')"
+                                            :class="letterId == {{ $letter['id'] }} && 'text-primary'">
+                                            {{ $letter['title'] ?? __('Untitled') }}
+                                        </button>
+                                    </li>
+                                @empty
+                                    <li class="disabled"><span class="opacity-60">No saved letters yet</span></li>
+                                @endforelse
+                            </ul>
+                        </details>
+                        <div class="cv-modal-thumb" wire:key="modal-letter-frame-{{ $selected }}" wire:ignore>
+                            <iframe :src="'{{ route('template', ['name' => $selected]) }}' + (letterId ? '?coverLetter=' + letterId : '')"
+                                title="Preview"></iframe>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-action w-full justify-center flex flex-col">
                     @php
@@ -159,9 +204,12 @@ new class extends Component
                         {{ $selectedTemplate['name'] ?? $selected }}
                     </span>
                     <div class="flex flex-row gap-2">
-                        <button class="btn flex-1" wire:click="close">Close</button>
+                        <button class="btn btn-error flex-1" wire:click="close">Close</button>
                         <button class="btn flex-1" wire:click="download('{{ $selected }}')">
-                            Download
+                            Download CV
+                        </button>
+                        <button class="btn btn-primary flex-1" wire:click="download('{{ $selected }}', letterId)">
+                            Download Letter
                         </button>
                     </div>
                 </div>
