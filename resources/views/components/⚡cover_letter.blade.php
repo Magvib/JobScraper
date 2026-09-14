@@ -99,6 +99,34 @@ new class extends Component
                 $wire.delete();
             }
         },
+        // Popup shown above the text selected in the preview.
+        popup: { open: false, x: 0, y: 0, h: 0, above: true, text: '', prompt: '' },
+        selectionChanged() {
+            const sel = window.getSelection();
+            if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
+            const range = sel.getRangeAt(0);
+            const box = this.$refs.preview;
+            if (!box || !box.contains(range.commonAncestorContainer)) return;
+            const text = sel.toString().trim();
+            if (text.length < 2) { this.popup.open = false; return; }
+            const r = range.getBoundingClientRect();
+            const c = box.getBoundingClientRect();
+            this.popup.text = text;
+            // Center above the selection, clamped so the popup stays inside the preview.
+            this.popup.x = Math.min(Math.max(r.left + r.width / 2 - c.left, 168), c.width - 168);
+            this.popup.y = r.top - c.top;
+            this.popup.h = r.height;
+            // Flip below the selection when there is not enough room above it.
+            this.popup.above = r.top - c.top > 130;
+            this.popup.open = true;
+        },
+        runPrompt(prompt) {
+            if (!prompt.trim() || !this.popup.text) return;
+            console.log('[AI] prompt:', prompt, '→ selection:', this.popup.text);
+            this.popup.open = false;
+            this.popup.prompt = '';
+            window.getSelection()?.removeAllRanges();
+        },
         // Real dirty check: current content/title vs. what is saved in the DB.
         get changed() {
             const savedContent = this.hasSaved ? this.saved : '';
@@ -284,7 +312,11 @@ new class extends Component
                         </div>
                     </div>
 
-                    <div class="bg-white text-neutral-800 rounded-lg shadow-inner border border-base-300 p-8 font-serif min-h-152 max-h-192 overflow-y-auto">
+                    <div x-ref="preview" class="relative bg-white text-neutral-800 rounded-lg shadow-inner border border-base-300 p-8 font-serif min-h-152 max-h-192 overflow-y-auto"
+                        @mouseup="selectionChanged()"
+                        @keyup="selectionChanged()"
+                        @mousedown.window="$event.target.closest('#selection-popup') || (popup.open = false)"
+                        @keydown.escape.window="popup.open = false">
                         <div class="flex justify-between items-start mb-8 gap-4 border-b border-neutral-200 pb-4">
                             <div>
                                 <p class="font-bold text-base">@auth {{ auth()->user()->name }} @endauth</p>
@@ -307,6 +339,34 @@ new class extends Component
                             x-html="diff ? diff.html : escape(letter)"></div>
                         <div x-show="!letter.trim()" class="italic text-neutral-400 text-[15px]">
                             {{ __('Your cover letter will appear here as you type...') }}
+                        </div>
+
+                        {{-- Popup shown above the selected text --}}
+                        <div id="selection-popup" x-show="popup.open" x-cloak
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            class="absolute z-40 w-80 rounded-lg border border-base-300 bg-base-100 shadow-xl p-3 text-white"
+                            :style="popup.above
+                                ? `left:${popup.x}px; top:${popup.y}px; transform:translate(-50%, calc(-100% - 8px))`
+                                : `left:${popup.x}px; top:${popup.y + popup.h + 8}px; transform:translate(-50%, 0)`">
+                            <p class="text-xs font-medium opacity-70 mb-2">{{ __('Rewrite selection') }}</p>
+                            <div class="flex gap-1.5">
+                                <input type="text" x-model="popup.prompt"
+                                    x-on:keydown.enter.prevent="runPrompt(popup.prompt)"
+                                    class="input input-bordered input-sm w-full"
+                                    placeholder="{{ __('e.g. Make this more professional') }}" />
+                                <button type="button" class="btn btn-primary btn-sm"
+                                    @click="runPrompt(popup.prompt)">→</button>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 mt-2">
+                                <button type="button" class="btn btn-outline btn-xs"
+                                    @click="runPrompt('Make this more professional')">{{ __('More professional') }}</button>
+                                <button type="button" class="btn btn-outline btn-xs"
+                                    @click="runPrompt('Make this more concise')">{{ __('More concise') }}</button>
+                                <button type="button" class="btn btn-outline btn-xs"
+                                    @click="runPrompt('Fix grammar and spelling')">{{ __('Fix grammar') }}</button>
+                            </div>
                         </div>
                     </div>
                 </div>
