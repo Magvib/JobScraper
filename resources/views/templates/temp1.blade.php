@@ -14,7 +14,7 @@
     </style>
 </head>
 @php
-    $jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
+    $jobs = $user->cv_json;
     $skills = $user->skills ?? [];
 @endphp
 <body class="bg-white min-h-screen">

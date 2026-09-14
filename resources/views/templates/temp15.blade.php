@@ -15,7 +15,7 @@
     </style>
 </head>
 @php
-    $jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
+    $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
     $photo = $user->getImage();
     $barWidths = [88, 76, 94, 68, 82, 72];

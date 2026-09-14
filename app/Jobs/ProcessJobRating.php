@@ -44,7 +44,7 @@ class ProcessJobRating implements ShouldQueue
             $response = (new ResumeToJobSpecialistPro)->prompt(
                 "Current date: ". now() . "\n" .
                 "Here is the job description: ". $text . "\n" .
-                "And here is the users CV in json: " . $this->user->cv_json . "\n" .
+                "And here is the users CV in json: " . json_encode($this->user->cv_json) . "\n" .
                 "And here is his skills in json: " . json_encode($this->user->skills),
             );
 

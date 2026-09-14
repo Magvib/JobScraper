@@ -37,6 +37,7 @@ class User extends Authenticatable
             'notify_experience_relevance_threshold' => 'float',
             'notify_seniority_fit_threshold' => 'float',
             'notify_keyword_match_threshold' => 'float',
+            'cv_json' => 'array',
         ];
     }
 

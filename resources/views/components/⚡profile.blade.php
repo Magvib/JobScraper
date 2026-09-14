@@ -78,7 +78,7 @@ new class extends Component
         $this->notifySeniorityFitThreshold = $user->notify_seniority_fit_threshold;
         $this->notifyKeywordMatchThreshold = $user->notify_keyword_match_threshold;
         $this->notifyMatchMode = $user->notify_match_mode ?? 'any';
-        $this->jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
+        $this->jobs = $user->cv_json;
 
         // Sort jobs with startDate, endDate, title in a ascending order
         usort($this->jobs, function ($a, $b) {

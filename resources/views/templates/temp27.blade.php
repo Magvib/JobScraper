@@ -15,7 +15,7 @@
     </style>
 </head>
 @php
-    $jobs = $user->cv_json ? json_decode($user->cv_json, true) : [];
+    $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
     $photo = $user->getImage();
     $initials = collect(explode(' ', trim($user->name ?? '')))->map(fn ($w) => strtoupper(mb_substr($w, 0, 1)))->implode('');
