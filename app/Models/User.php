@@ -41,6 +41,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function coverLetters()
+    {
+        return $this->hasMany(CoverLetter::class);
+    }
+
     /**
      * Get the user's initials
      */

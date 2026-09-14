@@ -31,7 +31,16 @@
         </header>
 
         {{-- Erhvervserfaring & uddannelse --}}
-        @if ($jobs)
+        @if (isset($coverLetter))
+            <section class="mt-8">
+                <h2 class="text-sm font-bold uppercase tracking-widest border-b border-gray-900 pb-1">Ansøgning</h2>
+                <div class="mt-5 space-y-4">
+                    @foreach (preg_split('/\n{2,}/', trim($coverLetter)) as $paragraph)
+                        <p class="text-sm leading-relaxed text-justify">{{ $paragraph }}</p>
+                    @endforeach
+                </div>
+            </section>
+        @elseif ($jobs)
             <section class="mt-8">
                 <h2 class="text-sm font-bold uppercase tracking-widest border-b border-gray-900 pb-1">Erhvervserfaring &amp; uddannelse</h2>
                 <div class="mt-5 space-y-5">

@@ -31,6 +31,7 @@
                     <li><a wire:navigate href="{{ route('dashboard') }}" wire:current="bg-primary">Home</a></li>
                     <li><a wire:navigate href="{{ route('profile') }}" wire:current="bg-primary">Profile</a></li>
                     <li><a wire:navigate href="{{ route('cv') }}" wire:current="bg-primary">CV</a></li>
+                    <li><a wire:navigate href="{{ route('cover-letter') }}" wire:current="bg-primary">Cover Letter</a></li>
                     <li><a wire:navigate href="{{ route('jobs') }}" wire:current="bg-primary">Jobs</a></li>
                 </ul>
             </div>
@@ -41,6 +42,7 @@
                 <li><a wire:navigate href="{{ route('dashboard') }}" wire:current="bg-primary text-white">Home</a></li>
                 <li><a wire:navigate href="{{ route('profile') }}" wire:current="bg-primary text-white">Profile</a></li>
                 <li><a wire:navigate href="{{ route('cv') }}" wire:current="bg-primary text-white">CV</a></li>
+                <li><a wire:navigate href="{{ route('cover-letter') }}" wire:current="bg-primary text-white">Cover Letter</a></li>
                 <li><a wire:navigate href="{{ route('jobs') }}" wire:current="bg-primary text-white">Jobs</a></li>
             </ul>
         </div>

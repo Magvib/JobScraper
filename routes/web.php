@@ -10,6 +10,7 @@ Route::livewire('/dashboard', 'dashboard')->name('dashboard')->middleware('auth'
 Route::livewire('/jobs', 'jobs')->name('jobs')->middleware('auth');
 Route::livewire('/profile', 'profile')->name('profile')->middleware('auth');
 Route::livewire('/cv', 'cv')->name('cv')->middleware('auth');
+Route::livewire('/cover-letter', 'cover_letter')->name('cover-letter')->middleware('auth');
 
 Route::get('/template/{name}', function ($name, Request $request) {
     $user = auth()->user();
