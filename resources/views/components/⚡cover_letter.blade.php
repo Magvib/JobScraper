@@ -1,5 +1,6 @@
 <?php
 
+use App\Ai\Agents\CoverLetterSpecialist;
 use Livewire\Component;
 
 new class extends Component
@@ -81,6 +82,31 @@ new class extends Component
             $this->dispatch('toast', message: __('Cover letter deleted.'), type: 'success');
         }
     }
+
+    public function aiPrompt($prompt, $letter = "", $selectedText = "")
+    {
+        $now = now();
+        
+        $response = (new CoverLetterSpecialist)->prompt(<<<PROMPT
+            Current date: $now
+
+            ---Prompt---
+            $prompt
+            ---End Prompt---
+
+            ---Selected Text---
+            $selectedText
+            ---End Selected Text---
+
+            ---Cover Letter---
+            $letter
+            ---End Cover Letter---
+            PROMPT
+        );
+
+        $this->dispatch('cover-letter-change', content: $response->text);
+        $this->dispatch('toast', message: __('Cover letter updated.'), type: 'success');
+    }
 };
 ?>
 
@@ -145,6 +171,7 @@ new class extends Component
             this.popup.open = false;
             this.popup.prompt = '';
             // The yellow highlight is kept so the selection stays visible.
+            $wire.aiPrompt(prompt, this.letter, this.popup.text);
         },
         // Prompt panel that works on the whole letter, no selection needed.
         whole: { open: false, prompt: '' },
@@ -164,6 +191,7 @@ new class extends Component
             console.log('[AI] prompt:', prompt, '→ whole letter');
             this.whole.open = false;
             this.whole.prompt = '';
+            $wire.aiPrompt(prompt, this.letter);
         },
         // Real dirty check: current content/title vs. what is saved in the DB.
         get changed() {
@@ -233,7 +261,8 @@ new class extends Component
     x-on:cover-letter-saved.window="saved = $wire.content; savedTitle = $wire.title; hasSaved = true"
     x-on:cover-letter-loaded.window="letter = $event.detail.content; saved = $event.detail.content; savedTitle = $wire.title; hasSaved = true; showDiff = true"
     x-on:cover-letter-cleared.window="letter = ''; saved = ''; savedTitle = ''; hasSaved = false; showDiff = true"
-    x-on:cover-letter-deleted.window="letter = ''; saved = ''; savedTitle = ''; hasSaved = false; showDiff = true">
+    x-on:cover-letter-deleted.window="letter = ''; saved = ''; savedTitle = ''; hasSaved = false; showDiff = true"
+    x-on:cover-letter-change.window="letter = $event.detail.content; showDiff = true">
     <div class="max-w-8xl mx-auto">
         <style>
             /* Frozen selection highlight shown while the rewrite popup is open. */
