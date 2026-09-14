@@ -166,10 +166,10 @@ new class extends Component
                     <div class="cv-modal-thumb" wire:key="modal-frame-{{ $selected }}" wire:ignore>
                         <iframe src="{{ route('template', $selected) }}" title="Preview"></iframe>
                     </div>
-                    <div class="flex flex-col items-center gap-2">
-                        {{-- Switch between saved cover letters --}}
-                        <details class="dropdown dropdown-end">
-                            <summary class="btn btn-outline btn-sm">
+                    <div class="relative">
+                        {{-- Switch between saved cover letters, floating over the letter preview --}}
+                        <details class="dropdown dropdown-end absolute right-3 top-3 z-30">
+                            <summary class="btn btn-outline btn-sm bg-base-100/90 backdrop-blur-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
