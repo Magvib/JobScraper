@@ -22,4 +22,17 @@ class CoverLetter extends Model
     {
         return $this->belongsTo(Post::class);
     }
+
+    public function renderContext()
+    {
+        $context = "";
+
+        foreach (preg_split('/\n{2,}/', trim($this->content)) as $paragraph) {
+            $context .= '<p class="text-sm leading-relaxed text-justify">';
+            $context .= implode('<br>', preg_split('/\n/', trim($paragraph)));
+            $context .= '</p>';
+        }
+
+        return $context;
+    }
 }

@@ -14,11 +14,19 @@ Route::livewire('/cover-letter', 'cover_letter')->name('cover-letter')->middlewa
 
 Route::get('/template/{name}', function ($name, Request $request) {
     $user = auth()->user();
+    $data = ['user' => $user];
+
+    if ($request->has('coverLetter')) {
+        $coverLetter = $user->coverLetters()->where('id', $request->query('coverLetter'))->first();
+        if ($coverLetter) {
+            $data['coverLetter'] = $coverLetter;
+        }
+    }
     
     try {
-        return view('templates.' . $name, ['user' => $user]);
+        return view('templates.' . $name, $data);
     } catch (Throwable $th) {
-        return view('templates.temp1', ['user' => $user]);
+        return view('templates.temp1', $data);
     }
 })->middleware('auth')->name('template');
 
@@ -29,15 +37,23 @@ Route::get('/signed/template/{slug}', function ($slug, Request $request) {
 
     // Get user from praams user
     $user = User::find($request->query('user'));
+    $data = ['user' => $user];
+
+    if ($request->has('coverLetter')) {
+        $coverLetter = $user->coverLetters()->where('id', $request->query('coverLetter'))->first();
+        if ($coverLetter) {
+            $data['coverLetter'] = $coverLetter;
+        }
+    }
 
     if (! $user) {
         abort(404);
     }
     
     try {
-        return view('templates.' . $slug, ['user' => $user]);
+        return view('templates.' . $slug, $data);
     } catch (Throwable $th) {
-        return view('templates.temp1', ['user' => $user]);
+        return view('templates.temp1', $data);
     }
 })->name('signed-template');
 
