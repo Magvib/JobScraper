@@ -101,7 +101,16 @@ new class extends Component
         },
         // Popup shown above the text selected in the preview.
         popup: { open: false, x: 0, y: 0, h: 0, above: true, text: '', prompt: '' },
+        _hl: null,
+        // Unwrap the frozen yellow highlight span, if any.
+        clearHighlight() {
+            if (this._hl) {
+                this._hl.replaceWith(...this._hl.childNodes);
+                this._hl = null;
+            }
+        },
         selectionChanged() {
+            this.clearHighlight();
             const sel = window.getSelection();
             if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
             const range = sel.getRangeAt(0);
@@ -119,13 +128,22 @@ new class extends Component
             // Flip below the selection when there is not enough room above it.
             this.popup.above = r.top - c.top > 130;
             this.popup.open = true;
+            // Freeze the selection as a yellow span so it stays visible while the
+            // popup is used (the browser clears the native selection on click).
+            const span = document.createElement('span');
+            span.className = 'ai-selection-highlight';
+            const frag = range.extractContents();
+            span.appendChild(frag);
+            range.insertNode(span);
+            this._hl = span;
+            window.getSelection()?.removeAllRanges();
         },
         runPrompt(prompt) {
             if (!prompt.trim() || !this.popup.text) return;
             console.log('[AI] prompt:', prompt, '→ selection:', this.popup.text);
             this.popup.open = false;
             this.popup.prompt = '';
-            window.getSelection()?.removeAllRanges();
+            // The yellow highlight is kept so the selection stays visible.
         },
         // Real dirty check: current content/title vs. what is saved in the DB.
         get changed() {
@@ -197,6 +215,15 @@ new class extends Component
     x-on:cover-letter-cleared.window="letter = ''; saved = ''; savedTitle = ''; hasSaved = false; showDiff = true"
     x-on:cover-letter-deleted.window="letter = ''; saved = ''; savedTitle = ''; hasSaved = false; showDiff = true">
     <div class="max-w-8xl mx-auto">
+        <style>
+            /* Frozen selection highlight shown while the rewrite popup is open. */
+            .ai-selection-highlight {
+                background: #fde047;
+                border-radius: 2px;
+                box-decoration-break: clone;
+                -webkit-box-decoration-break: clone;
+            }
+        </style>
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
                 <h1 class="text-3xl font-bold">Cover Letter Editor</h1>
@@ -315,8 +342,8 @@ new class extends Component
                     <div x-ref="preview" class="relative bg-white text-neutral-800 rounded-lg shadow-inner border border-base-300 p-8 font-serif min-h-152 max-h-192 overflow-y-auto"
                         @mouseup="selectionChanged()"
                         @keyup="selectionChanged()"
-                        @mousedown.window="$event.target.closest('#selection-popup') || (popup.open = false)"
-                        @keydown.escape.window="popup.open = false">
+                        @mousedown.window="$event.target.closest('#selection-popup') || (clearHighlight(), popup.open = false)"
+                        @keydown.escape.window="clearHighlight(), popup.open = false">
                         <div class="flex justify-between items-start mb-8 gap-4 border-b border-neutral-200 pb-4">
                             <div>
                                 <p class="font-bold text-base">@auth {{ auth()->user()->name }} @endauth</p>
