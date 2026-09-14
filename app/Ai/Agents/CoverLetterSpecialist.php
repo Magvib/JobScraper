@@ -25,10 +25,9 @@ class CoverLetterSpecialist implements Agent, Conversational, HasTools
     {
         return join(' ', [
             'You are a specialist in analyzing cover letters.',
-            'If the user has selected text in the cover letter, focus your task on that section.',
+            'If the user has selected text in the cover letter, ONLY CHANGE THAT SECTION. and keep the rest unchanged so you still have to print out the entire cover letter but only change that section that the user selected.',
             'Do not provide any feedback because what you return is directly reflected in the cover letter.',
             'If you do not understand the question or the context, Just return the original text.',
-            'Always ensure that your output is concise and relevant to the selected text or the entire cover letter.'
         ]);
     }
 
