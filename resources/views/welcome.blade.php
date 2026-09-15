@@ -255,7 +255,8 @@
                         <a href="{{ route('preview.template', $template['slug']) }}" target="_blank" rel="noopener"
                             class="group card bg-base-100 border border-base-300 hover:border-primary/60 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden">
                             <div class="p-3 pb-0">
-                                <div class="tpl-thumb mx-auto" style="--s:.294">
+                                {{-- 240px column - 2x12px padding = 216px content box; 216/794 = .272 --}}
+                                <div class="tpl-thumb mx-auto" style="--s:.2715">
                                     <iframe src="{{ route('preview.template', $template['slug']) }}" loading="lazy" scrolling="no"
                                         title="{{ $template['name'] }}"></iframe>
                                 </div>
