@@ -63,7 +63,7 @@
                 </h1>
 
                 <p class="text-xl text-base-content/60 max-w-2xl mx-auto mb-10 leading-relaxed">
-                    Upload your resume, get AI-powered improvements, and discover perfectly matched jobs — all in one place.
+                    Build your CV and cover letter right here with simple forms, choose from 150+ all-in-one templates, and discover perfectly matched jobs — all in one place.
                 </p>
 
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -89,13 +89,13 @@
                     </div>
                     <div class="hidden sm:block w-px h-10 bg-base-300"></div>
                     <div class="text-center">
-                        <div class="text-3xl font-bold text-primary">1-Click</div>
-                        <div class="text-sm text-base-content/50 mt-1">Job Applications</div>
+                        <div class="text-3xl font-bold text-primary">150+</div>
+                        <div class="text-sm text-base-content/50 mt-1">CV &amp; Cover Letter Templates</div>
                     </div>
                     <div class="hidden sm:block w-px h-10 bg-base-300"></div>
                     <div class="text-center">
-                        <div class="text-3xl font-bold text-primary">100%</div>
-                        <div class="text-sm text-base-content/50 mt-1">Free to Start</div>
+                        <div class="text-3xl font-bold text-primary">1-Click</div>
+                        <div class="text-sm text-base-content/50 mt-1">Downloads</div>
                     </div>
                 </div>
             </div>
@@ -117,15 +117,14 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/>
-                                        <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
-                                        <path d="M9 12h6M9 16h6"/>
+                                        <path d="M4 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Z"/>
+                                        <path d="M8 8h8M8 12h8M8 16h5"/>
                                     </svg>
                                 </div>
                                 <span class="text-xs font-semibold text-base-content/40 uppercase tracking-widest">Step 1</span>
                             </div>
-                            <h3 class="card-title text-lg">Upload your resume</h3>
-                            <p class="text-base-content/60 text-sm leading-relaxed">Upload your existing resume in any common format. Our AI will parse and understand your experience instantly.</p>
+                            <h3 class="card-title text-lg">Build your CV</h3>
+                            <p class="text-base-content/60 text-sm leading-relaxed">No uploads needed — create your CV right here with our simple forms, then pick from 150+ templates that combine your CV and cover letter into one polished document.</p>
                         </div>
                     </div>
 
@@ -168,14 +167,15 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl bg-primary/30 flex items-center justify-center shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                        <path d="m9 11 3 3L22 4"/>
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                        <path d="m7 10 5 5 5-5"/>
+                                        <path d="M12 15V3"/>
                                     </svg>
                                 </div>
                                 <span class="text-xs font-semibold text-base-content/40 uppercase tracking-widest">Step 4</span>
                             </div>
-                            <h3 class="card-title text-lg">Apply in one click</h3>
-                            <p class="text-base-content/60 text-sm leading-relaxed">Apply to perfectly matched jobs with a single click, using your AI-optimized resume tailored for each opportunity.</p>
+                            <h3 class="card-title text-lg">Download in one click</h3>
+                            <p class="text-base-content/60 text-sm leading-relaxed">Download your CV and cover letter — bundled in the template of your choice — with a single click, ready to attach to any application in seconds.</p>
                         </div>
                     </div>
                 </div>
