@@ -16,7 +16,7 @@ new class extends Component
 
     public function mount()
     {
-        $this->letters = auth()->user()->coverLetters()->pluck('title', 'id')->map(function ($title, $id) {
+        $this->letters = auth()->user()->coverLetters()->orderBy('created_at', 'desc')->pluck('title', 'id')->map(function ($title, $id) {
             return ['id' => $id, 'title' => $title];
         })->values()->toArray();
         
