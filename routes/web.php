@@ -1,11 +1,46 @@
 <?php
 
 use App\Models\User;
+use App\Support\FakePreviewUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Socialite;
 
-Route::view('/', 'welcome')->name('home');
+Route::get('/', function () {
+    $templates = collect(glob(resource_path('views/templates/temp*.blade.php')))
+        ->map(function ($file) {
+            $slug = basename($file, '.blade.php');
+
+            // Template name lives in the first blade comment: {{-- Classic Serif --}}
+            $name = $slug;
+            $handle = fopen($file, 'r');
+            if ($handle) {
+                $firstLine = (string) fgets($handle);
+                fclose($handle);
+                if (preg_match('/{{--\s*(.*?)\s*--}}/u', $firstLine, $m)) {
+                    $name = $m[1];
+                }
+            }
+
+            return [
+                'slug' => $slug,
+                'name' => $name,
+                'number' => (int) preg_replace('/\D/', '', $slug),
+            ];
+        })
+        ->shuffle()
+        ->take(5)
+        ->values();
+
+    return view('welcome', ['showcaseTemplates' => $templates->all()]);
+})->name('home');
+
+Route::get('/preview/template/{name}', function (string $name) {
+    abort_unless(preg_match('/^temp\d+$/', $name) === 1, 404);
+    abort_unless(is_file(resource_path("views/templates/{$name}.blade.php")), 404);
+
+    return view('templates.'.$name, ['user' => FakePreviewUser::make()]);
+})->name('preview.template');
 Route::livewire('/dashboard', 'dashboard')->name('dashboard')->middleware('auth');
 Route::livewire('/jobs', 'jobs')->name('jobs')->middleware('auth');
 Route::livewire('/profile', 'profile')->name('profile')->middleware('auth');
@@ -22,9 +57,9 @@ Route::get('/template/{name}', function ($name, Request $request) {
             $data['coverLetter'] = $coverLetter;
         }
     }
-    
+
     try {
-        return view('templates.' . $name, $data);
+        return view('templates.'.$name, $data);
     } catch (Throwable $th) {
         return view('templates.temp1', $data);
     }
@@ -49,9 +84,9 @@ Route::get('/signed/template/{slug}', function ($slug, Request $request) {
     if (! $user) {
         abort(404);
     }
-    
+
     try {
-        return view('templates.' . $slug, $data);
+        return view('templates.'.$slug, $data);
     } catch (Throwable $th) {
         return view('templates.temp1', $data);
     }

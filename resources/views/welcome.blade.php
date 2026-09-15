@@ -16,6 +16,32 @@
 
         <!-- Styles / Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        <style>
+            /* A4 at 96dpi is 794x1123px — scale each template iframe down to a thumbnail.
+               Set the scale per card via the --s custom property. */
+            .tpl-thumb {
+                position: relative;
+                overflow: hidden;
+                background: #fff;
+                border-radius: 8px;
+                width: calc(794px * var(--s));
+                height: calc(1123px * var(--s));
+                box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+            }
+
+            .tpl-thumb iframe {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 794px;
+                height: 1123px;
+                border: 0;
+                transform: scale(var(--s));
+                transform-origin: top left;
+                pointer-events: none; /* let the parent anchor handle clicks */
+            }
+        </style>
     </head>
     <body class="min-h-screen bg-base-100 text-base-content font-sans antialiased">
 
@@ -44,55 +70,85 @@
         </div>
 
         <!-- Hero Section -->
-        <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-
+        <section class="relative overflow-hidden pt-32 pb-20 lg:pt-40">
             <!-- Background glow effects -->
             <div class="absolute inset-0 pointer-events-none">
                 <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
                 <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-secondary/10 rounded-full blur-3xl"></div>
             </div>
 
-            <div class="container mx-auto px-4 lg:px-8 py-24 text-center relative z-10">
-                <div class="badge badge-primary badge-outline mb-6 gap-2 px-4 py-3 text-sm font-medium">
-                    <span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-                    AI-Powered Job Matching
-                </div>
+            <div class="container mx-auto px-4 lg:px-8 relative z-10">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                    <!-- Copy -->
+                    <div class="text-center lg:text-left">
+                        <div class="badge badge-primary badge-outline mb-6 gap-2 px-4 py-3 text-sm font-medium">
+                            <span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                            150+ CV &amp; Cover Letter Templates
+                        </div>
 
-                <h1 class="text-5xl lg:text-7xl font-bold leading-tight tracking-tight mb-6 max-w-4xl mx-auto">
-                    Land your <span class="text-primary">dream job</span><br class="hidden lg:block"> faster with AI
-                </h1>
+                        <h1 class="text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight tracking-tight mb-6">
+                            Land your <span class="text-primary">dream job</span> faster with AI
+                        </h1>
 
-                <p class="text-xl text-base-content/60 max-w-2xl mx-auto mb-10 leading-relaxed">
-                    Build your CV and cover letter right here with simple forms, choose from 150+ all-in-one templates, and discover perfectly matched jobs — all in one place.
-                </p>
+                        <p class="text-xl text-base-content/60 max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed">
+                            Build your CV and cover letter right here with simple forms, choose from 150+ all-in-one templates, and discover perfectly matched jobs — all in one place.
+                        </p>
 
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <a href="/auth/redirect" class="btn btn-primary btn-lg gap-3 shadow-lg shadow-primary/20">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
-                        </svg>
-                        Get started for free
-                    </a>
-                    <a href="#how-it-works" class="btn btn-ghost btn-lg">
-                        See how it works
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 5v14M19 12l-7 7-7-7"/>
-                        </svg>
-                    </a>
+                        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                            <a href="/auth/redirect" class="btn btn-primary btn-lg gap-3 shadow-lg shadow-primary/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+                                </svg>
+                                Get started for free
+                            </a>
+                            <a href="#templates" class="btn btn-ghost btn-lg">
+                                Browse templates
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 5v14M19 12l-7 7-7-7"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Template fan -->
+                    @if (count($showcaseTemplates) >= 3)
+                        <div class="hidden lg:flex relative items-start justify-center h-115">
+                            <div class="tpl-thumb absolute top-12 left-0 rotate-[-8deg] opacity-80" style="--s:.301">
+                                <iframe src="{{ route('preview.template', $showcaseTemplates[0]['slug']) }}" loading="lazy" scrolling="no"
+                                    title="{{ $showcaseTemplates[0]['name'] }}"></iframe>
+                            </div>
+                            <div class="tpl-thumb absolute top-16 right-0 rotate-[8deg] opacity-80" style="--s:.301">
+                                <iframe src="{{ route('preview.template', $showcaseTemplates[1]['slug']) }}" loading="lazy" scrolling="no"
+                                    title="{{ $showcaseTemplates[1]['name'] }}"></iframe>
+                            </div>
+                            <div class="absolute top-0 z-10">
+                                <div class="tpl-thumb" style="--s:.378">
+                                    <iframe src="{{ route('preview.template', $showcaseTemplates[2]['slug']) }}" loading="lazy" scrolling="no"
+                                        title="{{ $showcaseTemplates[2]['name'] }}"></iframe>
+                                </div>
+                                <div class="badge badge-primary gap-2 absolute -top-3 -right-3 shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 6 9 17l-5-5"/>
+                                    </svg>
+                                    CV + Cover Letter
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Stats row -->
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-8 mt-16 pt-8 border-t border-base-300">
+                <div class="flex flex-wrap items-center justify-center lg:justify-start gap-8 mt-16 pt-8 border-t border-base-300">
                     <div class="text-center">
                         <div class="text-3xl font-bold text-primary">AI</div>
                         <div class="text-sm text-base-content/50 mt-1">Resume Analysis</div>
                     </div>
-                    <div class="hidden sm:block w-px h-10 bg-base-300"></div>
+                    <div class="w-px h-10 bg-base-300 hidden sm:block"></div>
                     <div class="text-center">
                         <div class="text-3xl font-bold text-primary">150+</div>
                         <div class="text-sm text-base-content/50 mt-1">CV &amp; Cover Letter Templates</div>
                     </div>
-                    <div class="hidden sm:block w-px h-10 bg-base-300"></div>
+                    <div class="w-px h-10 bg-base-300 hidden sm:block"></div>
                     <div class="text-center">
                         <div class="text-3xl font-bold text-primary">1-Click</div>
                         <div class="text-sm text-base-content/50 mt-1">Downloads</div>
@@ -182,8 +238,58 @@
             </div>
         </section>
 
+        <!-- Template showcase -->
+        <section id="templates" class="py-24 bg-base-100">
+            <div class="container mx-auto px-4 lg:px-8">
+                <div class="text-center mb-16">
+                    <div class="badge badge-ghost mb-4 px-4 py-3 text-sm">Template gallery</div>
+                    <h2 class="text-4xl lg:text-5xl font-bold mb-4">One document. Both parts. <span class="text-primary">150+ ways to shine.</span></h2>
+                    <p class="text-base-content/60 text-lg max-w-2xl mx-auto">
+                        Every template combines your CV and cover letter into a single polished document. Here are
+                        <span class="text-base-content font-semibold">{{ count($showcaseTemplates) }}</span> of our favorites — refreshed on every visit.
+                    </p>
+                </div>
+
+                <div class="grid justify-center gap-6" style="grid-template-columns: repeat(auto-fill, 240px)">
+                    @foreach ($showcaseTemplates as $template)
+                        <a href="{{ route('preview.template', $template['slug']) }}" target="_blank" rel="noopener"
+                            class="group card bg-base-100 border border-base-300 hover:border-primary/60 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden">
+                            <div class="p-3 pb-0">
+                                <div class="tpl-thumb mx-auto" style="--s:.294">
+                                    <iframe src="{{ route('preview.template', $template['slug']) }}" loading="lazy" scrolling="no"
+                                        title="{{ $template['name'] }}"></iframe>
+                                </div>
+                            </div>
+                            <div class="card-body py-3 px-4 flex-row items-center justify-between gap-2">
+                                <div class="min-w-0">
+                                    <h3 class="card-title text-base leading-tight truncate">{{ $template['name'] }}</h3>
+                                    <p class="text-xs text-base-content/50">#{{ $template['number'] }}</p>
+                                </div>
+                                <span class="btn btn-ghost btn-xs shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    View
+                                </span>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+
+                <p class="text-center text-sm text-base-content/50 mt-8">
+                    Previews shown with sample data — your CV and cover letter slot right in.
+                </p>
+
+                <div class="text-center mt-10">
+                    <a href="/auth/redirect" class="btn btn-primary btn-lg gap-3 shadow-lg shadow-primary/20">
+                        Sign in to browse all {{ count($showcaseTemplates) > 0 ? '150+' : '' }} templates
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+
         <!-- Features highlight -->
-        <section class="py-24 bg-base-100">
+        <section class="py-24 bg-base-200">
             <div class="container mx-auto px-4 lg:px-8">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                     <div>
@@ -242,8 +348,8 @@
 
                     <!-- Visual card -->
                     <div class="relative">
-                        <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl blur-2xl"></div>
-                        <div class="relative card bg-base-200 border border-base-300 shadow-2xl">
+                        <div class="absolute inset-0 bg-linear-to-br from-primary/20 to-secondary/20 rounded-3xl blur-2xl"></div>
+                        <div class="relative card bg-base-100 border border-base-300 shadow-2xl">
                             <div class="card-body p-8 gap-6">
                                 <!-- Mock job match card -->
                                 <div class="flex items-center justify-between">
@@ -251,7 +357,7 @@
                                     <div class="badge badge-accent badge-sm">Live</div>
                                 </div>
                                 <div class="flex flex-col gap-3">
-                                    <div class="flex items-center gap-4 p-4 bg-base-100 rounded-xl border border-base-300 hover:border-primary/40 transition-colors cursor-pointer">
+                                    <div class="flex items-center gap-4 p-4 bg-base-200 rounded-xl border border-base-300 hover:border-primary/40 transition-colors cursor-pointer">
                                         <div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">A</div>
                                         <div class="grow min-w-0">
                                             <div class="font-semibold truncate">Senior Laravel Developer</div>
@@ -259,7 +365,7 @@
                                         </div>
                                         <div class="badge badge-primary badge-sm shrink-0">98%</div>
                                     </div>
-                                    <div class="flex items-center gap-4 p-4 bg-base-100 rounded-xl border border-base-300 hover:border-primary/40 transition-colors cursor-pointer">
+                                    <div class="flex items-center gap-4 p-4 bg-base-200 rounded-xl border border-base-300 hover:border-primary/40 transition-colors cursor-pointer">
                                         <div class="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center text-secondary font-bold text-sm shrink-0">T</div>
                                         <div class="grow min-w-0">
                                             <div class="font-semibold truncate">Full-Stack Engineer</div>
@@ -267,7 +373,7 @@
                                         </div>
                                         <div class="badge badge-primary badge-sm shrink-0">94%</div>
                                     </div>
-                                    <div class="flex items-center gap-4 p-4 bg-base-100 rounded-xl border border-base-300 hover:border-primary/40 transition-colors cursor-pointer">
+                                    <div class="flex items-center gap-4 p-4 bg-base-200 rounded-xl border border-base-300 hover:border-primary/40 transition-colors cursor-pointer">
                                         <div class="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center text-accent font-bold text-sm shrink-0">N</div>
                                         <div class="grow min-w-0">
                                             <div class="font-semibold truncate">Backend PHP Developer</div>
@@ -290,7 +396,7 @@
         </section>
 
         <!-- CTA -->
-        <section class="py-24 bg-base-200">
+        <section class="py-24 bg-base-100">
             <div class="container mx-auto px-4 lg:px-8 text-center">
                 <div class="max-w-2xl mx-auto">
                     <h2 class="text-4xl lg:text-5xl font-bold mb-6">Ready to find your next role?</h2>
