@@ -110,6 +110,14 @@ new class extends Component
     public function aiPrompt($prompt, $letter = "", $selectedText = "")
     {
         $now = now();
+        $jobDescription = "";
+
+        if ($this->jobId) {
+            $job = Post::find($this->jobId);
+            if ($job) {
+                $jobDescription = $job->description;
+            }
+        }
         
         $response = (new CoverLetterSpecialist)->prompt(<<<PROMPT
             Current date: $now
@@ -125,6 +133,10 @@ new class extends Component
             ---Cover Letter---
             $letter
             ---End Cover Letter---
+
+            ---Job Description---
+            $jobDescription
+            ---End Job Description---
             PROMPT
         );
 
@@ -296,6 +308,12 @@ new class extends Component
                 box-decoration-break: clone;
                 -webkit-box-decoration-break: clone;
             }
+
+            /* Job ad description rendered from stored HTML. */
+            .job-desc p { margin: 0 0 .5rem; }
+            .job-desc ul { list-style: disc; padding-left: 1.25rem; margin: 0 0 .5rem; }
+            .job-desc li p { margin: 0; }
+            .job-desc strong { font-weight: 600; }
         </style>
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
@@ -393,11 +411,36 @@ new class extends Component
 
                     {{-- Currently linked job, shown even when the search list doesn't include it --}}
                     @if (isset($linkedJob) && !collect($jobs ?? [])->contains('id', $linkedJob->id))
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="badge badge-primary badge-sm">{{ __('Linked') }}</span>
-                            <span class="truncate">{{ $linkedJob->title }} at {{ $linkedJob->company_name }}</span>
-                            <button type="button" class="btn btn-ghost btn-xs ml-auto"
-                                wire:click="$set('jobId', null)">{{ __('Unlink') }}</button>
+                        <div x-data="{ showDescription: false }">
+                            <div class="flex items-center gap-2 text-sm">
+                                <span class="badge badge-primary badge-sm">{{ __('Linked') }}</span>
+                                <span class="truncate">{{ $linkedJob->title }} at {{ $linkedJob->company_name }}</span>
+                                <div class="ml-auto flex items-center">
+                                    @if ($linkedJob->description)
+                                        <button type="button" class="btn btn-ghost btn-xs"
+                                            @click="showDescription = !showDescription">
+                                            {{ __('Description') }}
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 transition-transform"
+                                                :class="showDescription && 'rotate-180'"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+                                    @endif
+                                    <button type="button" class="btn btn-ghost btn-xs"
+                                        wire:click="$set('jobId', null)">{{ __('Unlink') }}</button>
+                                </div>
+                            </div>
+                            @if ($linkedJob->description)
+                                <div x-show="showDescription" x-cloak
+                                    x-transition:enter="transition ease-out duration-100"
+                                    x-transition:enter-start="opacity-0"
+                                    x-transition:enter-end="opacity-100"
+                                    class="job-desc mt-1 max-h-72 overflow-y-auto rounded-lg border border-base-300 bg-base-200/50 p-3 text-sm">
+                                    {!! $linkedJob->description !!}
+                                </div>
+                            @endif
                         </div>
                     @endif
 
@@ -420,6 +463,28 @@ new class extends Component
                                 @endif
                             </span>
                         </button>
+
+                        @if ($job->id === $jobId && $job->description)
+                            <div x-data="{ showDescription: false }" wire:key="job-desc-{{ $job->id }}">
+                                <button type="button" class="btn btn-ghost btn-xs mt-1"
+                                    @click="showDescription = !showDescription">
+                                    {{ __('Description') }}
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 transition-transform"
+                                        :class="showDescription && 'rotate-180'"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div x-show="showDescription" x-cloak
+                                    x-transition:enter="transition ease-out duration-100"
+                                    x-transition:enter-start="opacity-0"
+                                    x-transition:enter-end="opacity-100"
+                                    class="job-desc mt-1 max-h-72 overflow-y-auto rounded-lg border border-base-300 bg-base-200/50 p-3 text-sm">
+                                    {!! $job->description !!}
+                                </div>
+                            </div>
+                        @endif
                     @endforeach
 
                     <div class="relative">
