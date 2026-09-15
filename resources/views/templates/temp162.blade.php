@@ -44,7 +44,7 @@
 
         <div class="px-14 -mt-14 pb-10 flex-1">
             {{-- Kontakt-fritsvævende kort oven på mesh-overgangen --}}
-            <div class="bg-white rounded-2xl shadow-xl border border-slate-100 px-7 py-5 flex items-center justify-between gap-6 flex-wrap">
+            <div class="relative bg-white rounded-2xl shadow-xl border border-slate-100 px-7 py-5 flex items-center justify-between gap-6 flex-wrap">
                 <p class="text-sm font-medium text-slate-600">
                     {{ collect([$user->phone, $user->email, $user->address || $user->city ? collect([$user->address, trim(($user->zip ?? '') . ' ' . ($user->city ?? ''))])->filter()->implode(', ') : null, $user->birthdate ? 'Født ' . $user->birthdate->format('d/m/Y') : null])->filter()->implode('  ·  ') }}
                 </p>
