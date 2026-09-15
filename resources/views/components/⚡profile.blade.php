@@ -5,12 +5,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Ai\Files\Document;
 use Livewire\Component;
-use Livewire\WithFileUploads;
 
 new class extends Component
 {
-    use WithFileUploads;
-
     public string $username = '';
 
     public string $address = '';
@@ -20,10 +17,6 @@ new class extends Component
     public string $city = '';
 
     public int $maxDistance = 50;
-
-    public $cvFile = null;
-
-    public ?string $existingCv = null;
 
     public string $email = '';
 
@@ -65,7 +58,6 @@ new class extends Component
         $this->zip = $user->zip ?? '';
         $this->city = $user->city ?? '';
         $this->maxDistance = $user->max_distance ?? 50;
-        $this->existingCv = $user->cv;
         $this->email = $user->email ?? '';
         $this->phone = $user->phone ?? '';
         $this->birthdate = $user->birthdate?->format('Y-m-d');
@@ -106,7 +98,6 @@ new class extends Component
             'birthdate' => ['nullable', 'date', 'before:today'],
             'jobTitle' => ['nullable', 'string', 'max:100'],
             'image' => ['nullable', 'image', 'max:5120'],
-            'cvFile' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx'],
             'autoMatchNewJobs' => ['boolean'],
             'notifySkillsMatchThreshold' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notifyExperienceRelevanceThreshold' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -141,25 +132,6 @@ new class extends Component
         $user->notify_keyword_match_threshold = $this->notifyKeywordMatchThreshold;
         $user->notify_match_mode = $this->notifyMatchMode;
 
-        if ($this->cvFile) {
-            if ($user->cv) {
-                Storage::disk('local')->delete($user->cv);
-            }
-
-            $path = $this->cvFile->store('cv', 'local');
-            $user->cv = $path;
-            $this->existingCv = $path;
-
-            if (Storage::disk('local')->exists($this->existingCv)) {
-                $keywords = (new KeywordSpecialist)->prompt('Give me the keywords for this CV',
-                    attachments: [
-                        Document::fromStorage($this->existingCv),
-                    ]
-                );
-                $this->keywords = $keywords->structured['keywords'] ?? [];
-            }
-        }
-
         $user->keywords = $this->keywords;
         $user->skills = $this->skills;
         $user->save();
@@ -167,14 +139,6 @@ new class extends Component
             message: __('Profile saved successfully.'),
             type: 'success'
         );
-    }
-
-    public function showCV(): void
-    {
-        if ($this->existingCv) {
-            $url = Storage::temporaryUrl($this->existingCv, now()->addMinutes(5));
-            $this->js("window.open('{$url}', '_blank')");
-        }
     }
 
     public function addKeyword(): void
@@ -213,20 +177,12 @@ new class extends Component
 
     public function generateKeywords(): void
     {
-        if (! $this->existingCv) {
-            $this->addError('cvFile', __('Upload a CV to generate keywords.'));
-            return;
-        }
-
-        if (! Storage::disk('local')->exists($this->existingCv)) {
-            $this->addError('cvFile', __('We could not find your CV file. Please re-upload it.'));
-            return;
-        }
-
-        $keywords = (new KeywordSpecialist)->prompt('Give me the keywords for this CV',
-            attachments: [
-                Document::fromStorage($this->existingCv),
-            ]
+        $cvJson = json_encode(auth()->user()->cv_json);
+        $keywords = (new KeywordSpecialist)->prompt(<<<PROMPT
+            Give me the keywords for this CV.
+            
+            CV: $cvJson
+            PROMPT
         );
         $this->keywords = $keywords->structured['keywords'] ?? [];
 
@@ -408,37 +364,6 @@ new class extends Component
                         min="1"
                         max="500"
                     />
-                </fieldset>
-
-                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                    <legend class="fieldset-legend">{{ __('Resume / CV') }}</legend>
-                    
-                    @if ($existingCv)
-                        <div class="mb-4 flex items-center gap-3 p-3 bg-base-100 rounded-lg">
-                            <svg class="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div class="flex-1">
-                                <p class="font-medium">{{ __('CV uploaded') }}</p>
-                                <p class="text-sm text-base-content/60">{{ Str::afterLast($existingCv, '/') }}</p>
-                            </div>
-                            <button type="button" wire:click="showCV" class="btn btn-sm btn-ghost">
-                                {{ __('View') }}
-                            </button>
-                        </div>
-                    @endif
-
-                    <input 
-                        type="file" 
-                        wire:model="cvFile" 
-                        class="file-input file-input-bordered w-full"
-                        accept=".pdf,.doc,.docx"
-                    />
-                    <p class="fieldset-label">{{ __('PDF, DOC, or DOCX up to 10MB') }}</p>
-                    
-                    @error('cvFile')
-                        <p class="text-error text-sm mt-1">{{ $message }}</p>
-                    @enderror
                 </fieldset>
 
                 <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4" x-data='{
