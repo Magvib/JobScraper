@@ -63,6 +63,7 @@ new class extends Component
             return ['id' => $id, 'title' => $title];
         })->toArray();
         
+        $this->jobLink = '';
         $this->dispatch('cover-letter-saved');
         $this->dispatch('toast', message: __('Cover letter saved.'), type: 'success');
     }
