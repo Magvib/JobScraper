@@ -109,7 +109,7 @@ new class extends Component
     <div class="max-w-7xl mx-auto">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-                <h1 class="text-3xl font-bold">CV Templates</h1>
+                <h1 class="text-3xl font-bold">Templates</h1>
                 <p class="mt-2 opacity-70">
                     Showing {{ count($this->filteredTemplates) }} of {{ count($templates) }} templates — click one to preview
                 </p>

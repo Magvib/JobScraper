@@ -16,10 +16,10 @@ class CvGalleryTest extends TestCase
             'skills' => ['PHP', 'Laravel'],
         ]);
 
-        $response = $this->actingAs($user)->get('/cv');
+        $response = $this->actingAs($user)->get('/templates');
 
         $response->assertOk();
-        $response->assertSee('CV Templates');
+        $response->assertSee('Templates');
         $response->assertSee('Classic Serif');
         $response->assertSee('Comic Book Pop');
         $response->assertSee('/template/temp1');
