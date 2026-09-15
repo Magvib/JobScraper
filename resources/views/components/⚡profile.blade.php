@@ -365,39 +365,6 @@ new class extends Component
                         max="500"
                     />
                 </fieldset>
-
-                <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4" x-data='{
-                    jobs: @json($jobs),
-                    init() {
-                        console.log(9);
-                    },
-                    addJobSection() {
-                        this.jobs.push({
-                            title: "",
-                            company: "",
-                            startDate: "",
-                            endDate: "",
-                            description: ""
-                        });
-                    }
-                }'>
-                    <legend class="fieldset-legend">{{ __('CV Creator') }}</legend>
-
-                    <template x-for="(job, index) in jobs" :key="index">
-                        <div class="mb-4">
-                            <input type="text" x-model="job.title" placeholder="Job Title" class="input input-bordered w-full mb-2" />
-                            <input type="text" x-model="job.company" placeholder="Company" class="input input-bordered w-full mb-2" />
-                            <input type="date" x-model="job.startDate" placeholder="Start Date" class="input input-bordered w-full mb-2" />
-                            <input type="date" x-model="job.endDate" placeholder="End Date" class="input input-bordered w-full mb-2" />
-                            <textarea x-model="job.description" placeholder="Description" class="textarea textarea-bordered w-full mb-2"></textarea>
-                            <button type="button" @click="jobs.splice(index, 1)" class="btn btn-error">Remove</button>
-                        </div>
-                    </template>
-                    <div class="flex justify-end mb-4">
-                        <button type="button" @click="addJobSection()" class="btn btn-primary">Add Job</button>
-                        <button type="button" wire:click="saveCv(jobs)" class="btn btn-warning ml-2">Save CV</button>
-                    </div>
-                </fieldset>
             </div>
 
             <div>
@@ -559,5 +526,39 @@ new class extends Component
             </div>
         </div>
     </form>
+    <div class="mt-4 p-6">
+        <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4" x-data='{
+            jobs: @json($jobs),
+            init() {
+                console.log(9);
+            },
+            addJobSection() {
+                this.jobs.push({
+                    title: "",
+                    company: "",
+                    startDate: "",
+                    endDate: "",
+                    description: ""
+                });
+            }
+        }'>
+            <legend class="fieldset-legend">{{ __('CV Creator') }}</legend>
+
+            <template x-for="(job, index) in jobs" :key="index">
+                <div class="mb-4">
+                    <input type="text" x-model="job.title" placeholder="Job Title" class="input input-bordered w-full mb-2" />
+                    <input type="text" x-model="job.company" placeholder="Company" class="input input-bordered w-full mb-2" />
+                    <input type="date" x-model="job.startDate" placeholder="Start Date" class="input input-bordered w-full mb-2" />
+                    <input type="date" x-model="job.endDate" placeholder="End Date" class="input input-bordered w-full mb-2" />
+                    <textarea x-model="job.description" placeholder="Description" class="textarea textarea-bordered w-full mb-2"></textarea>
+                    <button type="button" @click="jobs.splice(index, 1)" class="btn btn-error">Remove</button>
+                </div>
+            </template>
+            <div class="flex justify-end mb-4">
+                <button type="button" @click="addJobSection()" class="btn btn-primary">Add Job</button>
+                <button type="button" wire:click="saveCv(jobs)" class="btn btn-warning ml-2">Save CV</button>
+            </div>
+        </fieldset>
+    </div>
     </div>
 </div>
