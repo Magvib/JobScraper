@@ -20,7 +20,7 @@
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
-    <div class="cv-page max-w-[210mm] mx-auto bg-[#ede9dc] shadow-lg min-h-[297mm] font-sans text-[#39392b] border-4 border-[#6b6b4e] m-4 outline outline-1 outline-[#6b6b4e] outline-offset-4">
+    <div class="cv-page max-w-[210mm] mx-auto bg-[#ede9dc] shadow-lg min-h-[297mm] font-sans text-[#39392b] border-4 border-[#6b6b4e]">
 
         {{-- Felt-blazer look --}}
         <header class="px-12 pt-10 pb-7 border-b-2 border-dashed border-[#9a9a78]">
