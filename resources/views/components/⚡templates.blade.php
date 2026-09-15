@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Http;
 use Livewire\Component;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 
 new class extends Component
@@ -93,9 +94,12 @@ new class extends Component
             abort(500, 'Gotenberg did not return a PDF: ' . substr($pdf, 0, 500));
         }
 
+        $user = auth()->user();
+        $name = ($coverLetterId ? "letter-" . Str::slug($user->name) : "cv-" . Str::slug($user->name)) . '.pdf';
+    
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf;
-        }, 'template.pdf', ['Content-Type' => 'application/pdf']);
+        }, $name, ['Content-Type' => 'application/pdf']);
     }
 
     public function close(): void
