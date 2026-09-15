@@ -1,13 +1,18 @@
 <?php
 
 use App\Ai\Agents\CoverLetterSpecialist;
+use App\Models\Post;
 use Livewire\Component;
 
 new class extends Component
 {
     public ?int $id = null;
+
+    public ?int $jobId = null;
     
     public string $title = '';
+
+    public string $jobLink = '';
 
     public string $content = '';
 
@@ -18,6 +23,21 @@ new class extends Component
         $this->letters = auth()->user()->coverLetters()->pluck('title', 'id')->map(function ($title, $id) {
             return ['id' => $id, 'title' => $title];
         })->toArray();
+    }
+
+    public function with(): array
+    {
+        $data = [];
+        
+        if (strlen($this->jobLink) > 3) {
+            $data['jobs'] = Post::where('title', 'like', '%' . $this->jobLink . '%')->orWhere('company_name', 'like', '%' . $this->jobLink . '%')->limit(5)->get();
+        }
+
+        if ($this->jobId) {
+            $data['linkedJob'] = Post::find($this->jobId);
+        }
+        
+        return $data;
     }
 
     public function save($asNew = false): void
@@ -33,7 +53,7 @@ new class extends Component
 
         $coverLetter = auth()->user()->coverLetters()->updateOrCreate(
             ['id' => $this->id ?? null],
-            ['title' => $this->title, 'content' => $this->content]
+            ['title' => $this->title, 'content' => $this->content, 'job_id' => $this->jobId]
         );
 
         $this->id = $coverLetter->id;
@@ -55,6 +75,7 @@ new class extends Component
             $this->id = $coverLetter->id;
             $this->title = $coverLetter->title;
             $this->content = $coverLetter->content;
+            $this->jobId = $coverLetter->job_id;
         }
         
         $this->dispatch('cover-letter-loaded', title: $this->title, content: $this->content);
@@ -65,6 +86,7 @@ new class extends Component
         $this->id = null;
         $this->title = '';
         $this->content = '';
+        $this->jobId = null;
         $this->dispatch('cover-letter-cleared');
     }
 
@@ -75,6 +97,7 @@ new class extends Component
             $this->id = null;
             $this->title = '';
             $this->content = '';
+            $this->jobId = null;
             $this->letters = auth()->user()->coverLetters()->pluck('title', 'id')->map(function ($title, $id) {
                 return ['id' => $id, 'title' => $title];
             })->toArray();
@@ -350,6 +373,53 @@ new class extends Component
                             class="input input-bordered w-full"
                             placeholder="{{ __('e.g. Frontend developer — Novo Nordisk') }}" />
                     </label>
+
+                    <label class="input w-full">
+                        <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <g
+                                stroke-linejoin="round"
+                                stroke-linecap="round"
+                                stroke-width="2.5"
+                                fill="none"
+                                stroke="currentColor"
+                            >
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.3-4.3"></path>
+                            </g>
+                        </svg>
+                        <input type="search" class="grow" placeholder="Link it to a job" wire:model.live.debounce.300ms="jobLink" />
+                    </label>
+
+                    {{-- Currently linked job, shown even when the search list doesn't include it --}}
+                    @if (isset($linkedJob) && !collect($jobs ?? [])->contains('id', $linkedJob->id))
+                        <div class="flex items-center gap-2 text-sm">
+                            <span class="badge badge-primary badge-sm">{{ __('Linked') }}</span>
+                            <span class="truncate">{{ $linkedJob->title }} at {{ $linkedJob->company_name }}</span>
+                            <button type="button" class="btn btn-ghost btn-xs ml-auto"
+                                wire:click="$set('jobId', null)">{{ __('Unlink') }}</button>
+                        </div>
+                    @endif
+
+                    @foreach ($jobs ?? [] as $job)
+                        <button type="button"
+                            wire:key="job-link-{{ $job->id }}"
+                            class="w-full text-left px-3 py-2 rounded-lg border text-sm transition-colors
+                                {{ $job->id === $jobId
+                                    ? 'border-primary bg-primary/10 font-medium'
+                                    : 'border-base-300 hover:border-primary/50 hover:bg-base-200' }}"
+                            wire:click="$set('jobId', {{ $job->id === $jobId ? 'null' : $job->id }})">
+                            <span class="flex items-center gap-2">
+                                <span class="truncate">{{ $job->title }} at {{ $job->company_name }}</span>
+                                @if ($job->id === $jobId)
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary shrink-0 ml-auto"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 13l4 4L19 7" />
+                                    </svg>
+                                @endif
+                            </span>
+                        </button>
+                    @endforeach
 
                     <div class="relative">
                         <textarea
