@@ -535,7 +535,7 @@ new class extends Component
                         </div>
                     </div>
 
-                    <div x-ref="preview" class="relative bg-white text-neutral-800 rounded-lg shadow-inner border border-base-300 p-8 font-serif min-h-152 max-h-192 overflow-y-auto"
+                    <div x-ref="preview" class="relative bg-white text-neutral-800 rounded-lg shadow-inner border border-base-300 p-8 font-serif min-h-152 max-h-[297mm] overflow-y-auto"
                         @mouseup="!$event.target.closest('#selection-popup, #whole-letter-popup') && selectionChanged()"
                         @keyup="!$event.target.closest('#selection-popup, #whole-letter-popup') && selectionChanged()"
                         @mousedown.window="!$event.target.closest('#selection-popup, #whole-letter-popup') && (clearHighlight(), popup.open = false)"
