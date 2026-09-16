@@ -41,10 +41,12 @@ Route::get('/preview/template/{name}', function (string $name) {
 
     return view('templates.'.$name, ['user' => FakePreviewUser::make()]);
 })->name('preview.template');
+
 Route::livewire('/dashboard', 'dashboard')->name('dashboard')->middleware('auth');
 Route::livewire('/jobs', 'jobs')->name('jobs')->middleware('auth');
 Route::livewire('/profile', 'profile')->name('profile')->middleware('auth');
 Route::livewire('/templates', 'templates')->name('templates')->middleware('auth');
+Route::livewire('/cv', 'cv')->name('cv')->middleware('auth');
 Route::livewire('/cover-letter', 'cover_letter')->name('cover-letter')->middleware('auth');
 
 Route::get('/template/{name}', function ($name, Request $request) {
