@@ -23,6 +23,8 @@ new class extends Component
 
     public string $sort = 'date';
 
+    public string $keyword = '';
+
     public function mount()
     {
         $user = auth()->user();
@@ -93,9 +95,30 @@ new class extends Component
     }
 
     #[Computed]
+    public function keywords()
+    {
+        return collect($this->jobs)
+            ->pluck('keyword')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+    }
+
+    #[Computed]
     public function sortedJobs()
     {
         $jobs = collect($this->jobs);
+
+        if ($this->keyword !== '') {
+            $jobs = $jobs->filter(fn ($job) => $job->keyword === $this->keyword);
+        }
+
+        if (trim($this->search) !== '') {
+            $needle = strtolower(trim($this->search));
+
+            $jobs = $jobs->filter(fn ($job) => str_contains(strtolower(($job->title ?? '').' '.($job->company_name ?? '').' '.$job->getLocation()), $needle));
+        }
 
         return match ($this->sort) {
             'az' => $jobs->sortBy(fn ($job) => strtolower($job->title))->values(),
@@ -252,38 +275,61 @@ new class extends Component
             </div>
         @else
             <div class="card bg-base-100 shadow-sm mb-4">
-                <div class="card-body p-4 flex flex-col sm:flex-row gap-3 sm:items-center">
-                    <label class="input input-sm flex items-center gap-2 grow">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-base-content/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"/>
-                            <path d="m21 21-4.3-4.3"/>
-                        </svg>
-                        <input
-                            type="text"
-                            wire:model.live.debounce.300ms="search"
-                            placeholder="{{ __('Search title, company or location...') }}"
-                            class="grow"
-                        />
-                    </label>
-                    <div class="join">
-                        @foreach(['date' => __('Date'), 'az' => __('A-Z'), 'score' => __('AI score')] as $sortKey => $sortLabel)
-                            <button
-                                class="btn btn-sm join-item {{ $sort === $sortKey ? 'btn-primary' : 'btn-ghost' }}"
-                                wire:click="$set('sort', '{{ $sortKey }}')"
-                            >
-                                {{ $sortLabel }}
-                            </button>
-                        @endforeach
+                <div class="card-body p-4 flex flex-col gap-3">
+                    <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+                        <label class="input input-sm flex items-center gap-2 grow">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-base-content/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="m21 21-4.3-4.3"/>
+                            </svg>
+                            <input
+                                type="text"
+                                wire:model.live.debounce.300ms="search"
+                                placeholder="{{ __('Search title, company or location...') }}"
+                                class="grow"
+                            />
+                        </label>
+                        <div class="join">
+                            @foreach(['date' => __('Date'), 'az' => __('A-Z'), 'score' => __('AI score')] as $sortKey => $sortLabel)
+                                <button
+                                    class="btn btn-sm join-item {{ $sort === $sortKey ? 'btn-primary' : 'btn-ghost' }}"
+                                    wire:click="$set('sort', '{{ $sortKey }}')"
+                                >
+                                    {{ $sortLabel }}
+                                </button>
+                            @endforeach
+                        </div>
+                        @if(trim($search) !== '' || $keyword !== '')
+                            <span class="text-xs text-base-content/60 whitespace-nowrap">
+                                {{ number_format(count($this->sortedJobs)) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
+                            </span>
+                        @endif
                     </div>
-                    @if(trim($search) !== '')
-                        <span class="text-xs text-base-content/60 whitespace-nowrap">
-                            {{ number_format(count($jobs)) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
-                        </span>
+                    @if($this->keywords->count() > 1)
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-xs text-base-content/60">{{ __('Keyword') }}:</span>
+                            <div class="flex flex-wrap gap-1">
+                                <button
+                                    class="btn btn-xs {{ $keyword === '' ? 'btn-primary' : 'btn-ghost' }}"
+                                    wire:click="$set('keyword', '')"
+                                >
+                                    {{ __('All') }}
+                                </button>
+                                @foreach($this->keywords as $kw)
+                                    <button
+                                        class="btn btn-xs {{ $keyword === $kw ? 'btn-primary' : 'btn-ghost' }}"
+                                        wire:click="$set('keyword', '{{ $kw }}')"
+                                    >
+                                        {{ Str::title($kw) }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
                     @endif
                 </div>
             </div>
 
-            @if(empty($jobs))
+            @if(count($this->sortedJobs) === 0)
                 <div class="card bg-base-100 shadow-sm">
                     <div class="card-body items-center text-center py-10">
                         <p class="text-base-content/60">{{ __('No jobs match your search or filters.') }}</p>
