@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 new class extends Component
@@ -89,6 +90,18 @@ new class extends Component
 
             $this->jobs = Post::query()->active()->whereIn('keyword', $keywords->toArray())->get();
         }
+    }
+
+    #[Computed]
+    public function sortedJobs()
+    {
+        $jobs = collect($this->jobs);
+
+        return match ($this->sort) {
+            'az' => $jobs->sortBy(fn ($job) => strtolower($job->title))->values(),
+            'score' => $jobs->sortByDesc(fn ($job) => $job->rating?->status === 'completed' ? $job->rating->skills_match : -1)->values(),
+            default => $jobs->sortByDesc('published_at')->values(),
+        };
     }
 
     public function companyInitials(string $name): string
@@ -253,7 +266,7 @@ new class extends Component
                         />
                     </label>
                     <div class="join">
-                        @foreach(['date' => __('Date'), 'az' => __('A-Z'), 'distance' => __('Distance'), 'score' => __('AI score')] as $sortKey => $sortLabel)
+                        @foreach(['date' => __('Date'), 'az' => __('A-Z'), 'score' => __('AI score')] as $sortKey => $sortLabel)
                             <button
                                 class="btn btn-sm join-item {{ $sort === $sortKey ? 'btn-primary' : 'btn-ghost' }}"
                                 wire:click="$set('sort', '{{ $sortKey }}')"
@@ -278,7 +291,7 @@ new class extends Component
                 </div>
             @else
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                @foreach($jobs as $job)
+                @foreach($this->sortedJobs as $job)
                     <div class="card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors duration-300">
                         <div class="card-body p-5">
                             <div class="flex items-start gap-4">
