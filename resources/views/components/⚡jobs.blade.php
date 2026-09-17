@@ -23,75 +23,20 @@ new class extends Component
 
     public string $sort = 'date';
 
-    public string $keyword = '';
+    public array $selectedKeywords = [];
 
     public function mount()
     {
         $user = auth()->user();
+        Post::searchForJobs($user);
+        $this->jobs = Post::query()->active()->whereIn('keyword', $user->keywords)->get();
+    }
 
-        if ($user->keywords) {
-            $keywords = collect($user->keywords)->take(5);
-
-            $jobIndexKey = 'jobindex_'.md5(json_encode($keywords->toArray()));
-            Cache::remember($jobIndexKey, now()->addMinutes(30), function () use ($user, $keywords) {
-                $data = [
-                    'sort' => 'date',
-                ];
-
-                if ($user->address && $user->max_distance) {
-                    $data['address'] = $user->address.', '.$user->zip.' '.$user->city;
-                    $data['radius'] = $user->max_distance;
-                }
-
-                foreach ($keywords as $keyword) {
-                    $data['q'] = $keyword;
-                    try {
-                        $response = Http::retry(2, 200)
-                            ->connectTimeout(5)
-                            ->timeout(15)->get('https://www.jobindex.dk/api/jobsearch/v3', $data)->json()['results'] ?? [];
-
-                        foreach ($response as $job) {
-                            Post::savePost($job, PostSource::JOBINDEX, $keyword);
-                        }
-                    } catch (\Throwable $th) {
-                        continue;
-                    }
-                }
-
-                return 1;
-            });
-
-            // Jobnet only supports one search string per request, so one request per keyword.
-            $jobnetKey = 'jobnet_'.md5(json_encode($keywords->toArray()));
-            Cache::remember($jobnetKey, now()->addMinutes(30), function () use ($keywords) {
-                foreach ($keywords as $keyword) {
-                    try {
-                        $response = Http::retry(2, 200)
-                            ->connectTimeout(5)
-                            ->timeout(15)
-                            ->withHeaders([
-                                'x-csrf' => 1,
-                            ])
-                            ->get('https://jobnet.dk/bff/FindJob/Search', [
-                                'resultsPerPage' => 20,
-                                'pageNumber' => 1,
-                                'orderType' => 'BestMatch',
-                                'searchString' => $keyword,
-                            ])->json() ?? [];
-
-                        foreach ($response['jobAds'] ?? [] as $job) {
-                            Post::savePost($job, PostSource::JOBNET, $keyword);
-                        }
-                    } catch (\Throwable $th) {
-                        continue;
-                    }
-                }
-
-                return 1;
-            });
-
-            $this->jobs = Post::query()->active()->whereIn('keyword', $keywords->toArray())->get();
-        }
+    public function refreshJobs()
+    {
+        $user = auth()->user();
+        Post::searchForJobs($user, true);
+        $this->jobs = Post::query()->active()->whereIn('keyword', $user->keywords)->get();
     }
 
     #[Computed]
@@ -105,13 +50,24 @@ new class extends Component
             ->values();
     }
 
+    public function toggleKeyword(string $keyword): void
+    {
+        if (($index = array_search($keyword, $this->selectedKeywords)) !== false) {
+            unset($this->selectedKeywords[$index]);
+        } else {
+            $this->selectedKeywords[] = $keyword;
+        }
+
+        $this->selectedKeywords = array_values($this->selectedKeywords);
+    }
+
     #[Computed]
     public function sortedJobs()
     {
         $jobs = collect($this->jobs);
 
-        if ($this->keyword !== '') {
-            $jobs = $jobs->filter(fn ($job) => $job->keyword === $this->keyword);
+        if ($this->selectedKeywords !== []) {
+            $jobs = $jobs->filter(fn ($job) => in_array($job->keyword, $this->selectedKeywords));
         }
 
         if (trim($this->search) !== '') {
@@ -190,9 +146,18 @@ new class extends Component
                     </a>
                 </div>
             </div>
-            <div class="badge badge-primary badge-outline">
-                <span class="w-2 h-2 bg-primary rounded-full animate-pulse mr-2"></span>
-                {{ __('Live results') }}
+            <div class="flex items-center gap-3">
+                <button class="btn btn-sm btn-outline gap-2" wire:click="refreshJobs" wire:loading.attr="disabled" wire:target="refreshJobs">
+                    {{ __('Refresh') }}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 animate-spin" wire:loading wire:target="refreshJobs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+                        <polyline points="21 3 21 9 15 9"/>
+                    </svg>
+                </button>
+                <div class="badge badge-primary badge-outline">
+                    <span class="w-2 h-2 bg-primary rounded-full animate-pulse mr-2"></span>
+                    {{ __('Live results') }}
+                </div>
             </div>
         </div>
 
@@ -299,7 +264,7 @@ new class extends Component
                                 </button>
                             @endforeach
                         </div>
-                        @if(trim($search) !== '' || $keyword !== '')
+                        @if(trim($search) !== '' || $selectedKeywords !== [])
                             <span class="text-xs text-base-content/60 whitespace-nowrap">
                                 {{ number_format(count($this->sortedJobs)) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
                             </span>
@@ -310,15 +275,15 @@ new class extends Component
                             <span class="text-xs text-base-content/60">{{ __('Keyword') }}:</span>
                             <div class="flex flex-wrap gap-1">
                                 <button
-                                    class="btn btn-xs {{ $keyword === '' ? 'btn-primary' : 'btn-ghost' }}"
-                                    wire:click="$set('keyword', '')"
+                                    class="btn btn-xs {{ $selectedKeywords === [] ? 'btn-primary' : 'btn-ghost' }}"
+                                    wire:click="$set('selectedKeywords', [])"
                                 >
                                     {{ __('All') }}
                                 </button>
                                 @foreach($this->keywords as $kw)
                                     <button
-                                        class="btn btn-xs {{ $keyword === $kw ? 'btn-primary' : 'btn-ghost' }}"
-                                        wire:click="$set('keyword', '{{ $kw }}')"
+                                        class="btn btn-xs {{ in_array($kw, $selectedKeywords) ? 'btn-primary' : 'btn-ghost' }}"
+                                        wire:click="toggleKeyword('{{ $kw }}')"
                                     >
                                         {{ Str::title($kw) }}
                                     </button>

@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 enum PostSource: string
 {
@@ -90,5 +92,74 @@ class Post extends Model
     public function getLocation()
     {
         return join(', ', array_filter([$this->city, $this->zipcode, $this->street, $this->country]));
+    }
+
+    public static function searchForJobs(User $user, $clearCache = false)
+    {
+        $cacheTime = now()->addMinutes(60);
+        $keywords = collect($user->keywords);
+        $jobIndexKey = 'jobindex_'.md5(json_encode($keywords->toArray()));
+        $jobnetKey = 'jobnet_'.md5(json_encode($keywords->toArray()));
+
+        if ($clearCache) {
+            Cache::forget($jobIndexKey);
+            Cache::forget($jobnetKey);
+        }
+
+        Cache::remember($jobIndexKey, $cacheTime, function () use ($user, $keywords) {
+            $data = [
+                'sort' => 'date',
+            ];
+
+            if ($user->address && $user->max_distance) {
+                $data['address'] = $user->address.', '.$user->zip.' '.$user->city;
+                $data['radius'] = $user->max_distance;
+            }
+
+            foreach ($keywords as $keyword) {
+                $data['q'] = $keyword;
+                try {
+                    $response = Http::retry(2, 200)
+                        ->connectTimeout(5)
+                        ->timeout(15)->get('https://www.jobindex.dk/api/jobsearch/v3', $data)->json()['results'] ?? [];
+
+                    foreach ($response as $job) {
+                        Post::savePost($job, PostSource::JOBINDEX, $keyword);
+                    }
+                } catch (\Throwable $th) {
+                    continue;
+                }
+            }
+
+            return 1;
+        });
+
+        // Jobnet only supports one search string per request, so one request per keyword.
+        Cache::remember($jobnetKey, $cacheTime, function () use ($keywords) {
+            foreach ($keywords as $keyword) {
+                try {
+                    $response = Http::retry(2, 200)
+                        ->connectTimeout(5)
+                        ->timeout(15)
+                        ->withHeaders([
+                            'x-csrf' => 1,
+                        ])
+                        ->get('https://jobnet.dk/bff/FindJob/Search', [
+                            'resultsPerPage' => 20,
+                            'pageNumber' => 1,
+                            'orderType' => 'BestMatch',
+                            'searchString' => $keyword,
+                        ])->json() ?? [];
+
+                    foreach ($response['jobAds'] ?? [] as $job) {
+                        Post::savePost($job, PostSource::JOBNET, $keyword);
+                    }
+                } catch (\Throwable $th) {
+                    continue;
+                }
+            }
+
+            return 1;
+        });
     }
 }
