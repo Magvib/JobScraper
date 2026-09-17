@@ -25,6 +25,8 @@ new class extends Component
 
     public array $selectedKeywords = [];
 
+    public array $selectedSources = [];
+
     public function mount()
     {
         $user = auth()->user();
@@ -62,12 +64,38 @@ new class extends Component
     }
 
     #[Computed]
+    public function sources()
+    {
+        return collect($this->jobs)
+            ->pluck('source')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+    }
+
+    public function toggleSource(string $source): void
+    {
+        if (($index = array_search($source, $this->selectedSources)) !== false) {
+            unset($this->selectedSources[$index]);
+        } else {
+            $this->selectedSources[] = $source;
+        }
+
+        $this->selectedSources = array_values($this->selectedSources);
+    }
+
+    #[Computed]
     public function sortedJobs()
     {
         $jobs = collect($this->jobs);
 
         if ($this->selectedKeywords !== []) {
             $jobs = $jobs->filter(fn ($job) => in_array($job->keyword, $this->selectedKeywords));
+        }
+
+        if ($this->selectedSources !== []) {
+            $jobs = $jobs->filter(fn ($job) => in_array($job->source, $this->selectedSources));
         }
 
         if (trim($this->search) !== '') {
@@ -264,7 +292,7 @@ new class extends Component
                                 </button>
                             @endforeach
                         </div>
-                        @if(trim($search) !== '' || $selectedKeywords !== [])
+                        @if(trim($search) !== '' || $selectedKeywords !== [] || $selectedSources !== [])
                             <span class="text-xs text-base-content/60 whitespace-nowrap">
                                 {{ number_format(count($this->sortedJobs)) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
                             </span>
@@ -286,6 +314,27 @@ new class extends Component
                                         wire:click="toggleKeyword('{{ $kw }}')"
                                     >
                                         {{ Str::title($kw) }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                    @if($this->sources->count() > 1)
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-xs text-base-content/60">{{ __('Source') }}:</span>
+                            <div class="flex flex-wrap gap-1">
+                                <button
+                                    class="btn btn-xs {{ $selectedSources === [] ? 'btn-primary' : 'btn-ghost' }}"
+                                    wire:click="$set('selectedSources', [])"
+                                >
+                                    {{ __('All') }}
+                                </button>
+                                @foreach($this->sources as $src)
+                                    <button
+                                        class="btn btn-xs {{ in_array($src, $selectedSources) ? 'btn-primary' : 'btn-ghost' }}"
+                                        wire:click="toggleSource('{{ $src }}')"
+                                    >
+                                        {{ Str::title($src) }}
                                     </button>
                                 @endforeach
                             </div>
