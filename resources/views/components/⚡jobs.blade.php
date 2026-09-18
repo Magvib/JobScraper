@@ -767,6 +767,14 @@ new class extends Component
                     #jobs-map-card.is-fullscreen .jobs-map-legend {
                         display: none;
                     }
+                    /* Filter buttons live in the header next to the close
+                       button, but only while the map is fullscreen. */
+                    #jobs-map-card .jobs-map-filters {
+                        display: none;
+                    }
+                    #jobs-map-card.is-fullscreen .jobs-map-filters {
+                        display: flex;
+                    }
                     #jobs-map-card #jobs-map-exit {
                         display: none;
                     }
@@ -813,7 +821,51 @@ new class extends Component
                 </style>
                 <div class="card bg-base-100 shadow-sm mb-4" id="jobs-map-card" wire:key="jobs-map-{{ md5($this->mapPoints->toJson()) }}">
                     <div class="card-body p-4 gap-3">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="jobs-map-filters flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+                                @if($this->keywords->count() > 1)
+                                    <div class="flex flex-wrap items-center gap-1">
+                                        <span class="text-xs text-base-content/60">{{ __('Keyword') }}:</span>
+                                        <button
+                                            class="btn btn-xs {{ $selectedKeywords === [] ? 'btn-primary' : 'btn-ghost' }}"
+                                            wire:click="$set('selectedKeywords', [])"
+                                        >
+                                            {{ __('All') }}
+                                        </button>
+                                        @foreach($this->keywords as $kw)
+                                            <button
+                                                class="btn btn-xs {{ in_array($kw, $selectedKeywords) ? 'btn-primary' : 'btn-ghost' }}"
+                                                wire:click="toggleKeyword('{{ $kw }}')"
+                                            >
+                                                <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background: {{ $this->keywordColor($kw) }}" title="{{ __('Map color') }}"></span>
+                                                {{ Str::title($kw) }}
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                @if($this->sources->count() > 1)
+                                    <div class="flex flex-wrap items-center gap-1">
+                                        <span class="text-xs text-base-content/60">{{ __('Source') }}:</span>
+                                        <button
+                                            class="btn btn-xs {{ $selectedSources === [] ? 'btn-primary' : 'btn-ghost' }}"
+                                            wire:click="$set('selectedSources', [])"
+                                        >
+                                            {{ __('All') }}
+                                        </button>
+                                        @foreach($this->sources as $src)
+                                            <button
+                                                class="btn btn-xs {{ in_array($src, $selectedSources) ? 'btn-primary' : 'btn-ghost' }}"
+                                                wire:click="toggleSource('{{ $src }}')"
+                                            >
+                                                {{ Str::title($src) }}
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                <span class="text-xs text-base-content/60 whitespace-nowrap">
+                                    {{ number_format(count($this->sortedJobs)) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
+                                </span>
+                            </div>
                             <div class="jobs-map-header-text">
                                 <p class="text-sm font-semibold text-base-content">{{ __('Job locations') }}</p>
                                 <span class="text-xs text-base-content/60">
