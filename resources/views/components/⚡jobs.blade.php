@@ -992,18 +992,48 @@ new class extends Component
                             var count = group.getChildCount();
                             var size = count < 10 ? 36 : count < 50 ? 44 : 52;
 
-                            // Take on the keyword color when every marker in the
-                            // cluster belongs to the same keyword, otherwise fall
-                            // back to the neutral blue.
-                            var colors = group.getAllChildMarkers()
-                                .map(function (marker) { return marker.options.keywordColor; })
-                                .filter(Boolean);
+                            // Count the markers per keyword color and split the
+                            // cluster background like a pie chart: each keyword
+                            // gets a share of the circle proportional to its
+                            // number of jobs (2 green + 1 blue -> 2/3 green,
+                            // 1/3 blue). A single keyword (or none) stays a
+                            // solid color.
+                            var colorCounts = {};
+                            var colors = [];
+                            var total = 0;
 
-                            var color = colors.length === count ? colors[0] : '#1d4ed8';
+                            group.getAllChildMarkers().forEach(function (marker) {
+                                var color = marker.options.keywordColor || '#1d4ed8';
+
+                                if (colorCounts[color] === undefined) {
+                                    colorCounts[color] = 0;
+                                    colors.push(color);
+                                }
+
+                                colorCounts[color]++;
+                                total++;
+                            });
+
+                            var background;
+
+                            if (colors.length > 1) {
+                                var stops = [];
+                                var cumulative = 0;
+
+                                colors.forEach(function (color) {
+                                    var start = cumulative / total * 100;
+                                    cumulative += colorCounts[color];
+                                    stops.push(color + ' ' + start.toFixed(2) + '% ' + (cumulative / total * 100).toFixed(2) + '%');
+                                });
+
+                                background = 'conic-gradient(' + stops.join(', ') + ')';
+                            } else {
+                                background = colors[0] || '#1d4ed8';
+                            }
 
                             return L.divIcon({
                                 className: 'job-cluster-icon',
-                                html: '<div class="job-cluster" style="width:' + size + 'px;height:' + size + 'px;line-height:' + (size - 6) + 'px;background:' + color + '">' + count + '</div>',
+                                html: '<div class="job-cluster" style="width:' + size + 'px;height:' + size + 'px;line-height:' + (size - 6) + 'px;background:' + background + '">' + count + '</div>',
                                 iconSize: L.point(size, size)
                             });
                         }
