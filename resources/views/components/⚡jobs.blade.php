@@ -27,6 +27,207 @@ new class extends Component
 
     public array $selectedSources = [];
 
+    public bool $showMap = false;
+
+    public array $cordsForCitys = [
+        "Copenhagen" => [55.6761, 12.5689],
+        "Aarhus" => [56.1564, 10.2097],
+        "Odense" => [55.4000, 10.3833],
+        "Aalborg" => [57.0500, 9.9167],
+        "Esbjerg" => [55.4708, 8.4514],
+        "Randers" => [56.4569, 10.0392],
+        "Horsens" => [55.8619, 9.8519],
+        "Kolding" => [55.4908, 9.4722],
+        "Vejle" => [55.7083, 9.5333],
+        "Roskilde" => [55.6417, 12.0808],
+        "Silkeborg" => [56.1667, 9.5500],
+        "Herning" => [56.1361, 8.9767],
+        "Hørsholm" => [55.8786, 12.4992],
+        "Helsingør" => [56.0360, 12.6106],
+        "Næstved" => [55.2333, 11.7667],
+        "Viborg" => [56.4500, 9.4000],
+        "Fredericia" => [55.5644, 9.7597],
+        "Køge" => [55.4500, 12.1833],
+        "Taastrup" => [55.6500, 12.3000],
+        "Holstebro" => [56.3581, 8.6175],
+        "Hillerød" => [55.9333, 12.3000],
+        "Slagelse" => [55.4008, 11.3500],
+        "Holbæk" => [55.7181, 11.7103],
+        "Sønderborg" => [54.9114, 9.7867],
+        "Svendborg" => [55.0597, 10.6100],
+        "Hjørring" => [57.4600, 9.9867],
+        "Ringsted" => [55.4406, 11.7936],
+        "Nørresundby" => [57.0583, 9.9228],
+        "Frederikshavn" => [57.4339, 10.5361],
+        "Haderslev" => [55.2500, 9.5000],
+        "Birkerød" => [55.8474, 12.4280],
+        "Farum" => [55.8083, 12.3581],
+        "Skanderborg" => [56.0333, 9.9333],
+        "Skive" => [56.5667, 9.0269],
+        "Smørumnedre" => [55.7380, 12.3020],
+        "Nyborg" => [55.3097, 10.7917],
+        "Solrød Strand" => [55.5319, 12.2194],
+        "Frederikssund" => [55.8406, 12.0637],
+        "Ikast" => [56.1356, 9.1547],
+        "Lillerød" => [55.8708, 12.3560],
+        "Middelfart" => [55.5058, 9.7306],
+        "Hedehusene" => [55.6500, 12.1986],
+        "Kalundborg" => [55.6814, 11.0850],
+        "Aabenraa" => [55.0447, 9.4195],
+        "Nykøbing Falster" => [54.7667, 11.8833],
+        "Korsør" => [55.3283, 11.1397],
+        "Varde" => [55.6200, 8.4806],
+        "Grenaa" => [56.4133, 10.8758],
+        "Rønne" => [55.1000, 14.7000],
+        "Odder" => [55.9725, 10.1497],
+        "Thisted" => [56.9539, 8.6903],
+        "Hedensted" => [55.7725, 9.7017],
+        "Værløse" => [55.7828, 12.3700],
+        "Brønderslev" => [57.2651, 9.9599],
+        "Frederiksværk" => [55.9699, 12.0199],
+        "Haslev" => [55.3269, 11.9636],
+        "Hobro" => [56.6333, 9.8000],
+        "Dragør" => [55.5925, 12.6722],
+        "Nakskov" => [54.8333, 11.1500],
+        "Vordingborg" => [55.0083, 11.9103],
+        "Jyllinge" => [55.7514, 12.1039],
+        "Vejen" => [55.4758, 9.1381],
+        "Lystrup" => [56.2456, 10.2347],
+        "Struer" => [56.4917, 8.5944],
+        "Ringkøbing" => [56.0833, 8.2500],
+        "Humlebæk" => [55.9600, 12.5328],
+        "Helsinge" => [56.0219, 12.1994],
+        "Støvring" => [56.8890, 9.8310],
+        "Galten" => [56.1564, 9.9050],
+        "Sæby" => [57.3327, 10.5267],
+        "Fredensborg" => [55.9738, 12.4051],
+        "Nykøbing Mors" => [56.7981, 8.8622],
+        "Nivå" => [55.9340, 12.5048],
+        "Aars" => [56.8031, 9.5128],
+        "Måløv" => [55.7500, 12.3333],
+        "Løgten" => [56.2786, 10.3158],
+        "Hundested" => [55.9636, 11.8525],
+        "Hadsten" => [56.3256, 10.0485],
+        "Hørning" => [56.0850, 10.0364],
+        "Hinnerup" => [56.2644, 10.0633],
+        "Sorø" => [55.4366, 11.5592],
+        "Ribe" => [55.3272, 8.7631],
+        "Svenstrup" => [56.9711, 9.8467],
+        "Skjern" => [55.9436, 8.4978],
+        "Ry" => [56.0922, 9.7581],
+        "Billund" => [55.7243, 9.1188],
+        "Tønder" => [54.9428, 8.8639],
+        "Bjerringbro" => [56.3756, 9.6550],
+        "Vojens" => [55.2483, 9.3050],
+        "Skagen" => [57.7222, 10.5878],
+        "Ebeltoft" => [56.2000, 10.6800],
+        "Bramming" => [55.4650, 8.7044],
+        "Hammel" => [56.2500, 9.8667],
+        "Slangerup" => [55.8467, 12.1761],
+        "Ringe" => [55.2369, 10.4794],
+        "Fåborg" => [55.0950, 10.2422],
+        "Gilleleje" => [56.1225, 12.3081],
+        "Hornslet" => [56.3150, 10.3192],
+        "Aabybro" => [57.1625, 9.7306],
+        "Børkop" => [55.6419, 9.6519],
+        "Skælskør" => [55.2528, 11.2931],
+        "Rødekro" => [55.0701, 9.3350],
+        "Kerteminde" => [55.4490, 10.6590],
+        "Assens" => [55.2664, 9.8968],
+        "Bellinge" => [55.3350, 10.3133],
+        "Maribo" => [54.7753, 11.5035],
+        "Hellebæk" => [56.0671, 12.5593],
+        "Nordborg" => [55.0577, 9.7476],
+        "Nibe" => [56.9833, 9.6333],
+        "Tune" => [55.5931, 12.1708],
+        "Klarup" => [57.0125, 10.0597],
+        "Munkebo" => [55.4570, 10.5530],
+        "Hirtshals" => [57.5900, 9.9600],
+        "Strib" => [55.5367, 9.7722],
+        "Otterup" => [55.5167, 10.4000],
+        "Kjellerup" => [56.2847, 9.4331],
+        "Fensmark" => [55.2778, 11.8050],
+        "Hornbæk" => [56.0875, 12.4587],
+        "Mårslet" => [56.0683, 10.1617],
+        "Viby" => [55.5475, 12.0250],
+        "Strøby Egede" => [55.4131, 12.2456],
+        "Hadsund" => [56.7185, 10.1155],
+        "Borup" => [55.4983, 11.9781],
+        "Nykøbing Sjælland" => [55.9225, 11.6686],
+        "Vamdrup" => [55.4270, 9.2830],
+        "Kirke Hvalsø" => [55.5958, 11.8616],
+        "Solbjerg" => [56.0397, 10.0867],
+        "Vodskov" => [57.1083, 10.0269],
+        "Brørup" => [55.4825, 9.0158],
+        "Havdrup" => [55.5433, 12.1181],
+        "Sakskøbing" => [54.7975, 11.6364],
+        "Hjallerup" => [57.1675, 10.1450],
+        "Rudkøbing" => [54.9380, 10.7160],
+        "Langeskov" => [55.3568, 10.5862],
+        "Årslev" => [55.3029, 10.4642],
+        "Høng" => [55.5044, 11.2919],
+        "Videbæk" => [56.0931, 8.6325],
+        "Jyderup" => [55.6575, 11.4014],
+        "Gråsten" => [54.9211, 9.5944],
+        "Svogerslev" => [55.6339, 12.0111],
+        "Jægerspris" => [55.8500, 11.9910],
+        "Lynge" => [55.8397, 12.2767],
+        "Fakse" => [55.2544, 12.1181],
+        "Vildbjerg" => [56.1972, 8.7667],
+        "Tarm" => [55.9053, 8.5206],
+        "Dianalund" => [55.5295, 11.4924],
+        "Jelling" => [55.7558, 9.4194],
+        "Bogense" => [55.5642, 10.0894],
+        "Tølløse" => [55.6117, 11.7736],
+        "Harlev" => [56.1447, 9.9969],
+        "Juelsminde" => [55.7062, 10.0155],
+        "Løgstør" => [56.9667, 9.2500],
+        "Brædstrup" => [55.9717, 9.6114],
+        "Assentoft" => [56.4403, 10.1467],
+        "Præstø" => [55.1167, 12.0500],
+        "Virklund" => [56.1297, 9.5600],
+        "Stege" => [54.9861, 12.2856],
+        "Stenløse" => [55.3392, 10.3617],
+        "Gistrup" => [56.9964, 9.9906],
+        "Græsted" => [56.0653, 12.2842],
+        "Nexø" => [55.0625, 15.1319],
+        "Store Heddinge" => [55.3086, 12.3869],
+        "Hjortshøj" => [56.2492, 10.2656],
+        "Taulov" => [55.5364, 9.6083],
+        "Sabro" => [56.2133, 10.0344],
+        "Storvorde" => [57.0028, 10.1008],
+        "Trige" => [56.2533, 10.1475],
+        "Auning" => [56.4306, 10.3767],
+        "Rønde" => [56.3000, 10.4833],
+        "Søndersø" => [55.4858, 10.2549],
+        "Glamsbjerg" => [55.2778, 10.1056],
+        "Vissenbjerg" => [55.3862, 10.1317],
+        "Årup" => [55.3798, 10.0482],
+        "Bjæverskov" => [55.4575, 12.0319],
+        "Thurø By" => [55.0456, 10.6672],
+        "Broager" => [54.8890, 9.6696],
+        "Vallensbæk Strand" => [55.6353, 12.3648],
+        "Frederiksberg" => [55.6785, 12.5221],
+        "Herlev" => [55.7235, 12.4404],
+        "Kongens Lyngby" => [55.7718, 12.5060],
+        "Søborg" => [55.7302, 12.5098],
+        "Hvidovre" => [55.6503, 12.4758],
+        "Rødovre" => [55.6827, 12.4644],
+        "Charlottenlund" => [55.7537, 12.5918],
+        "Ballerup" => [55.7198, 12.3520],
+        "Glostrup" => [55.6666, 12.4038],
+        "Brøndby" => [55.6541, 12.4215],
+        "Albertslund" => [55.6623, 12.3351],
+        "Ishøj" => [55.6184, 12.3281],
+        "Allerød" => [55.8703, 12.3574],
+        "Holte" => [55.8167, 12.4667],
+        "Greve" => [55.5966, 12.2492],
+        "Kokkedal" => [55.9098, 12.5152],
+        "Kastrup" => [55.6352, 12.6489],
+        "Stenløse" => [55.7677, 12.1960],
+        "Ærøskøbing" => [54.8912, 10.4083],
+    ];
+
     public function mount()
     {
         $user = auth()->user();
@@ -83,6 +284,94 @@ new class extends Component
         }
 
         $this->selectedSources = array_values($this->selectedSources);
+    }
+
+    public function toggleMap(): void
+    {
+        $this->showMap = ! $this->showMap;
+    }
+
+    protected array $cityAliases = [
+        'københavn' => 'Copenhagen',
+        'århus' => 'Aarhus',
+    ];
+
+    protected function cityCoordinates(?string $city): ?array
+    {
+        if (! $city) {
+            return null;
+        }
+
+        $city = mb_strtolower(trim($city));
+
+        // Map every known name (and alias) to its entry in $cordsForCitys
+        $names = [];
+        foreach ($this->cordsForCitys as $name => $coords) {
+            $names[mb_strtolower($name)] = $name;
+        }
+        foreach ($this->cityAliases as $alias => $canonical) {
+            $names[mb_strtolower($alias)] = $canonical;
+        }
+
+        // Exact match
+        if (isset($names[$city])) {
+            return $this->cordsForCitys[$names[$city]];
+        }
+
+        // Otherwise fall back to the longest matching prefix ("København Ø" -> "København").
+        // Require a word boundary after the prefix so "Helsingør" does not match "Helsinge".
+        $best = null;
+
+        foreach ($names as $name => $canonical) {
+            if ($name === '' || ! str_starts_with($city, $name)) {
+                continue;
+            }
+
+            $remainder = mb_substr($city, mb_strlen($name));
+
+            if ($remainder !== '' && $remainder[0] !== ' ') {
+                continue;
+            }
+
+            if ($best === null || mb_strlen($name) > mb_strlen($best)) {
+                $best = $name;
+            }
+        }
+        
+        return $best !== null ? $this->cordsForCitys[$names[$best]] : null;
+    }
+
+    #[Computed]
+    public function mapPoints()
+    {
+        return $this->sortedJobs
+            ->map(function ($job) {
+                $lat = $job->latitude;
+                $lng = $job->longitude;
+
+                if ((! $lat || ! $lng) && $job->city) {
+                    $coords = $this->cityCoordinates($job->city);
+
+                    if ($coords !== null) {
+                        [$lat, $lng] = $coords;
+                    }
+                }
+
+                if (! $lat || ! $lng) {
+                    return null;
+                }
+
+                return [
+                    'lat' => (float) $lat,
+                    'lng' => (float) $lng,
+                    'title' => $job->title,
+                    'company' => $job->company_name,
+                    'location' => $job->getLocation(),
+                    'url' => $job->canonical_url,
+                ];
+            })
+            ->filter()
+            ->values();
     }
 
     #[Computed]
@@ -292,6 +581,16 @@ new class extends Component
                                 </button>
                             @endforeach
                         </div>
+                        <button
+                            class="btn btn-sm {{ $showMap ? 'btn-primary' : 'btn-outline' }} gap-2"
+                            wire:click="toggleMap"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            {{ __('Map') }}
+                        </button>
                         @if(trim($search) !== '' || $selectedKeywords !== [] || $selectedSources !== [])
                             <span class="text-xs text-base-content/60 whitespace-nowrap">
                                 {{ number_format(count($this->sortedJobs)) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
@@ -342,6 +641,25 @@ new class extends Component
                     @endif
                 </div>
             </div>
+
+            @if($showMap)
+                <div class="card bg-base-100 shadow-sm mb-4" wire:key="jobs-map-{{ md5($this->mapPoints->toJson()) }}">
+                    <div class="card-body p-4 gap-3">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm font-semibold text-base-content">{{ __('Job locations') }}</p>
+                            <span class="text-xs text-base-content/60">
+                                {{ number_format($this->mapPoints->count()) }} / {{ number_format(count($this->sortedJobs)) }} {{ __('jobs have a known location') }}
+                            </span>
+                        </div>
+                        @if($this->mapPoints->isEmpty())
+                            <p class="text-sm text-base-content/60">{{ __('None of the listed jobs have a known location.') }}</p>
+                        @else
+                            <script type="application/json" id="jobs-map-data">@json($this->mapPoints)</script>
+                            <div id="jobs-map" class="h-120 rounded-box overflow-hidden z-0"></div>
+                        @endif
+                    </div>
+                </div>
+            @endif
 
             @if(count($this->sortedJobs) === 0)
                 <div class="card bg-base-100 shadow-sm">
@@ -455,4 +773,90 @@ new class extends Component
             @endif
         @endif
     </div>
+
+    <script>
+        (function () {
+            function escapeHtml(str) {
+                var div = document.createElement('div');
+                div.textContent = str == null ? '' : String(str);
+                return div.innerHTML;
+            }
+
+            function ensureLeaflet(callback) {
+                if (window.L) {
+                    return callback();
+                }
+
+                if (! window.jobsMapLeafletLoading) {
+                    window.jobsMapLeafletLoading = new Promise(function (resolve) {
+                        var link = document.createElement('link');
+                        link.rel = 'stylesheet';
+                        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                        document.head.appendChild(link);
+
+                        var script = document.createElement('script');
+                        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                        script.onload = resolve;
+                        document.head.appendChild(script);
+                    });
+                }
+
+                window.jobsMapLeafletLoading.then(callback);
+            }
+
+            function initJobsMap(container, points) {
+                ensureLeaflet(function () {
+                    if (window.jobsMap) {
+                        window.jobsMap.remove();
+                        window.jobsMap = null;
+                    }
+
+                    var map = L.map(container);
+                    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 18,
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+                    }).addTo(map);
+
+                    points.forEach(function (point) {
+                        L.marker([point.lat, point.lng])
+                            .addTo(map)
+                            .bindPopup(
+                                '<div style="min-width:200px">' +
+                                    '<a href="' + escapeHtml(point.url) + '" target="_blank" rel="noopener" style="font-weight:600">' + escapeHtml(point.title) + '</a>' +
+                                    '<div style="font-size:12px;margin-top:2px">' + escapeHtml(point.company) + '</div>' +
+                                    '<div style="font-size:12px;opacity:.65">' + escapeHtml(point.location) + '</div>' +
+                                '</div>'
+                            );
+                    });
+
+                    if (points.length > 1) {
+                        map.fitBounds(L.latLngBounds(points.map(function (p) { return [p.lat, p.lng]; })).pad(0.15));
+                    } else {
+                        map.setView([points[0].lat, points[0].lng], 12);
+                    }
+
+                    window.jobsMap = map;
+                });
+            }
+
+            var mapObserver = new MutationObserver(function () {
+                var container = document.getElementById('jobs-map');
+
+                if (! container || container.dataset.initialized) {
+                    return;
+                }
+
+                var data = document.getElementById('jobs-map-data');
+
+                if (! data) {
+                    return;
+                }
+
+                container.dataset.initialized = '1';
+                initJobsMap(container, JSON.parse(data.textContent));
+            });
+
+            mapObserver.observe(document.body, { childList: true, subtree: true });
+        })();
+    </script>
 </div>

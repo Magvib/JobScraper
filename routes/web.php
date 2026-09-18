@@ -126,7 +126,7 @@ Route::get('/auth/callback', function () {
         'password' => bcrypt(uniqid()),
     ]);
 
-    auth()->login($user);
+    auth()->login($user, true);
 
     return redirect()->route('dashboard');
 });
