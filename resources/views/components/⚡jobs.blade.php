@@ -367,13 +367,33 @@ new class extends Component
         return $best !== null ? $this->cordsForCitys[$names[$best]] : null;
     }
 
-    public function hasMapPoint($job): bool
+    /**
+     * Latitude/longitude for a job, falling back to the city lookup like
+     * the map does, or null when nothing is known.
+     */
+    public function mapCoordinates($job): ?array
     {
-        if ($job->latitude && $job->longitude) {
-            return true;
+        $lat = $job->latitude;
+        $lng = $job->longitude;
+
+        if ((! $lat || ! $lng) && $job->city) {
+            $coords = $this->cityCoordinates($job->city);
+
+            if ($coords !== null) {
+                [$lat, $lng] = $coords;
+            }
         }
 
-        return $this->cityCoordinates($job->city) !== null;
+        if (! $lat || ! $lng) {
+            return null;
+        }
+
+        return [(float) $lat, (float) $lng];
+    }
+
+    public function hasMapPoint($job): bool
+    {
+        return $this->mapCoordinates($job) !== null;
     }
 
     #[Computed]
@@ -381,20 +401,13 @@ new class extends Component
     {
         return $this->sortedJobs
             ->map(function ($job) {
-                $lat = $job->latitude;
-                $lng = $job->longitude;
+                $coords = $this->mapCoordinates($job);
 
-                if ((! $lat || ! $lng) && $job->city) {
-                    $coords = $this->cityCoordinates($job->city);
-
-                    if ($coords !== null) {
-                        [$lat, $lng] = $coords;
-                    }
-                }
-
-                if (! $lat || ! $lng) {
+                if ($coords === null) {
                     return null;
                 }
+
+                [$lat, $lng] = $coords;
 
                 return [
                     'lat' => (float) $lat,
@@ -441,25 +454,16 @@ new class extends Component
             return null;
         }
 
-        $lat = $job->latitude;
-        $lng = $job->longitude;
+        $coords = $this->mapCoordinates($job);
 
-        if ((! $lat || ! $lng) && $job->city) {
-            $coords = $this->cityCoordinates($job->city);
-
-            if ($coords !== null) {
-                [$lat, $lng] = $coords;
-            }
-        }
-
-        if (! $lat || ! $lng) {
+        if ($coords === null) {
             return null;
         }
 
         $latFrom = deg2rad($user['lat']);
         $lngFrom = deg2rad($user['lng']);
-        $latTo = deg2rad((float) $lat);
-        $lngTo = deg2rad((float) $lng);
+        $latTo = deg2rad($coords[0]);
+        $lngTo = deg2rad($coords[1]);
 
         // Haversine distance
         $latDelta = $latTo - $latFrom;
@@ -743,19 +747,91 @@ new class extends Component
             </div>
 
             @if($showMap)
-                <div class="card bg-base-100 shadow-sm mb-4" wire:key="jobs-map-{{ md5($this->mapPoints->toJson()) }}">
+                <style>
+                    /* Fullscreen map: the card covers the viewport, the map fills
+                       it and a sidebar on the side lists only the jobs in view. */
+                    #jobs-map-card.is-fullscreen {
+                        position: fixed;
+                        inset: 0;
+                        z-index: 999;
+                        margin: 0;
+                        border-radius: 0;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    #jobs-map-card.is-fullscreen .card-body {
+                        flex: 1 1 auto;
+                        min-height: 0;
+                    }
+                    #jobs-map-card.is-fullscreen .jobs-map-header-text,
+                    #jobs-map-card.is-fullscreen .jobs-map-legend {
+                        display: none;
+                    }
+                    #jobs-map-card #jobs-map-exit {
+                        display: none;
+                    }
+                    #jobs-map-card.is-fullscreen #jobs-map-exit {
+                        display: inline-flex;
+                    }
+                    #jobs-map-card.is-fullscreen #jobs-map-expand {
+                        display: none;
+                    }
+                    #jobs-map-card.is-fullscreen .jobs-map-layout {
+                        display: flex;
+                        flex: 1 1 auto;
+                        gap: 0.75rem;
+                        min-height: 0;
+                    }
+                    #jobs-map-card.is-fullscreen #jobs-map {
+                        flex: 1 1 auto;
+                        height: auto;
+                        min-height: 0;
+                        min-width: 0;
+                    }
+                    #jobs-map-card.is-fullscreen #jobs-map-sidebar {
+                        display: flex;
+                        flex-direction: column;
+                        flex: 0 0 auto;
+                        width: min(20rem, 45vw);
+                        min-height: 0;
+                        overflow-y: auto;
+                    }
+                    body.jobs-map-fullscreen-open {
+                        overflow: hidden;
+                    }
+                </style>
+                <div class="card bg-base-100 shadow-sm mb-4" id="jobs-map-card" wire:key="jobs-map-{{ md5($this->mapPoints->toJson()) }}">
                     <div class="card-body p-4 gap-3">
                         <div class="flex items-center justify-between">
-                            <p class="text-sm font-semibold text-base-content">{{ __('Job locations') }}</p>
-                            <span class="text-xs text-base-content/60">
-                                {{ number_format($this->mapPoints->count()) }} / {{ number_format(count($this->sortedJobs)) }} {{ __('jobs have a known location') }}
-                            </span>
+                            <div class="jobs-map-header-text">
+                                <p class="text-sm font-semibold text-base-content">{{ __('Job locations') }}</p>
+                                <span class="text-xs text-base-content/60">
+                                    {{ number_format($this->mapPoints->count()) }} / {{ number_format(count($this->sortedJobs)) }} {{ __('jobs have a known location') }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button id="jobs-map-expand" class="btn btn-sm btn-ghost gap-2" title="{{ __('Expand map') }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+                                        <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+                                        <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+                                        <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+                                    </svg>
+                                    {{ __('Expand') }}
+                                </button>
+                                <button id="jobs-map-exit" class="btn btn-sm btn-circle btn-ghost" title="{{ __('Close map') }}" aria-label="{{ __('Close map') }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                         @if($this->mapPoints->isEmpty())
                             <p class="text-sm text-base-content/60">{{ __('None of the listed jobs have a known location.') }}</p>
                         @else
                             @if($this->mapPoints->pluck('keyword')->filter()->unique()->count() > 1)
-                                <div class="flex flex-wrap items-center gap-2">
+                                <div class="jobs-map-legend flex flex-wrap items-center gap-2">
                                     <span class="text-xs text-base-content/60">{{ __('Keyword colors') }}:</span>
                                     @foreach($this->mapPoints->pluck('keyword')->filter()->unique()->sort() as $kw)
                                         <span class="badge badge-ghost badge-sm gap-1.5">
@@ -765,9 +841,56 @@ new class extends Component
                                     @endforeach
                                 </div>
                             @endif
-                            <script type="application/json" id="jobs-map-data">@json($this->mapPoints)</script>
-                            <script type="application/json" id="jobs-map-user-data">@json($this->userPoint)</script>
-                            <div id="jobs-map" class="h-120 rounded-box overflow-hidden z-0"></div>
+                            <div class="jobs-map-layout">
+                                <script type="application/json" id="jobs-map-data">@json($this->mapPoints)</script>
+                                <script type="application/json" id="jobs-map-user-data">@json($this->userPoint)</script>
+                                <div id="jobs-map" class="h-120 rounded-box overflow-hidden z-0"></div>
+                                <div id="jobs-map-sidebar" class="hidden border-l border-base-300 flex-col pl-3">
+                                    <div class="sticky top-0 z-10 bg-base-100 py-1 pr-1 shrink-0">
+                                        <span class="text-xs text-base-content/60">
+                                            {{ __('In view') }}: <span id="jobs-map-sidebar-count">0</span>
+                                        </span>
+                                    </div>
+                                    <div id="jobs-map-sidebar-list" class="flex flex-col gap-2">
+                                        @foreach($this->sortedJobs as $job)
+                                            @php
+                                            $coords = $this->mapCoordinates($job)
+                                            @endphp
+                                            @if($coords !== null)
+                                                <a
+                                                    href="{{ $job->canonical_url }}"
+                                                    target="_blank"
+                                                    rel="noopener"
+                                                    class="jobs-map-sidebar-item card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors duration-300 shrink-0"
+                                                    data-map-lat="{{ $coords[0] }}"
+                                                    data-map-lng="{{ $coords[1] }}"
+                                                >
+                                                    <div class="card-body p-3 gap-1">
+                                                        <div class="flex items-start gap-2">
+                                                            @if($job->keyword)
+                                                                <span class="w-2.5 h-2.5 rounded-full shrink-0 mt-1.5" style="background: {{ $this->keywordColor($job->keyword) }}" title="{{ __('Map color') }}"></span>
+                                                            @endif
+                                                            <span class="font-medium text-sm hover:text-primary transition-colors line-clamp-2">{{ $job->title }}</span>
+                                                        </div>
+                                                        <div class="text-xs text-base-content/60">{{ $job->company_name }}</div>
+                                                        <div class="text-xs text-base-content/60 flex flex-wrap items-center gap-x-1.5">
+                                                            <span>{{ $job->getLocation() }}</span>
+                                                            @if($this->jobDistance($job) !== null)
+                                                                <span class="text-base-content/40">({{ $this->formatDistance($this->jobDistance($job)) }})</span>
+                                                            @endif
+                                                            <span class="text-base-content/40">·</span>
+                                                            <span>{{ $job->published_at->diffForHumans() }}</span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                    <p id="jobs-map-sidebar-empty" class="hidden text-sm text-base-content/60 text-center py-6 m-0">
+                                        {{ __('No jobs in this area. Pan or zoom the map.') }}
+                                    </p>
+                                </div>
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -985,8 +1108,118 @@ new class extends Component
                 window.jobsMapLeafletLoading.then(callback);
             }
 
+            // Fullscreen state lives on window (not Livewire) so expanding is
+            // instant with no server round trip. Livewire morphs can strip the
+            // runtime classes, so re-apply them after every commit and every
+            // map re-init (jobsMapSetFullscreen is idempotent).
+            window.jobsMapExpanded = false;
+
+            function jobsMapFilterSidebar(map) {
+                var list = document.getElementById('jobs-map-sidebar-list');
+
+                if (! list) {
+                    return;
+                }
+
+                var bounds = map.getBounds();
+                var count = 0;
+
+                list.querySelectorAll('.jobs-map-sidebar-item').forEach(function (item) {
+                    var lat = parseFloat(item.getAttribute('data-map-lat'));
+                    var lng = parseFloat(item.getAttribute('data-map-lng'));
+                    var inView = bounds.contains([lat, lng]);
+
+                    item.classList.toggle('hidden', ! inView);
+
+                    if (inView) {
+                        count++;
+                    }
+                });
+
+                var countEl = document.getElementById('jobs-map-sidebar-count');
+
+                if (countEl) {
+                    countEl.textContent = count;
+                }
+
+                var empty = document.getElementById('jobs-map-sidebar-empty');
+
+                if (empty) {
+                    empty.classList.toggle('hidden', count > 0);
+                }
+            }
+
+            function jobsMapSetFullscreen(active) {
+                window.jobsMapExpanded = active;
+
+                var card = document.getElementById('jobs-map-card');
+
+                document.body.classList.toggle('jobs-map-fullscreen-open', active);
+
+                if (card) {
+                    card.classList.toggle('is-fullscreen', active);
+                }
+
+                // Leaflet must re-measure after the layout change, and the
+                // sidebar needs an initial filter for the current viewport.
+                requestAnimationFrame(function () {
+                    if (window.jobsMap) {
+                        try {
+                            window.jobsMap.invalidateSize();
+                        } catch (err) {
+                            // The map may have been removed by a concurrent re-init.
+                        }
+
+                        if (active) {
+                            jobsMapFilterSidebar(window.jobsMap);
+                        }
+                    }
+                });
+            }
+
+            document.addEventListener('click', function (e) {
+                if (e.target.closest('#jobs-map-expand')) {
+                    jobsMapSetFullscreen(true);
+                }
+
+                if (e.target.closest('#jobs-map-exit')) {
+                    jobsMapSetFullscreen(false);
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && window.jobsMapExpanded) {
+                    jobsMapSetFullscreen(false);
+                }
+            });
+
+            document.addEventListener('livewire:init', function () {
+                Livewire.hook('commit', function ({ succeed }) {
+                    succeed(function () {
+                        if (window.jobsMapExpanded) {
+                            requestAnimationFrame(function () {
+                                jobsMapSetFullscreen(true);
+                            });
+                        }
+                    });
+                });
+            });
+
             function initJobsMap(container, points) {
                 ensureLeaflet(function () {
+                    // A re-render replaces the card, which loses the fullscreen
+                    // classes — restore them before the map is created so it
+                    // measures at full size from the start.
+                    if (window.jobsMapExpanded) {
+                        var freshCard = container.closest('#jobs-map-card');
+
+                        if (freshCard) {
+                            freshCard.classList.add('is-fullscreen');
+                        }
+
+                        document.body.classList.add('jobs-map-fullscreen-open');
+                    }
+
                     if (window.jobsMap) {
                         window.jobsMap.remove();
                         window.jobsMap = null;
@@ -1140,6 +1373,34 @@ new class extends Component
                     }
 
                     window.jobsMap = map;
+
+                    // Clicking empty map area expands to fullscreen. Clicks on
+                    // markers, clusters, popups and controls have their own
+                    // handlers and are excluded so links keep working.
+                    map.on('click', function (e) {
+                        var target = e.originalEvent && e.originalEvent.target;
+
+                        if (target && target.closest && target.closest('.leaflet-popup, .leaflet-control')) {
+                            return;
+                        }
+
+                        jobsMapSetFullscreen(true);
+                    });
+
+                    // Panning or zooming re-filters the sidebar to the jobs
+                    // that are currently in view.
+                    map.on('moveend', function () {
+                        if (window.jobsMapExpanded) {
+                            jobsMapFilterSidebar(map);
+                        }
+                    });
+
+                    if (window.jobsMapExpanded) {
+                        requestAnimationFrame(function () {
+                            map.invalidateSize();
+                            jobsMapFilterSidebar(map);
+                        });
+                    }
                 });
             }
 
