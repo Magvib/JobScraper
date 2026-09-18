@@ -819,7 +819,7 @@ new class extends Component
                         overflow: hidden;
                     }
                 </style>
-                <div class="card bg-base-100 shadow-sm mb-4" id="jobs-map-card" wire:key="jobs-map-{{ md5($this->mapPoints->toJson()) }}">
+                <div class="card bg-base-100 shadow-sm mb-4" id="jobs-map-card" wire:key="jobs-map-{{ md5($this->mapPoints->sortBy(fn ($p) => $p['lat'].','.$p['lng'].','.$p['title'])->values()->toJson()) }}">
                     <div class="card-body p-4 gap-3">
                         <div class="flex items-center justify-between gap-2">
                             <div class="jobs-map-filters flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
@@ -862,6 +862,19 @@ new class extends Component
                                         @endforeach
                                     </div>
                                 @endif
+                                <div class="flex flex-wrap items-center gap-1">
+                                    <span class="text-xs text-base-content/60">{{ __('Sort') }}:</span>
+                                    <div class="join">
+                                        @foreach(['date' => __('Date'), 'az' => __('A-Z'), 'score' => __('AI score'), 'distance' => __('Distance')] as $sortKey => $sortLabel)
+                                            <button
+                                                class="btn btn-xs join-item {{ $sort === $sortKey ? 'btn-primary' : 'btn-ghost' }}"
+                                                wire:click="$set('sort', '{{ $sortKey }}')"
+                                            >
+                                                {{ $sortLabel }}
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                </div>
                                 <span class="text-xs text-base-content/60 whitespace-nowrap">
                                     {{ number_format($this->mapPoints->count()) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
                                 </span>
