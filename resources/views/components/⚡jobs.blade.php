@@ -925,8 +925,8 @@ new class extends Component
                     var jobIcon = L.divIcon({
                         className: 'job-marker-icon',
                         html: '<div class="job-marker-dot"></div>',
-                        iconSize: [12, 12],
-                        iconAnchor: [6, 6]
+                        iconSize: [16, 16],
+                        iconAnchor: [8, 8]
                     });
 
                     points.forEach(function (point) {
