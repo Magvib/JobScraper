@@ -784,7 +784,7 @@ new class extends Component
                             <div class="flex flex-wrap items-center gap-3 mt-4 text-sm">
                                 <span class="badge badge-ghost badge-sm">{{ Str::title($job['source'] ?? 'Jobindex') }}</span>
                                 @if($job->keyword)
-                                    <span class="badge badge-outline badge-sm" title="{{ __('Search keyword') }}">{{ Str::title($job->keyword) }}</span>
+                                    <span class="badge badge-outline badge-sm gap-1.5" title="{{ __('Search keyword') }}"><span class="w-2.5 h-2.5 rounded-full shrink-0" style="background: {{ $this->keywordColor($job->keyword) }}" title="{{ __('Map color') }}"></span>{{ Str::title($job->keyword) }}</span>
                                 @endif
                                 <div class="flex items-center gap-1.5 text-base-content/60">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

@@ -111,10 +111,10 @@ class Post extends Model
                 'sort' => 'date',
             ];
 
-            if ($user->address && $user->max_distance) {
-                $data['address'] = $user->address.', '.$user->zip.' '.$user->city;
-                $data['radius'] = $user->max_distance;
-            }
+            // if ($user->address && $user->max_distance) {
+            //     $data['address'] = $user->address.', '.$user->zip.' '.$user->city;
+            //     $data['radius'] = $user->max_distance;
+            // }
 
             foreach ($keywords as $keyword) {
                 $data['q'] = $keyword;
