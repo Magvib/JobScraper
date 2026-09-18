@@ -49,7 +49,7 @@ class Post extends Model
                 'zipcode'          => $data['addresses'][0]['zipcode'] ?? null,
                 'latitude'         => $data['addresses'][0]['coordinates']['latitude'] ?? null,
                 'longitude'        => $data['addresses'][0]['coordinates']['longitude'] ?? null,
-                'canonical_url'    => $data['share_url'],
+                'canonical_url'    => $data['url'] ?? $data['share_url'] ?? null,
                 'is_remote'        => $data['home_workplace'],
                 'deadline_is_asap' => $data['apply_deadline_asap'],
                 'published_at'     => $data['firstdate'],
@@ -72,7 +72,6 @@ class Post extends Model
                 'deadline_at'      => $data['applicationDeadline'],
                 'raw'              => $data,
                 'company_logo_url' => isset($data['logoUrl']) ? "https://jobnet.dk".$data['logoUrl'] : null,
-
                 'city'             => $data['postalDistrictName'] ?? $data['municipality'] ?? null,
                 'zipcode'          => $data['postalCode'] ?? null,
             ]);
