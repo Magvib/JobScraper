@@ -415,6 +415,48 @@ new class extends Component
         ];
     }
 
+    /**
+     * Distance in km between the user and a job, or null when either
+     * has no coordinates (job coordinates fall back to the city lookup,
+     * like the map does).
+     */
+    public function jobDistance($job): ?float
+    {
+        $user = $this->userPoint;
+
+        if ($user === null) {
+            return null;
+        }
+
+        $lat = $job->latitude;
+        $lng = $job->longitude;
+
+        if ((! $lat || ! $lng) && $job->city) {
+            $coords = $this->cityCoordinates($job->city);
+
+            if ($coords !== null) {
+                [$lat, $lng] = $coords;
+            }
+        }
+
+        if (! $lat || ! $lng) {
+            return null;
+        }
+
+        $latFrom = deg2rad($user['lat']);
+        $lngFrom = deg2rad($user['lng']);
+        $latTo = deg2rad((float) $lat);
+        $lngTo = deg2rad((float) $lng);
+
+        // Haversine distance
+        $latDelta = $latTo - $latFrom;
+        $lngDelta = $lngTo - $lngFrom;
+
+        $a = sin($latDelta / 2) ** 2 + cos($latFrom) * cos($latTo) * sin($lngDelta / 2) ** 2;
+
+        return 6371 * 2 * atan2(sqrt($a), sqrt(1 - $a));
+    }
+
     #[Computed]
     public function sortedJobs()
     {
@@ -437,6 +479,9 @@ new class extends Component
         return match ($this->sort) {
             'az' => $jobs->sortBy(fn ($job) => strtolower($job->title))->values(),
             'score' => $jobs->sortByDesc(fn ($job) => $job->rating?->status === 'completed' ? $job->rating->skills_match : -1)->values(),
+            'distance' => $this->userPoint === null
+                ? $jobs->sortByDesc('published_at')->values()
+                : $jobs->sortBy(fn ($job) => $this->jobDistance($job) ?? INF)->values(),
             default => $jobs->sortByDesc('published_at')->values(),
         };
     }
@@ -613,7 +658,7 @@ new class extends Component
                             />
                         </label>
                         <div class="join">
-                            @foreach(['date' => __('Date'), 'az' => __('A-Z'), 'score' => __('AI score')] as $sortKey => $sortLabel)
+                            @foreach(['date' => __('Date'), 'az' => __('A-Z'), 'score' => __('AI score'), 'distance' => __('Distance')] as $sortKey => $sortLabel)
                                 <button
                                     class="btn btn-sm join-item {{ $sort === $sortKey ? 'btn-primary' : 'btn-ghost' }}"
                                     wire:click="$set('sort', '{{ $sortKey }}')"
@@ -795,8 +840,8 @@ new class extends Component
                                     @if(! $this->hasMapPoint($job))
                                         <span class="badge badge-warning badge-xs" title="{{ __('This job has no known coordinates, so it is not shown on the map') }}">{{ __('Not on map') }}</span>
                                     @endif
-                                    @if(false)
-                                        <span class="text-base-content/40">({{ $distance }})</span>
+                                    @if($this->jobDistance($job) !== null)
+                                        <span class="text-base-content/40">({{ $this->formatDistance($this->jobDistance($job)) }})</span>
                                     @endif
                                 </div>
                                 <div class="flex items-center gap-1.5 text-base-content/60">
