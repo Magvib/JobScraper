@@ -226,6 +226,7 @@ new class extends Component
         "Kastrup" => [55.6352, 12.6489],
         "Stenløse" => [55.7677, 12.1960],
         "Ærøskøbing" => [54.8912, 10.4083],
+        "Virum" => [55.7948, 12.4510],
     ];
 
     public function mount()
@@ -317,6 +318,9 @@ new class extends Component
 
         $city = mb_strtolower(trim($city));
 
+        // Strip a leading postal code, e.g. "2100 København Ø", "1500-1799 København V" or "DK-2100 København".
+        $city = (string) preg_replace('/^(?:[a-z]{2}-)?\d{4}(-\d{4})?[\/\s]+/u', '', $city);
+
         // Map every known name (and alias) to its entry in $cordsForCitys
         $names = [];
         foreach ($this->cordsForCitys as $name => $coords) {
@@ -331,26 +335,35 @@ new class extends Component
             return $this->cordsForCitys[$names[$city]];
         }
 
-        // Otherwise fall back to the longest matching prefix ("København Ø" -> "København").
-        // Require a word boundary after the prefix so "Helsingør" does not match "Helsinge".
+        // Otherwise find the longest city name contained in the string on word
+        // boundaries, so "København Ø" -> "København" while "Helsingør" does
+        // not match "Helsinge" (the character after a match must not be a letter).
         $best = null;
 
         foreach ($names as $name => $canonical) {
-            if ($name === '' || ! str_starts_with($city, $name)) {
+            if ($name === '' || mb_strlen($name) <= mb_strlen($best ?? '')) {
                 continue;
             }
 
-            $remainder = mb_substr($city, mb_strlen($name));
+            $pos = mb_strpos($city, $name);
 
-            if ($remainder !== '' && $remainder[0] !== ' ') {
+            if ($pos === false) {
                 continue;
             }
 
-            if ($best === null || mb_strlen($name) > mb_strlen($best)) {
-                $best = $name;
+            $end = $pos + mb_strlen($name);
+
+            if ($pos > 0 && preg_match('/\pL/u', mb_substr($city, $pos - 1, 1))) {
+                continue;
             }
+
+            if ($end < mb_strlen($city) && preg_match('/\pL/u', mb_substr($city, $end, 1))) {
+                continue;
+            }
+
+            $best = $name;
         }
-        
+
         return $best !== null ? $this->cordsForCitys[$names[$best]] : null;
     }
 
