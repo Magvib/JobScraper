@@ -976,7 +976,7 @@ new class extends Component
                         window.jobsMap = null;
                     }
 
-                    var map = L.map(container);
+                    var map = L.map(container, { attributionControl: false });
                     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         maxZoom: 18,
                         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
