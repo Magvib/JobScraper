@@ -385,6 +385,22 @@ new class extends Component
     }
 
     #[Computed]
+    public function userPoint(): ?array
+    {
+        $user = auth()->user();
+
+        if (! $user?->latitude || ! $user?->longitude) {
+            return null;
+        }
+
+        return [
+            'lat' => (float) $user->latitude,
+            'lng' => (float) $user->longitude,
+            'city' => $user->city,
+        ];
+    }
+
+    #[Computed]
     public function sortedJobs()
     {
         $jobs = collect($this->jobs);
@@ -665,6 +681,7 @@ new class extends Component
                             <p class="text-sm text-base-content/60">{{ __('None of the listed jobs have a known location.') }}</p>
                         @else
                             <script type="application/json" id="jobs-map-data">@json($this->mapPoints)</script>
+                            <script type="application/json" id="jobs-map-user-data">@json($this->userPoint)</script>
                             <div id="jobs-map" class="h-120 rounded-box overflow-hidden z-0"></div>
                         @endif
                     </div>
@@ -839,6 +856,23 @@ new class extends Component
                                 '}' +
                                 '.marker-cluster span {' +
                                     'line-height: 30px !important;' +
+                                '}' +
+                                // Distinct pulsing dot for the user's own location,
+                                // so it stands apart from the blue job markers.
+                                '.user-location-icon { background: none; border: none; }' +
+                                '.user-location-dot {' +
+                                    'width: 16px;' +
+                                    'height: 16px;' +
+                                    'border-radius: 50%;' +
+                                    'background: #16a34a;' +
+                                    'border: 3px solid #fff;' +
+                                    'box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);' +
+                                    'animation: user-location-pulse 2s infinite;' +
+                                '}' +
+                                '@keyframes user-location-pulse {' +
+                                    '0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3); }' +
+                                    '70% { box-shadow: 0 0 0 14px rgba(22, 163, 74, 0), 0 2px 6px rgba(0, 0, 0, 0.3); }' +
+                                    '100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0), 0 2px 6px rgba(0, 0, 0, 0.3); }' +
                                 '}';
                             document.head.appendChild(clusterStyle);
 
@@ -888,8 +922,40 @@ new class extends Component
 
                     map.addLayer(cluster);
 
-                    if (points.length > 1) {
-                        map.fitBounds(cluster.getBounds().pad(0.15));
+                    // The user's own location, kept out of the job cluster so it
+                    // never merges with job markers and always stays on top.
+                    var userMarker = null;
+                    var userData = document.getElementById('jobs-map-user-data');
+                    var userPoint = userData ? JSON.parse(userData.textContent) : null;
+
+                    if (userPoint) {
+                        var userIcon = L.divIcon({
+                            className: 'user-location-icon',
+                            html: '<div class="user-location-dot"></div>',
+                            iconSize: [16, 16],
+                            iconAnchor: [8, 8]
+                        });
+
+                        userMarker = L.marker([userPoint.lat, userPoint.lng], { icon: userIcon, zIndexOffset: 1000 })
+                            .bindPopup(
+                                '<div style="min-width:150px">' +
+                                    '<span style="font-weight:600">' + escapeHtml(userPoint.city || 'Your location') + '</span>' +
+                                    '<div style="font-size:12px;opacity:.65">Your location</div>' +
+                                '</div>'
+                            )
+                            .addTo(map);
+                    }
+
+                    var bounds = cluster.getBounds();
+
+                    if (userMarker) {
+                        bounds.extend(userMarker.getLatLng());
+                    }
+
+                    if (points.length + (userMarker ? 1 : 0) > 1) {
+                        map.fitBounds(bounds.pad(0.15));
+                    } else if (userMarker) {
+                        map.setView([userPoint.lat, userPoint.lng], 12);
                     } else {
                         map.setView([points[0].lat, points[0].lng], 12);
                     }

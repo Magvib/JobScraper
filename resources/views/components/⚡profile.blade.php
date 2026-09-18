@@ -1,6 +1,7 @@
 <?php
 
 use App\Ai\Agents\KeywordSpecialist;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Ai\Files\Document;
@@ -17,6 +18,10 @@ new class extends Component
     public string $city = '';
 
     public int $maxDistance = 50;
+
+    public ?float $latitude = null;
+
+    public ?float $longitude = null;
 
     public string $email = '';
 
@@ -57,6 +62,8 @@ new class extends Component
         $this->address = $user->address ?? '';
         $this->zip = $user->zip ?? '';
         $this->city = $user->city ?? '';
+        $this->latitude = $user->latitude;
+        $this->longitude = $user->longitude;
         $this->maxDistance = $user->max_distance ?? 50;
         $this->email = $user->email ?? '';
         $this->phone = $user->phone ?? '';
@@ -112,6 +119,22 @@ new class extends Component
         $user->address = $this->address ?: null;
         $user->zip = $this->zip ?: null;
         $user->city = $this->city ?: null;
+
+        // Look up the user's coordinates from their address, zip and city.
+        if (($this->address || $this->zip || $this->city) && $this->latitude === null) {
+            [$this->latitude, $this->longitude] = $this->geocodeLocation();
+    
+            if ($this->latitude === null) {
+                $this->dispatch(
+                    'toast',
+                    message: __('Could not find coordinates for your address. Please check your zip and city.'),
+                    type: 'error'
+                );
+            }
+        }
+
+        $user->latitude = $this->latitude;
+        $user->longitude = $this->longitude;
         $user->phone = $this->phone ?: null;
         $user->birthdate = $this->birthdate ?: null;
         $user->job_title = $this->jobTitle ?: null;
@@ -140,6 +163,53 @@ new class extends Component
             message: __('Profile saved successfully.'),
             type: 'success'
         );
+    }
+
+    /**
+     * Look up coordinates for the user's address, zip and city
+     * using the OpenStreetMap Nominatim API.
+     *
+     * @return array{0: float, 1: float}|null [latitude, longitude] or null when no match was found.
+     */
+    public function geocodeLocation(): ?array
+    {
+        try {
+            $response = Http::withHeaders([
+                'User-Agent' => config('app.name') . ' (' . config('app.url') . ')',
+            ])->get('https://nominatim.openstreetmap.org/search', [
+                'format' => 'jsonv2',
+                'limit' => 1,
+                'street' => $this->address ?: null,
+                'postalcode' => $this->zip ?: null,
+                'city' => $this->city ?: null,
+                'countrycodes' => 'dk',
+            ]);
+
+            $result = $response->json('0');
+
+            if ($response->failed() || ! isset($result['lat'], $result['lon'])) {
+                return null;
+            }
+
+            return [(float) $result['lat'], (float) $result['lon']];
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    public function forceUpdateCords()
+    {
+        [$this->latitude, $this->longitude] = $this->geocodeLocation() ?? [null, null];
+
+        if (($this->address || $this->zip || $this->city) && $this->latitude === null) {
+            $this->dispatch(
+                'toast',
+                message: __('Could not find coordinates for your address. Please check your zip and city.'),
+                type: 'error'
+            );
+        }
+
+        $this->save();
     }
 
     public function addKeyword(): void
@@ -342,6 +412,33 @@ new class extends Component
                             class="input w-full"
                             placeholder="{{ __('Viborg') }}"
                             maxlength="100" />
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label class="label">
+                                    <span class="label-text">{{ __('Latitude') }}</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    wire:model="latitude"
+                                    class="input w-full"
+                                    readonly
+                                    placeholder="{{ __('Set automatically on save') }}" />
+                            </div>
+                            <div>
+                                <label class="label">
+                                    <span class="label-text">{{ __('Longitude') }}</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    wire:model="longitude"
+                                    class="input w-full"
+                                    readonly
+                                    placeholder="{{ __('Set automatically on save') }}" />
+                            </div>
+                        </div>
+                        <button type="button" wire:click="forceUpdateCords" class="btn btn-secondary mt-2">
+                            {{ __('Update Coordinates') }}
+                        </button>
                         <label class="label mt-2">
                             <span class="label-text">{{ __('Max Distance (km)') }}</span>
                         </label>
