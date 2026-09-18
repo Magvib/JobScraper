@@ -808,7 +808,44 @@ new class extends Component
 
                         var script = document.createElement('script');
                         script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-                        script.onload = resolve;
+                        script.onload = function () {
+                            // Cluster + spiderfy markers that share the same city coordinates.
+                            var clusterCss = document.createElement('link');
+                            clusterCss.rel = 'stylesheet';
+                            clusterCss.href = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css';
+                            document.head.appendChild(clusterCss);
+
+                            var clusterThemeCss = document.createElement('link');
+                            clusterThemeCss.rel = 'stylesheet';
+                            clusterThemeCss.href = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css';
+                            document.head.appendChild(clusterThemeCss);
+
+                            // The default clusters are pale green with white text — override
+                            // with a dark circle and bolder text so the count is readable.
+                            var clusterStyle = document.createElement('style');
+                            clusterStyle.textContent =
+                                '.marker-cluster-small,' +
+                                '.marker-cluster-medium,' +
+                                '.marker-cluster-large {' +
+                                    'background-color: rgba(37, 99, 235, 0.25) !important;' +
+                                '}' +
+                                '.marker-cluster div {' +
+                                    'background-color: #1d4ed8 !important;' +
+                                    'color: #fff !important;' +
+                                    'font-weight: 800 !important;' +
+                                    'font-size: 15px !important;' +
+                                    'text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45) !important;' +
+                                '}' +
+                                '.marker-cluster span {' +
+                                    'line-height: 30px !important;' +
+                                '}';
+                            document.head.appendChild(clusterStyle);
+
+                            var clusterScript = document.createElement('script');
+                            clusterScript.src = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js';
+                            clusterScript.onload = resolve;
+                            document.head.appendChild(clusterScript);
+                        };
                         document.head.appendChild(script);
                     });
                 }
@@ -829,9 +866,10 @@ new class extends Component
                         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
                     }).addTo(map);
 
+                    var cluster = L.markerClusterGroup();
+
                     points.forEach(function (point) {
-                        L.marker([point.lat, point.lng])
-                            .addTo(map)
+                        var marker = L.marker([point.lat, point.lng])
                             .bindPopup(
                                 '<div style="min-width:200px">' +
                                     '<a href="' + escapeHtml(point.url) + '" target="_blank" rel="noopener" style="font-weight:600">' + escapeHtml(point.title) + '</a>' +
@@ -839,10 +877,14 @@ new class extends Component
                                     '<div style="font-size:12px;opacity:.65">' + escapeHtml(point.location) + '</div>' +
                                 '</div>'
                             );
+
+                        cluster.addLayer(marker);
                     });
 
+                    map.addLayer(cluster);
+
                     if (points.length > 1) {
-                        map.fitBounds(L.latLngBounds(points.map(function (p) { return [p.lat, p.lng]; })).pad(0.15));
+                        map.fitBounds(cluster.getBounds().pad(0.15));
                     } else {
                         map.setView([points[0].lat, points[0].lng], 12);
                     }
