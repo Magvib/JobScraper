@@ -785,8 +785,11 @@ new class extends Component
                     <div class="card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors duration-300">
                         <div class="card-body p-5">
                             <div class="flex items-start gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                                <div class="relative w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0 overflow-hidden">
                                     {{ $this->companyInitials($job->company_name) }}
+                                    @if($job->company_logo_url)
+                                        <img src="{{ $job->company_logo_url }}" alt="{{ $job->company_name }}" class="absolute inset-0 w-full h-full object-contain bg-base-100" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">
+                                    @endif
                                 </div>
                                 <div class="grow min-w-0">
                                     <a href="{{ $job->canonical_url }}" target="_blank" class="font-semibold text-base hover:text-primary transition-colors line-clamp-2">
