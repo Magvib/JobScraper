@@ -861,9 +861,10 @@ new class extends Component
                                                     href="{{ $job->canonical_url }}"
                                                     target="_blank"
                                                     rel="noopener"
-                                                    class="jobs-map-sidebar-item card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors duration-300 shrink-0"
+                                                    class="jobs-map-sidebar-item card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors duration-100 shrink-0"
                                                     data-map-lat="{{ $coords[0] }}"
                                                     data-map-lng="{{ $coords[1] }}"
+                                                    data-map-color="{{ $this->keywordColor($job->keyword) }}"
                                                 >
                                                     <div class="card-body p-3 gap-1">
                                                         <div class="flex items-start gap-2">
@@ -905,7 +906,7 @@ new class extends Component
             @else
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 @foreach($this->sortedJobs as $job)
-                    <div class="card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors duration-300">
+                    <div class="card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors duration-100">
                         <div class="card-body p-5">
                             <div class="flex items-start gap-4">
                                 <div class="relative w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0 overflow-hidden">
@@ -1093,6 +1094,31 @@ new class extends Component
                                 '}' +
                                 '.job-marker-icon:hover .job-marker-dot {' +
                                     'transform: scale(1.4);' +
+                                '}' +
+                                // Hovering a job in the fullscreen sidebar pings its
+                                // position on the map with a pulsing ring, and scales
+                                // up the dot — or the cluster bubble that currently
+                                // represents it — while the hover lasts.
+                                '.jobs-map-highlight-icon { background: none; border: none; pointer-events: none; }' +
+                                '.jobs-map-highlight-ring {' +
+                                    'width: 36px;' +
+                                    'height: 36px;' +
+                                    'border-radius: 50%;' +
+                                    'border: 3px solid #1d4ed8;' +
+                                    'box-sizing: border-box;' +
+                                    'animation: jobs-map-highlight-pulse 1.2s ease-out infinite;' +
+                                '}' +
+                                '@keyframes jobs-map-highlight-pulse {' +
+                                    '0% { transform: scale(0.4); opacity: 1; }' +
+                                    '100% { transform: scale(1.2); opacity: 0; }' +
+                                '}' +
+                                '.job-marker-dot.is-active {' +
+                                    'transform: scale(1.9);' +
+                                    'box-shadow: 0 0 0 5px rgba(29, 78, 216, 0.35), 0 1px 4px rgba(0, 0, 0, 0.3);' +
+                                '}' +
+                                '.job-cluster.is-active {' +
+                                    'transform: scale(1.15);' +
+                                    'box-shadow: 0 0 0 5px rgba(29, 78, 216, 0.35), 0 2px 8px rgba(0, 0, 0, 0.3);' +
                                 '}';
                             document.head.appendChild(clusterStyle);
 
@@ -1149,8 +1175,98 @@ new class extends Component
                 }
             }
 
+            function jobsMapClearJobHighlight() {
+                if (window.jobsMap && window.jobsMapHighlight) {
+                    window.jobsMap.removeLayer(window.jobsMapHighlight);
+                    window.jobsMapHighlight = null;
+                }
+
+                document.querySelectorAll('.job-marker-dot.is-active, .job-cluster.is-active').forEach(function (el) {
+                    el.classList.remove('is-active');
+                });
+            }
+
+            /**
+             * Highlight the map position for a hovered sidebar job: a pulsing
+             * ring at its coordinates, plus a scaled-up dot — or the cluster
+             * bubble that currently represents it when the marker is inside
+             * a cluster.
+             */
+            function jobsMapHighlightJob(lat, lng, color) {
+                jobsMapClearJobHighlight();
+
+                var map = window.jobsMap;
+
+                if (! map) {
+                    return;
+                }
+
+                var ringIcon = L.divIcon({
+                    className: 'jobs-map-highlight-icon',
+                    html: '<div class="jobs-map-highlight-ring" style="border-color:' + (color || '#1d4ed8') + '"></div>',
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 18]
+                });
+
+                window.jobsMapHighlight = L.marker([lat, lng], { icon: ringIcon, interactive: false, zIndexOffset: 2000 }).addTo(map);
+
+                (window.jobsMapJobMarkers || []).forEach(function (entry) {
+                    // Coordinates come from the same source on both sides, but
+                    // compare with a tolerance so float formatting can't miss.
+                    if (Math.abs(entry.lat - lat) > 1e-9 || Math.abs(entry.lng - lng) > 1e-9) {
+                        return;
+                    }
+
+                    var visible = entry.cluster.getVisibleParent(entry.marker);
+
+                    if (! visible) {
+                        return;
+                    }
+
+                    var el = visible.getElement();
+
+                    if (! el) {
+                        return;
+                    }
+
+                    var target = el.querySelector('.job-marker-dot') || el.querySelector('.job-cluster');
+
+                    if (target) {
+                        target.classList.add('is-active');
+                    }
+                });
+            }
+
+            document.addEventListener('mouseover', function (e) {
+                var item = e.target.closest('.jobs-map-sidebar-item');
+
+                if (! item || item.contains(e.relatedTarget)) {
+                    return;
+                }
+
+                jobsMapHighlightJob(
+                    parseFloat(item.getAttribute('data-map-lat')),
+                    parseFloat(item.getAttribute('data-map-lng')),
+                    item.getAttribute('data-map-color')
+                );
+            });
+
+            document.addEventListener('mouseout', function (e) {
+                var item = e.target.closest('.jobs-map-sidebar-item');
+
+                if (! item || item.contains(e.relatedTarget)) {
+                    return;
+                }
+
+                jobsMapClearJobHighlight();
+            });
+
             function jobsMapSetFullscreen(active) {
                 window.jobsMapExpanded = active;
+
+                if (! active) {
+                    jobsMapClearJobHighlight();
+                }
 
                 var card = document.getElementById('jobs-map-card');
 
@@ -1224,6 +1340,11 @@ new class extends Component
                         window.jobsMap.remove();
                         window.jobsMap = null;
                     }
+
+                    // Rebuilt below from the markers, so sidebar hover can find
+                    // the marker (or cluster) that represents a given location.
+                    window.jobsMapJobMarkers = [];
+                    window.jobsMapHighlight = null;
 
                     var map = L.map(container, { attributionControl: false });
                     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1310,6 +1431,13 @@ new class extends Component
                             );
 
                         cluster.addLayer(marker);
+
+                        window.jobsMapJobMarkers.push({
+                            lat: point.lat,
+                            lng: point.lng,
+                            marker: marker,
+                            cluster: cluster
+                        });
                     });
 
                     map.addLayer(cluster);
