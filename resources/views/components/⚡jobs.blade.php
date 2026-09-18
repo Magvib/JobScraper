@@ -253,6 +253,19 @@ new class extends Component
             ->values();
     }
 
+    public function keywordColor(?string $keyword): ?string
+    {
+        if (! $keyword) {
+            return null;
+        }
+
+        // Golden-angle hue from a stable keyword hash, so each keyword
+        // gets a distinct color that never changes between reloads.
+        $hue = fmod(crc32(mb_strtolower(trim($keyword))) * 137.508, 360);
+
+        return 'hsl('.round($hue).', 70%, 45%)';
+    }
+
     public function toggleKeyword(string $keyword): void
     {
         if (($index = array_search($keyword, $this->selectedKeywords)) !== false) {
@@ -378,6 +391,7 @@ new class extends Component
                     'location' => $job->getLocation(),
                     'url' => $job->canonical_url,
                     'keyword' => $job->keyword,
+                    'color' => $this->keywordColor($job->keyword),
                 ];
             })
             ->filter()
@@ -639,6 +653,7 @@ new class extends Component
                                         class="btn btn-xs {{ in_array($kw, $selectedKeywords) ? 'btn-primary' : 'btn-ghost' }}"
                                         wire:click="toggleKeyword('{{ $kw }}')"
                                     >
+                                        <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background: {{ $this->keywordColor($kw) }}" title="{{ __('Map color') }}"></span>
                                         {{ Str::title($kw) }}
                                     </button>
                                 @endforeach
@@ -681,6 +696,17 @@ new class extends Component
                         @if($this->mapPoints->isEmpty())
                             <p class="text-sm text-base-content/60">{{ __('None of the listed jobs have a known location.') }}</p>
                         @else
+                            @if($this->mapPoints->pluck('keyword')->filter()->unique()->count() > 1)
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-xs text-base-content/60">{{ __('Keyword colors') }}:</span>
+                                    @foreach($this->mapPoints->pluck('keyword')->filter()->unique()->sort() as $kw)
+                                        <span class="badge badge-ghost badge-sm gap-1.5">
+                                            <span class="w-2.5 h-2.5 rounded-full" style="background: {{ $this->keywordColor($kw) }}"></span>
+                                            {{ Str::title($kw) }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
                             <script type="application/json" id="jobs-map-data">@json($this->mapPoints)</script>
                             <script type="application/json" id="jobs-map-user-data">@json($this->userPoint)</script>
                             <div id="jobs-map" class="h-120 rounded-box overflow-hidden z-0"></div>
@@ -841,7 +867,7 @@ new class extends Component
                                     'border-radius: 50%;' +
                                     'background: #1d4ed8;' +
                                     'border: 3px solid #fff;' +
-                                    'box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.3), 0 2px 8px rgba(0, 0, 0, 0.3);' +
+                                    'box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.3);' +
                                     'color: #fff;' +
                                     'font-weight: 800;' +
                                     'font-size: 13px;' +
@@ -878,7 +904,7 @@ new class extends Component
                                     'border-radius: 50%;' +
                                     'background: #1d4ed8;' +
                                     'border: 3px solid #fff;' +
-                                    'box-shadow: 0 0 0 1px rgba(29, 78, 216, 0.35), 0 1px 4px rgba(0, 0, 0, 0.3);' +
+                                    'box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2), 0 1px 4px rgba(0, 0, 0, 0.3);' +
                                     'transition: transform 0.15s ease;' +
                                 '}' +
                                 '.job-marker-icon:hover .job-marker-dot {' +
@@ -921,27 +947,40 @@ new class extends Component
                             var count = group.getChildCount();
                             var size = count < 10 ? 36 : count < 50 ? 44 : 52;
 
+                            // Take on the keyword color when every marker in the
+                            // cluster belongs to the same keyword, otherwise fall
+                            // back to the neutral blue.
+                            var colors = group.getAllChildMarkers()
+                                .map(function (marker) { return marker.options.keywordColor; })
+                                .filter(Boolean);
+
+                            var color = colors.length === count ? colors[0] : '#1d4ed8';
+
                             return L.divIcon({
                                 className: 'job-cluster-icon',
-                                html: '<div class="job-cluster" style="width:' + size + 'px;height:' + size + 'px;line-height:' + (size - 6) + 'px">' + count + '</div>',
+                                html: '<div class="job-cluster" style="width:' + size + 'px;height:' + size + 'px;line-height:' + (size - 6) + 'px;background:' + color + '">' + count + '</div>',
                                 iconSize: L.point(size, size)
                             });
                         }
                     });
 
-                    var jobIcon = L.divIcon({
-                        className: 'job-marker-icon',
-                        html: '<div class="job-marker-dot"></div>',
-                        iconSize: [16, 16],
-                        iconAnchor: [8, 8]
-                    });
-
                     points.forEach(function (point) {
-                        var marker = L.marker([point.lat, point.lng], { icon: jobIcon })
+                        var jobIcon = L.divIcon({
+                            className: 'job-marker-icon',
+                            html: '<div class="job-marker-dot"' + (point.color ? ' style="background:' + point.color + '"' : '') + '></div>',
+                            iconSize: [16, 16],
+                            iconAnchor: [8, 8]
+                        });
+
+                        var marker = L.marker([point.lat, point.lng], { icon: jobIcon, keywordColor: point.color })
                             .bindPopup(
                                 '<div style="min-width:200px">' +
                                     '<a href="' + escapeHtml(point.url) + '" target="_blank" rel="noopener" style="font-weight:600">' + escapeHtml(point.title) + '</a>' +
-                                    '<div style="font-size:12px;margin-top:2px">' + escapeHtml(point.company + " - " + point.keyword) + '</div>' +
+                                    '<div style="font-size:12px;margin-top:2px">' + escapeHtml(point.company) +
+                                        (point.color
+                                            ? ' - <span style="color:' + point.color + ';font-weight:600">' + escapeHtml(point.keyword) + '</span>'
+                                            : (point.keyword ? ' - ' + escapeHtml(point.keyword) : '')) +
+                                    '</div>' +
                                     '<div style="font-size:12px;opacity:.65">' + escapeHtml(point.location) + '</div>' +
                                 '</div>'
                             );
