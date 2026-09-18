@@ -863,7 +863,7 @@ new class extends Component
                                     </div>
                                 @endif
                                 <span class="text-xs text-base-content/60 whitespace-nowrap">
-                                    {{ number_format(count($this->sortedJobs)) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
+                                    {{ number_format($this->mapPoints->count()) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
                                 </span>
                             </div>
                             <div class="jobs-map-header-text">
