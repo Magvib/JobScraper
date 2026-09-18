@@ -873,6 +873,21 @@ new class extends Component
                                     '0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3); }' +
                                     '70% { box-shadow: 0 0 0 14px rgba(22, 163, 74, 0), 0 2px 6px rgba(0, 0, 0, 0.3); }' +
                                     '100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0), 0 2px 6px rgba(0, 0, 0, 0.3); }' +
+                                '}' +
+                                // Job markers: smaller blue dots in the same family as the
+                                // cluster color, with a hover scale so they feel interactive.
+                                '.job-marker-icon { background: none; border: none; }' +
+                                '.job-marker-dot {' +
+                                    'width: 16px;' +
+                                    'height: 16px;' +
+                                    'border-radius: 50%;' +
+                                    'background: #1d4ed8;' +
+                                    'border: 3px solid #fff;' +
+                                    'box-shadow: 0 0 0 1px rgba(29, 78, 216, 0.35), 0 1px 4px rgba(0, 0, 0, 0.3);' +
+                                    'transition: transform 0.15s ease;' +
+                                '}' +
+                                '.job-marker-icon:hover .job-marker-dot {' +
+                                    'transform: scale(1.4);' +
                                 '}';
                             document.head.appendChild(clusterStyle);
 
@@ -907,8 +922,15 @@ new class extends Component
                     // marker no matter how far the map is zoomed out.
                     var cluster = L.markerClusterGroup({ maxClusterRadius: 0 });
 
+                    var jobIcon = L.divIcon({
+                        className: 'job-marker-icon',
+                        html: '<div class="job-marker-dot"></div>',
+                        iconSize: [12, 12],
+                        iconAnchor: [6, 6]
+                    });
+
                     points.forEach(function (point) {
-                        var marker = L.marker([point.lat, point.lng])
+                        var marker = L.marker([point.lat, point.lng], { icon: jobIcon })
                             .bindPopup(
                                 '<div style="min-width:200px">' +
                                     '<a href="' + escapeHtml(point.url) + '" target="_blank" rel="noopener" style="font-weight:600">' + escapeHtml(point.title) + '</a>' +
