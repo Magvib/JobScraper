@@ -866,7 +866,11 @@ new class extends Component
                         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
                     }).addTo(map);
 
-                    var cluster = L.markerClusterGroup();
+                    // maxClusterRadius: 0 disables distance-based clustering entirely,
+                    // so only markers sharing (nearly) the same coordinates group up —
+                    // e.g. jobs in the same city — and everything else stays a single
+                    // marker no matter how far the map is zoomed out.
+                    var cluster = L.markerClusterGroup({ maxClusterRadius: 0 });
 
                     points.forEach(function (point) {
                         var marker = L.marker([point.lat, point.lng])
