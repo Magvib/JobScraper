@@ -397,6 +397,7 @@ new class extends Component
             'lat' => (float) $user->latitude,
             'lng' => (float) $user->longitude,
             'city' => $user->city,
+            'maxDistance' => (float) ($user->max_distance ?? 50),
         ];
     }
 
@@ -969,9 +970,29 @@ new class extends Component
                                 '<div style="min-width:150px">' +
                                     '<span style="font-weight:600">' + escapeHtml(userPoint.city || 'Your location') + '</span>' +
                                     '<div style="font-size:12px;opacity:.65">Your location</div>' +
+                                    (userPoint.maxDistance ? '<div style="font-size:12px;opacity:.65">' + userPoint.maxDistance + ' km search radius</div>' : '') +
                                 '</div>'
                             )
                             .addTo(map);
+
+                        // The user's job-search radius (max_distance, in km) as a
+                        // dashed circle around their location.
+                        if (userPoint.maxDistance) {
+                            var radiusCircle = L.circle([userPoint.lat, userPoint.lng], {
+                                radius: userPoint.maxDistance * 1000,
+                                color: '#16a34a',
+                                weight: 2,
+                                opacity: 0.7,
+                                dashArray: '6 8',
+                                fillColor: '#16a34a',
+                                fillOpacity: 0.06,
+                                // Non-interactive so clicks pass through to the job
+                                // markers inside the circle.
+                                interactive: false
+                            }).addTo(map);
+
+                            userMarker.radiusCircle = radiusCircle;
+                        }
                     }
 
                     var bounds = cluster.getBounds();
