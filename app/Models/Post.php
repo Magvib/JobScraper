@@ -45,7 +45,7 @@ class Post extends Model
                 'company_logo_url' => $data['workplace_company']['logo'] ?? null,
                 'company_website'  => $data['workplace_company']['homeurl'] ?? null,
                 'street'           => $data['addresses'][0]['line'] ?? null,
-                'city'             => $data['addresses'][0]['city'] ?? null,
+                'city'             => $data['addresses'][0]['city'] ?? $data['area'] ?? null,
                 'zipcode'          => $data['addresses'][0]['zipcode'] ?? null,
                 'latitude'         => $data['addresses'][0]['coordinates']['latitude'] ?? null,
                 'longitude'        => $data['addresses'][0]['coordinates']['longitude'] ?? null,

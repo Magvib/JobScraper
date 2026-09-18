@@ -341,6 +341,15 @@ new class extends Component
         return $best !== null ? $this->cordsForCitys[$names[$best]] : null;
     }
 
+    public function hasMapPoint($job): bool
+    {
+        if ($job->latitude && $job->longitude) {
+            return true;
+        }
+
+        return $this->cityCoordinates($job->city) !== null;
+    }
+
     #[Computed]
     public function mapPoints()
     {
@@ -738,6 +747,9 @@ new class extends Component
                                         <circle cx="12" cy="10" r="3"/>
                                     </svg>
                                     {{ $job->getLocation() }}
+                                    @if(! $this->hasMapPoint($job))
+                                        <span class="badge badge-warning badge-xs" title="{{ __('This job has no known coordinates, so it is not shown on the map') }}">{{ __('Not on map') }}</span>
+                                    @endif
                                     @if(false)
                                         <span class="text-base-content/40">({{ $distance }})</span>
                                     @endif
