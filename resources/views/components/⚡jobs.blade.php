@@ -941,7 +941,7 @@ new class extends Component
                             .bindPopup(
                                 '<div style="min-width:200px">' +
                                     '<a href="' + escapeHtml(point.url) + '" target="_blank" rel="noopener" style="font-weight:600">' + escapeHtml(point.title) + '</a>' +
-                                    '<div style="font-size:12px;margin-top:2px">' + escapeHtml(point.company + " #" + point.keyword) + '</div>' +
+                                    '<div style="font-size:12px;margin-top:2px">' + escapeHtml(point.company + " - " + point.keyword) + '</div>' +
                                     '<div style="font-size:12px;opacity:.65">' + escapeHtml(point.location) + '</div>' +
                                 '</div>'
                             );
