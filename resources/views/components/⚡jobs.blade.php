@@ -796,6 +796,17 @@ new class extends Component
                         min-height: 0;
                         overflow-y: auto;
                     }
+                    /* Hovering or selecting a marker on the map highlights the
+                       matching sidebar item(s) — several jobs can share a marker
+                       when they are in the same city. */
+                    #jobs-map-card .jobs-map-sidebar-item.is-highlighted,
+                    #jobs-map-card .jobs-map-sidebar-item.is-selected {
+                        border-color: #1d4ed8;
+                        box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.3);
+                    }
+                    #jobs-map-card .jobs-map-sidebar-item.is-selected {
+                        background: rgba(29, 78, 216, 0.08);
+                    }
                     body.jobs-map-fullscreen-open {
                         overflow: hidden;
                     }
@@ -1237,6 +1248,91 @@ new class extends Component
                 });
             }
 
+            /**
+             * Sidebar items that correspond to the given map markers. Markers
+             * match by coordinates (same source on both sides, compared with
+             * a tolerance), so one marker matches every job in the same spot.
+             */
+            function jobsMapSidebarItemsForMarkers(markers) {
+                var list = document.getElementById('jobs-map-sidebar-list');
+
+                if (! list) {
+                    return [];
+                }
+
+                var entries = (window.jobsMapJobMarkers || []).filter(function (entry) {
+                    return markers.indexOf(entry.marker) !== -1;
+                });
+
+                var items = [];
+
+                if (! entries.length) {
+                    return items;
+                }
+
+                list.querySelectorAll('.jobs-map-sidebar-item').forEach(function (item) {
+                    var lat = parseFloat(item.getAttribute('data-map-lat'));
+                    var lng = parseFloat(item.getAttribute('data-map-lng'));
+
+                    var matches = entries.some(function (entry) {
+                        return Math.abs(entry.lat - lat) < 1e-9 && Math.abs(entry.lng - lng) < 1e-9;
+                    });
+
+                    if (matches) {
+                        items.push(item);
+                    }
+                });
+
+                return items;
+            }
+
+            function jobsMapClearSidebarHover() {
+                (window.jobsMapSidebarHoverItems || []).forEach(function (item) {
+                    item.classList.remove('is-highlighted');
+                });
+
+                window.jobsMapSidebarHoverItems = [];
+            }
+
+            // Hovering a marker (or cluster) on the map highlights its sidebar
+            // item(s) and scrolls the first one into view.
+            function jobsMapHoverSidebar(markers) {
+                jobsMapClearSidebarHover();
+
+                if (! window.jobsMapExpanded) {
+                    return;
+                }
+
+                window.jobsMapSidebarHoverItems = jobsMapSidebarItemsForMarkers(markers);
+
+                window.jobsMapSidebarHoverItems.forEach(function (item, index) {
+                    item.classList.add('is-highlighted');
+
+                    if (index === 0) {
+                        item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    }
+                });
+            }
+
+            // Clicking a marker selects its sidebar item(s); the selection stays
+            // until another marker is clicked, empty map area is clicked or
+            // fullscreen is exited.
+            function jobsMapSelectSidebar(markers) {
+                (window.jobsMapSidebarSelectedItems || []).forEach(function (item) {
+                    item.classList.remove('is-selected');
+                });
+
+                window.jobsMapSidebarSelectedItems = jobsMapSidebarItemsForMarkers(markers);
+
+                window.jobsMapSidebarSelectedItems.forEach(function (item, index) {
+                    item.classList.add('is-selected');
+
+                    if (index === 0 && window.jobsMapExpanded) {
+                        item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    }
+                });
+            }
+
             document.addEventListener('mouseover', function (e) {
                 var item = e.target.closest('.jobs-map-sidebar-item');
 
@@ -1266,6 +1362,8 @@ new class extends Component
 
                 if (! active) {
                     jobsMapClearJobHighlight();
+                    jobsMapClearSidebarHover();
+                    jobsMapSelectSidebar([]);
                 }
 
                 var card = document.getElementById('jobs-map-card');
@@ -1432,6 +1530,18 @@ new class extends Component
 
                         cluster.addLayer(marker);
 
+                        // Hover and click on the map highlight/select the job's
+                        // sidebar item — the reverse of the sidebar hover ping.
+                        marker.on('mouseover', function () {
+                            jobsMapHoverSidebar([marker]);
+                        });
+
+                        marker.on('mouseout', jobsMapClearSidebarHover);
+
+                        marker.on('click', function () {
+                            jobsMapSelectSidebar([marker]);
+                        });
+
                         window.jobsMapJobMarkers.push({
                             lat: point.lat,
                             lng: point.lng,
@@ -1441,6 +1551,14 @@ new class extends Component
                     });
 
                     map.addLayer(cluster);
+
+                    // A cluster bubble represents several markers, so hover
+                    // highlights every sidebar item inside it.
+                    cluster.on('clustermouseover', function (e) {
+                        jobsMapHoverSidebar(e.layer.getAllChildMarkers());
+                    });
+
+                    cluster.on('clustermouseout', jobsMapClearSidebarHover);
 
                     // The user's own location, kept out of the job cluster so it
                     // never merges with job markers and always stays on top.
@@ -1510,6 +1628,13 @@ new class extends Component
 
                         if (target && target.closest && target.closest('.leaflet-popup, .leaflet-control')) {
                             return;
+                        }
+
+                        // Clicking empty map area while fullscreen clears the
+                        // current selection; markers stop propagation so their
+                        // clicks never reach this handler.
+                        if (window.jobsMapExpanded) {
+                            jobsMapSelectSidebar([]);
                         }
 
                         jobsMapSetFullscreen(true);
