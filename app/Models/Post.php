@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use DOMDocument;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 enum PostSource: string
 {
@@ -91,6 +93,97 @@ class Post extends Model
     public function getLocation()
     {
         return join(', ', array_filter([$this->city, $this->zipcode, $this->street, $this->country]));
+    }
+
+    /**
+     * The stored description, or fetch and clean the job page once and persist it.
+     */
+    public function fetchDescription($force = false): ?string
+    {
+        if ($this->description && ! $force) {
+            return $this->description;
+        }
+
+        if (! $this->canonical_url) {
+            return null;
+        }
+
+        if ($force) {
+            Cache::forget('job_description_'.md5($this->canonical_url));
+        }
+
+        $html = Cache::remember('job_description_'.md5($this->canonical_url), now()->addHours(6), function () {
+            return $this->fetchDescriptionBody($this->canonical_url);
+        });
+
+        if (! $html) {
+            return null;
+        }
+
+        $this->description = $html;
+        $this->save();
+
+        return $html;
+    }
+
+    private function fetchDescriptionBody(string $jobUrl): ?string
+    {
+        try {
+            $response = Http::retry(2, 200)
+                ->connectTimeout(5)
+                ->timeout(15)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                ])
+                ->get($jobUrl);
+
+            if (! $response->successful()) {
+                Log::warning('Job description fetch failed.', [
+                    'job_url' => $jobUrl,
+                    'status' => $response->status(),
+                ]);
+
+                return null;
+            }
+
+            return $this->cleanHtmlBody($response->body());
+        } catch (\Throwable $th) {
+            Log::warning('Job description fetch exception.', [
+                'job_url' => $jobUrl,
+                'error' => $th->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Strip page chrome (scripts, styles, navigation) so only the ad markup remains.
+     */
+    private function cleanHtmlBody(string $html): ?string
+    {
+        $dom = new DOMDocument();
+        @$dom->loadHTML($html);
+
+        foreach (['script', 'style', 'noscript', 'nav', 'header', 'footer', 'aside', 'iframe', 'svg'] as $tag) {
+            $nodes = $dom->getElementsByTagName($tag);
+            for ($i = $nodes->length - 1; $i >= 0; $i--) {
+                $nodes->item($i)->parentNode?->removeChild($nodes->item($i));
+            }
+        }
+
+        $body = $dom->getElementsByTagName('body')->item(0);
+
+        if (! $body) {
+            return null;
+        }
+
+        $cleaned = '';
+        foreach ($body->childNodes as $node) {
+            $cleaned .= $dom->saveHTML($node);
+        }
+
+        return trim($cleaned) ?: null;
     }
 
     public static function searchForJobs(User $user, $clearCache = false)

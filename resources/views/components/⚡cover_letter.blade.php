@@ -115,7 +115,7 @@ new class extends Component
         if ($this->jobId) {
             $job = Post::find($this->jobId);
             if ($job) {
-                $jobDescription = $job->description;
+                $jobDescription = $job->fetchDescription() ?? '';
             }
         }
         
@@ -142,6 +142,17 @@ new class extends Component
 
         $this->dispatch('cover-letter-change', content: $response->text);
         $this->dispatch('toast', message: __('Cover letter updated.'), type: 'success');
+    }
+
+    public function getDescription($jobId, $force = false)
+    {
+        $job = Post::find($jobId);
+
+        if ($job?->fetchDescription($force)) {
+            $this->dispatch('toast', message: __('Job description fetched.'), type: 'success');
+        } else {
+            $this->dispatch('toast', message: __('Could not fetch the job description.'), type: 'error');
+        }
     }
 };
 ?>
@@ -417,6 +428,7 @@ new class extends Component
                                 <span class="truncate">{{ $linkedJob->title }} at {{ $linkedJob->company_name }}</span>
                                 <div class="ml-auto flex items-center">
                                     @if ($linkedJob->description)
+                                        <button type="button" class="btn btn-warning btn-xs" wire:click="getDescription({{ $linkedJob->id }}, true)">{{ __('Reload Description') }}</button>
                                         <button type="button" class="btn btn-ghost btn-xs"
                                             @click="showDescription = !showDescription">
                                             {{ __('Description') }}
@@ -427,9 +439,10 @@ new class extends Component
                                                     d="M19 9l-7 7-7-7" />
                                             </svg>
                                         </button>
+                                    @else
+                                        <button type="button" class="btn btn-ghost btn-xs" wire:click="getDescription({{ $linkedJob->id }})">{{ __('Get Description') }}</button>
                                     @endif
-                                    <button type="button" class="btn btn-ghost btn-xs"
-                                        wire:click="$set('jobId', null)">{{ __('Unlink') }}</button>
+                                    <button type="button" class="btn btn-ghost btn-xs" wire:click="$set('jobId', null)">{{ __('Unlink') }}</button>
                                 </div>
                             </div>
                             @if ($linkedJob->description)
@@ -484,6 +497,12 @@ new class extends Component
                                     {!! $job->description !!}
                                 </div>
                             </div>
+                        @elseif ($job->id === $jobId)
+                            <button type="button" class="btn btn-ghost btn-xs mt-1" wire:key="job-desc-{{ $job->id }}"
+                                wire:click="getDescription({{ $job->id }})">
+                                {{ __('Get Description') }}
+                                <span wire:loading wire:target="getDescription({{ $job->id }})" class="loading loading-spinner loading-xs"></span>
+                            </button>
                         @endif
                     @endforeach
 
