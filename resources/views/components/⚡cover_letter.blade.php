@@ -428,8 +428,8 @@ new class extends Component
                                 <span class="truncate">{{ $linkedJob->title }} at {{ $linkedJob->company_name }}</span>
                                 <div class="ml-auto flex items-center">
                                     @if ($linkedJob->description)
-                                        <button type="button" class="btn btn-warning btn-xs" wire:click="getDescription({{ $linkedJob->id }}, true)">{{ __('Reload Description') }}</button>
-                                        <button type="button" class="btn btn-ghost btn-xs"
+                                        <button type="button" class="btn btn-warning btn-xs mr-2" wire:click="getDescription({{ $linkedJob->id }}, true)">{{ __('Reload Description') }}</button>
+                                        <button type="button" class="btn btn-ghost btn-xs mr-2"
                                             @click="showDescription = !showDescription">
                                             {{ __('Description') }}
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 transition-transform"
@@ -440,7 +440,7 @@ new class extends Component
                                             </svg>
                                         </button>
                                     @else
-                                        <button type="button" class="btn btn-ghost btn-xs" wire:click="getDescription({{ $linkedJob->id }})">{{ __('Get Description') }}</button>
+                                        <button type="button" class="btn btn-ghost btn-xs mr-2" wire:click="getDescription({{ $linkedJob->id }})">{{ __('Get Description') }}</button>
                                     @endif
                                     <button type="button" class="btn btn-ghost btn-xs" wire:click="$set('jobId', null)">{{ __('Unlink') }}</button>
                                 </div>
