@@ -203,20 +203,29 @@ class Post extends Model
                 'sort' => 'date',
             ];
 
-            // if ($user->address && $user->max_distance) {
-            //     $data['address'] = $user->address.', '.$user->zip.' '.$user->city;
-            //     $data['radius'] = $user->max_distance;
-            // }
+            $maxPages = 5;
 
             foreach ($keywords as $keyword) {
                 $data['q'] = $keyword;
-                try {
-                    $response = Http::retry(2, 200)
-                        ->connectTimeout(5)
-                        ->timeout(15)->get('https://www.jobindex.dk/api/jobsearch/v3', $data)->json()['results'] ?? [];
 
-                    foreach ($response as $job) {
-                        Post::savePost($job, PostSource::JOBINDEX, $keyword);
+                try {
+                    $page = 1;
+                    $totalPages = 1;
+
+                    while ($page <= min($totalPages, $maxPages)) {
+                        $requestData = $page === 1 ? $data : $data + ['page' => $page];
+
+                        $response = Http::retry(2, 200)
+                            ->connectTimeout(5)
+                            ->timeout(15)->get('https://www.jobindex.dk/api/jobsearch/v3', $requestData)->json();
+
+                        $totalPages = $response['total_pages'] ?? 1;
+
+                        foreach ($response['results'] ?? [] as $job) {
+                            Post::savePost($job, PostSource::JOBINDEX, $keyword);
+                        }
+
+                        $page++;
                     }
                 } catch (\Throwable $th) {
                     continue;
@@ -237,7 +246,7 @@ class Post extends Model
                             'x-csrf' => 1,
                         ])
                         ->get('https://jobnet.dk/bff/FindJob/Search', [
-                            'resultsPerPage' => 20,
+                            'resultsPerPage' => 200,
                             'pageNumber' => 1,
                             'orderType' => 'BestMatch',
                             'searchString' => $keyword,
