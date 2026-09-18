@@ -828,34 +828,28 @@ new class extends Component
                         script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
                         script.onload = function () {
                             // Cluster + spiderfy markers that share the same city coordinates.
-                            var clusterCss = document.createElement('link');
-                            clusterCss.rel = 'stylesheet';
-                            clusterCss.href = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css';
-                            document.head.appendChild(clusterCss);
-
-                            var clusterThemeCss = document.createElement('link');
-                            clusterThemeCss.rel = 'stylesheet';
-                            clusterThemeCss.href = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css';
-                            document.head.appendChild(clusterThemeCss);
-
-                            // The default clusters are pale green with white text — override
-                            // with a dark circle and bolder text so the count is readable.
+                            // The cluster icon is built from scratch via iconCreateFunction
+                            // below, so the plugin's default stylesheets aren't loaded —
+                            // everything it needs lives in this single style block.
                             var clusterStyle = document.createElement('style');
                             clusterStyle.textContent =
-                                '.marker-cluster-small,' +
-                                '.marker-cluster-medium,' +
-                                '.marker-cluster-large {' +
-                                    'background-color: rgba(37, 99, 235, 0.25) !important;' +
+                                // Cluster bubbles: same dot design as the job markers,
+                                // scaled up with the job count inside.
+                                '.job-cluster-icon { background: none; border: none; }' +
+                                '.job-cluster {' +
+                                    'border-radius: 50%;' +
+                                    'background: #1d4ed8;' +
+                                    'border: 3px solid #fff;' +
+                                    'box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.3), 0 2px 8px rgba(0, 0, 0, 0.3);' +
+                                    'color: #fff;' +
+                                    'font-weight: 800;' +
+                                    'font-size: 13px;' +
+                                    'text-align: center;' +
+                                    'text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);' +
+                                    'transition: transform 0.15s ease;' +
                                 '}' +
-                                '.marker-cluster div {' +
-                                    'background-color: #1d4ed8 !important;' +
-                                    'color: #fff !important;' +
-                                    'font-weight: 800 !important;' +
-                                    'font-size: 15px !important;' +
-                                    'text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45) !important;' +
-                                '}' +
-                                '.marker-cluster span {' +
-                                    'line-height: 30px !important;' +
+                                '.job-cluster-icon:hover .job-cluster {' +
+                                    'transform: scale(1.1);' +
                                 '}' +
                                 // Distinct pulsing dot for the user's own location,
                                 // so it stands apart from the blue job markers.
@@ -920,7 +914,19 @@ new class extends Component
                     // so only markers sharing (nearly) the same coordinates group up —
                     // e.g. jobs in the same city — and everything else stays a single
                     // marker no matter how far the map is zoomed out.
-                    var cluster = L.markerClusterGroup({ maxClusterRadius: 0 });
+                    var cluster = L.markerClusterGroup({
+                        maxClusterRadius: 0,
+                        iconCreateFunction: function (group) {
+                            var count = group.getChildCount();
+                            var size = count < 10 ? 36 : count < 50 ? 44 : 52;
+
+                            return L.divIcon({
+                                className: 'job-cluster-icon',
+                                html: '<div class="job-cluster" style="width:' + size + 'px;height:' + size + 'px;line-height:' + (size - 6) + 'px">' + count + '</div>',
+                                iconSize: L.point(size, size)
+                            });
+                        }
+                    });
 
                     var jobIcon = L.divIcon({
                         className: 'job-marker-icon',
