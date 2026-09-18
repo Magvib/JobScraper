@@ -1000,7 +1000,7 @@ new class extends Component
                     // e.g. jobs in the same city — and everything else stays a single
                     // marker no matter how far the map is zoomed out.
                     var cluster = L.markerClusterGroup({
-                        maxClusterRadius: 15,
+                        maxClusterRadius: 18,
                         iconCreateFunction: function (group) {
                             var count = group.getChildCount();
                             var size = count < 10 ? 36 : count < 50 ? 44 : 52;
