@@ -7,16 +7,10 @@ new class extends Component
 {
     public string $username = '';
 
-    public ?string $cv = null;
-
-    public ?array $keywords = null;
-
     public function mount()
     {
         $user = auth()->user();
         $this->username = $user->name;
-        $this->cv = $user->cv;
-        $this->keywords = $user->keywords;
     }
 
     public function getMatchStatsProperty(): array
@@ -101,45 +95,16 @@ new class extends Component
             </div>
 
             <div class="flex gap-2">
-                @if ($cv)
-                    <a href="{{ route('jobs') }}" wire:navigate class="btn btn-primary gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        Browse Jobs
-                    </a>
-                @else
-                    <a href="{{ route('profile') }}" wire:navigate class="btn btn-warning gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        Upload CV
-                    </a>
-                @endif
+                <a href="{{ route('jobs') }}" wire:navigate class="btn btn-primary gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Browse Jobs
+                </a>
             </div>
         </div>
 
-        @if (! $cv)
-            <!-- Onboarding: nothing to show stats for yet -->
-            <div class="card bg-base-100 shadow-lg mb-8">
-                <div class="card-body">
-                    <h2 class="text-xl font-bold mb-4">Get Started</h2>
-                    <ul class="steps w-full">
-                        <li class="step step-primary">Login</li>
-                        <li class="step">Upload CV</li>
-                        <li class="step">AI Analysis</li>
-                        <li class="step">Find Jobs</li>
-                    </ul>
-                    <p class="text-sm text-gray-500 mt-4 text-center">
-                        Upload your CV and our AI will analyze it, then start matching you with relevant jobs.
-                    </p>
-                    <div class="flex justify-center mt-2">
-                        <a href="{{ route('profile') }}" wire:navigate class="btn btn-warning">Upload CV</a>
-                    </div>
-                </div>
-            </div>
-        @else
-            <!-- Stat Tiles -->
+        <!-- Stat Tiles -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <div class="card bg-base-100 shadow-lg border border-base-300">
                     <div class="card-body p-5">
@@ -292,6 +257,5 @@ new class extends Component
                     </div>
                 </div>
             </div>
-        @endif
     </div>
 </div>
