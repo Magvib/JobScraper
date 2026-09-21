@@ -17,6 +17,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
@@ -56,6 +57,21 @@
                     <span class="text-[10px] font-bold uppercase tracking-[0.25em] text-sky-600 mr-2">Kompetencer</span>
                     @foreach ($skills as $skill)
                         <span class="text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 px-3 py-1 rounded-full">{{ $skill }}</span>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        {{-- Links --}}
+        @if ($links->isNotEmpty())
+            <section class="bg-white px-12 py-5 border-b border-sky-200">
+                <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
+                    <span class="text-[10px] font-bold uppercase tracking-[0.25em] text-sky-600 mr-2">Links</span>
+                    @foreach ($links as $link)
+                        <span class="text-sm">
+                            <span class="font-semibold text-sky-700">{{ $link->name }}</span>
+                            <a href="{{ $link->url }}" class="text-sky-600 underline break-all">{{ $link->prettifyUrl() }}</a>
+                        </span>
                     @endforeach
                 </div>
             </section>

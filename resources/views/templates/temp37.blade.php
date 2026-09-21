@@ -19,6 +19,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
 @endphp
 <body class="bg-neutral-300 min-h-screen">
@@ -95,23 +96,42 @@
                     </div>
                 </div>
 
-                {{-- Sidepanel: kompetencer --}}
-                @if ($skills)
+                {{-- Sidepanel: kompetencer & links --}}
+                @if ($skills || $links->isNotEmpty())
                     <div class="w-[46mm] shrink-0 flex flex-col gap-2">
-                        <div class="win-out bg-[#c0c0c0] win-in p-2">
-                            <p class="text-xs font-bold mb-1">☑ Kompetencer</p>
-                            <div class="space-y-1 text-[10px]">
-                                @foreach ($skills as $skill)
-                                    <p class="flex items-center gap-1.5"><span class="win-out bg-white w-3 h-3 inline-block shrink-0"></span> {{ $skill }}</p>
-                                @endforeach
+                        @if ($skills)
+                            <div class="win-out bg-[#c0c0c0] win-in p-2">
+                                <p class="text-xs font-bold mb-1">☑ Kompetencer</p>
+                                <div class="space-y-1 text-[10px]">
+                                    @foreach ($skills as $skill)
+                                        <p class="flex items-center gap-1.5"><span class="win-out bg-white w-3 h-3 inline-block shrink-0"></span> {{ $skill }}</p>
+                                    @endforeach
+                                </div>
                             </div>
-                        </div>
-                        <div class="win-out bg-[#c0c0c0] win-in p-2 text-[10px]">
-                            <p class="font-bold mb-1">Kapacitet</p>
-                            <div class="win-out bg-white win-in h-3 relative">
-                                <div class="absolute inset-y-0 left-0 bg-blue-900 w-[88%]"></div>
+                        @endif
+
+                        @if ($links->isNotEmpty())
+                            <div class="win-out bg-[#c0c0c0] win-in p-2">
+                                <p class="text-xs font-bold mb-1">🔗 Favoritter</p>
+                                <div class="space-y-2 text-[10px]">
+                                    @foreach ($links as $link)
+                                        <p class="break-all">
+                                            <span class="font-bold">{{ $link->name }}</span>
+                                            <a href="{{ $link->url }}" class="text-blue-900 underline">{{ $link->prettifyUrl() }}</a>
+                                        </p>
+                                    @endforeach
+                                </div>
                             </div>
-                        </div>
+                        @endif
+
+                        @if ($skills)
+                            <div class="win-out bg-[#c0c0c0] win-in p-2 text-[10px]">
+                                <p class="font-bold mb-1">Kapacitet</p>
+                                <div class="win-out bg-white win-in h-3 relative">
+                                    <div class="absolute inset-y-0 left-0 bg-blue-900 w-[88%]"></div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 @endif
             </div>

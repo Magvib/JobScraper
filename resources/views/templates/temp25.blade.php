@@ -25,6 +25,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
 @endphp
 <body class="bg-amber-50 min-h-screen">
@@ -103,6 +104,20 @@
                                  {{ $i % 4 === 0 ? 'rotate-[-3deg] text-orange-500' : ($i % 4 === 1 ? 'rotate-[2deg] text-lime-600' : ($i % 4 === 2 ? 'rotate-[-2deg] text-sky-600' : 'rotate-[3deg] text-pink-500')) }}">
                         {{ $skill }} ✨
                     </span>
+                @endforeach
+            </div>
+        @endif
+
+        {{-- Links --}}
+        @if ($links->isNotEmpty())
+            <h2 class="mt-10 text-2xl font-bold text-stone-700 rotate-[-0.5deg] underline decoration-wavy decoration-orange-300 underline-offset-8">Links</h2>
+            <div class="mt-5 flex flex-wrap gap-3">
+                @foreach ($links as $i => $link)
+                    <div class="bg-white shadow-md px-5 py-3 {{ $i % 2 === 0 ? 'rotate-[-1deg]' : 'rotate-[1deg]' }} relative">
+                        <span class="tape {{ $i % 2 === 0 ? '-top-2 left-8 rotate-[3deg]' : '-top-2 right-8 rotate-[-3deg]' }}"></span>
+                        <p class="font-bold">{{ $link->name }}</p>
+                        <a href="{{ $link->url }}" class="text-sm text-stone-600 underline break-all">{{ $link->prettifyUrl() }}</a>
+                    </div>
                 @endforeach
             </div>
         @endif

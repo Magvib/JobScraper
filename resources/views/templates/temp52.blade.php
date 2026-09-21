@@ -17,6 +17,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
@@ -45,15 +46,30 @@
                 </ul>
             </section>
 
-            @if ($skills)
-                <section class="mt-8">
-                    <h2 class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500">Kompetencer</h2>
-                    <ul class="mt-2.5 space-y-1 text-sm text-gray-700">
-                        @foreach ($skills as $skill)
-                            <li>— {{ $skill }}</li>
-                        @endforeach
-                    </ul>
-                </section>
+            @if ($skills || $links->isNotEmpty())
+                @if ($skills)
+                    <section class="mt-8">
+                        <h2 class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500">Kompetencer</h2>
+                        <ul class="mt-2.5 space-y-1 text-sm text-gray-700">
+                            @foreach ($skills as $skill)
+                                <li>— {{ $skill }}</li>
+                            @endforeach
+                        </ul>
+                    </section>
+                @endif
+
+                @if ($links->isNotEmpty())
+                    <section class="mt-8">
+                        <h2 class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500">Links</h2>
+                        <ul class="mt-2.5 space-y-1.5 text-sm text-gray-700">
+                            @foreach ($links as $link)
+                                <li>— {{ $link->name }}<br>
+                                    <a href="{{ $link->url }}" class="text-gray-600 underline break-all">{{ $link->prettifyUrl() }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </section>
+                @endif
             @endif
         </aside>
 

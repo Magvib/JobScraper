@@ -17,6 +17,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
     $firstJob = collect($jobs)->filter(fn ($j) => !empty($j['startDate']))->sortBy('startDate')->first();
     $years = $firstJob ? max(0, \Carbon\Carbon::parse($firstJob['startDate'])->diffInYears(now())) : 0;
@@ -109,6 +110,21 @@
                     @foreach ($skills as $i => $skill)
                         <p class="border border-slate-300 px-3 py-1.5">
                             <span class="text-slate-400">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}.</span> {{ $skill }}
+                        </p>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        {{-- Links som eksterne referencer --}}
+        @if ($links->isNotEmpty())
+            <section class="mt-8 border-t-4 border-double border-slate-800 pt-4">
+                <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-slate-900">Note 3 — Links (eksterne referencer)</h2>
+                <div class="mt-3 divide-y divide-dotted divide-slate-300 text-xs">
+                    @foreach ($links as $i => $link)
+                        <p class="py-2 grid grid-cols-[1fr_1fr] gap-4">
+                            <span><span class="text-slate-400">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}.</span> {{ $link->name }}</span>
+                            <a href="{{ $link->url }}" class="text-right underline break-all">{{ $link->prettifyUrl() }}</a>
                         </p>
                     @endforeach
                 </div>

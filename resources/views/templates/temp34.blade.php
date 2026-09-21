@@ -27,6 +27,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
@@ -104,18 +105,35 @@
                 </p>
             </main>
 
-            {{-- Proviantliste: kompetencer --}}
-            @if ($skills)
+            {{-- Proviantliste: kompetencer & links --}}
+            @if ($skills || $links->isNotEmpty())
                 <aside>
-                    <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-emerald-700 border-b-2 border-emerald-600 pb-2">Proviant — Kompetencer</h2>
-                    <ul class="mt-6 space-y-3 text-sm">
-                        @foreach ($skills as $skill)
-                            <li class="bg-white rounded shadow-sm px-3.5 py-2.5 border border-emerald-100 font-medium flex items-center gap-2">
-                                <span class="text-emerald-500">⚑</span>
-                                {{ $skill }}
-                            </li>
-                        @endforeach
-                    </ul>
+                    @if ($skills)
+                        <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-emerald-700 border-b-2 border-emerald-600 pb-2">Proviant — Kompetencer</h2>
+                        <ul class="mt-6 space-y-3 text-sm">
+                            @foreach ($skills as $skill)
+                                <li class="bg-white rounded shadow-sm px-3.5 py-2.5 border border-emerald-100 font-medium flex items-center gap-2">
+                                    <span class="text-emerald-500">⚑</span>
+                                    {{ $skill }}
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+
+                    @if ($links->isNotEmpty())
+                        <h2 class="mt-8 text-xs font-bold uppercase tracking-[0.3em] text-emerald-700 border-b-2 border-emerald-600 pb-2">Vejviser — Links</h2>
+                        <ul class="mt-6 space-y-3 text-sm">
+                            @foreach ($links as $link)
+                                <li class="bg-white rounded shadow-sm px-3.5 py-2.5 border border-emerald-100">
+                                    <p class="font-medium flex items-center gap-2">
+                                        <span class="text-emerald-500">⚓</span>
+                                        {{ $link->name }}
+                                    </p>
+                                    <a href="{{ $link->url }}" class="mt-0.5 block text-xs text-emerald-700 underline break-all">{{ $link->prettifyUrl() }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </aside>
             @endif
         </div>

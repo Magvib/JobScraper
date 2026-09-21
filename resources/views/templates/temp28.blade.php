@@ -17,6 +17,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
@@ -79,18 +80,33 @@
                 @endif
             </main>
 
-            {{-- Kompetencer nummereret --}}
-            @if ($skills)
+            {{-- Kompetencer & links nummereret --}}
+            @if ($skills || $links->isNotEmpty())
                 <aside>
-                    <h2 class="text-2xl font-black uppercase tracking-tight border-b-4 border-neutral-900 pb-2">Skills</h2>
-                    <ul class="mt-6 space-y-3">
-                        @foreach ($skills as $i => $skill)
-                            <li class="flex items-baseline gap-3 border-b border-neutral-200 pb-2">
-                                <span class="text-xs font-black text-red-600">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</span>
-                                <span class="text-sm font-medium">{{ $skill }}</span>
-                            </li>
-                        @endforeach
-                    </ul>
+                    @if ($skills)
+                        <h2 class="text-2xl font-black uppercase tracking-tight border-b-4 border-neutral-900 pb-2">Skills</h2>
+                        <ul class="mt-6 space-y-3">
+                            @foreach ($skills as $i => $skill)
+                                <li class="flex items-baseline gap-3 border-b border-neutral-200 pb-2">
+                                    <span class="text-xs font-black text-red-600">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</span>
+                                    <span class="text-sm font-medium">{{ $skill }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+
+                    @if ($links->isNotEmpty())
+                        <h2 class="mt-10 text-2xl font-black uppercase tracking-tight border-b-4 border-neutral-900 pb-2">Links</h2>
+                        <ul class="mt-6 space-y-3">
+                            @foreach ($links as $i => $link)
+                                <li class="border-b border-neutral-200 pb-2">
+                                    <span class="text-xs font-black text-red-600">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</span>
+                                    <p class="mt-1 text-sm font-medium">{{ $link->name }}</p>
+                                    <a href="{{ $link->url }}" class="text-sm text-neutral-600 underline break-all">{{ $link->prettifyUrl() }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </aside>
             @endif
         </div>

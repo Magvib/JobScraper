@@ -17,6 +17,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
     $palette = ['#e11d48', '#f59e0b', '#10b981', '#0ea5e9', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 @endphp
@@ -87,6 +88,23 @@
                         </div>
                     @endforeach
                 </div>
+            </section>
+        @endif
+
+        @if ($links->isNotEmpty())
+            <section class="mt-10">
+                <h2 class="text-sm font-black uppercase tracking-[0.2em] text-neutral-900 flex items-center gap-4">
+                    Links <span class="flex-1 h-1 bg-neutral-900 rounded-full"></span>
+                </h2>
+                <ul class="mt-5 text-sm space-y-2 text-neutral-700">
+                    @foreach ($links as $i => $link)
+                        <li class="flex items-center gap-3">
+                            <span class="w-2.5 h-2.5 shrink-0 rotate-45" style="background: {{ $palette[$i % count($palette)] }}"></span>
+                            <span class="font-semibold text-neutral-900">{{ $link->name }}:</span>
+                            <a href="{{ $link->url }}" class="underline break-all">{{ $link->prettifyUrl() }}</a>
+                        </li>
+                    @endforeach
+                </ul>
             </section>
         @endif
 

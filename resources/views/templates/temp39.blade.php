@@ -24,6 +24,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
 @endphp
 <body class="bg-[#8a7156] min-h-screen">
@@ -102,6 +103,23 @@
                         {{ collect($skills)->implode(' · ') }}
                     </p>
                     <p class="mt-2 text-sm italic text-[#e8e4d8]/60">— serveres med engagement —</p>
+                </section>
+            @endif
+
+            {{-- Links --}}
+            @if ($links->isNotEmpty())
+                <section class="mt-10 text-center">
+                    <h2 class="text-2xl font-bold uppercase tracking-widest text-[#fbbf24]">Se Mere Her</h2>
+                    <div class="mt-4 space-y-2 text-lg">
+                        @foreach ($links as $link)
+                            <p>
+                                <span class="font-bold">{{ $link->name }}</span>
+                                <span class="text-[#e8e4d8]/60"> — </span>
+                                <a href="{{ $link->url }}" class="text-[#fbbf24] underline break-all">{{ $link->prettifyUrl() }}</a>
+                            </p>
+                        @endforeach
+                    </div>
+                    <p class="mt-2 text-sm italic text-[#e8e4d8]/60">— find mig også online —</p>
                 </section>
             @endif
 

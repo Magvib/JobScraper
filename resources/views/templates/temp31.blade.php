@@ -23,6 +23,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
@@ -93,22 +94,39 @@
                 @endif
             </main>
 
-            {{-- Kompetencer i gitter --}}
-            @if ($skills)
+            {{-- Kompetencer & links i gitter --}}
+            @if ($skills || $links->isNotEmpty())
                 <aside>
-                    <h2 class="flex items-center gap-3 text-sm font-black uppercase tracking-[0.25em] border-b-2 border-neutral-900 pb-3">
-                        <span class="w-4 h-4 bg-yellow-400 inline-block rotate-45"></span>
-                        Kompetencer
-                    </h2>
-                    @if ($photo)
-                        <img src="{{ $photo }}" alt="{{ $user->name }}"
-                             class="mt-6 w-28 h-28 object-cover border-2 border-neutral-900">
+                    @if ($skills)
+                        <h2 class="flex items-center gap-3 text-sm font-black uppercase tracking-[0.25em] border-b-2 border-neutral-900 pb-3">
+                            <span class="w-4 h-4 bg-yellow-400 inline-block rotate-45"></span>
+                            Kompetencer
+                        </h2>
+                        @if ($photo)
+                            <img src="{{ $photo }}" alt="{{ $user->name }}"
+                                 class="mt-6 w-28 h-28 object-cover border-2 border-neutral-900">
+                        @endif
+                        <div class="mt-6 grid grid-cols-2 gap-3">
+                            @foreach ($skills as $skill)
+                                <span class="text-xs font-bold bg-white border border-neutral-900 px-3 py-2 text-center leading-4">{{ $skill }}</span>
+                            @endforeach
+                        </div>
                     @endif
-                    <div class="mt-6 grid grid-cols-2 gap-3">
-                        @foreach ($skills as $skill)
-                            <span class="text-xs font-bold bg-white border border-neutral-900 px-3 py-2 text-center leading-4">{{ $skill }}</span>
-                        @endforeach
-                    </div>
+
+                    @if ($links->isNotEmpty())
+                        <h2 class="mt-8 flex items-center gap-3 text-sm font-black uppercase tracking-[0.25em] border-b-2 border-neutral-900 pb-3">
+                            <span class="w-4 h-4 rounded-full bg-blue-600 inline-block"></span>
+                            Links
+                        </h2>
+                        <ul class="mt-6 space-y-3 text-sm">
+                            @foreach ($links as $link)
+                                <li>
+                                    <p class="font-bold">{{ $link->name }}</p>
+                                    <a href="{{ $link->url }}" class="text-blue-600 underline break-all">{{ $link->prettifyUrl() }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </aside>
             @endif
         </div>

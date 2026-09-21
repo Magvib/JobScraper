@@ -17,6 +17,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
     $initials = collect(explode(' ', (string) $user->name))->filter()->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(2)->implode('');
 @endphp
@@ -102,6 +103,17 @@
                     @endif
                     @if ($user->birthdate)
                         <p class="mb-2">Født {{ $user->birthdate->format('d/m/Y') }}</p>
+                    @endif
+                    @if ($links->isNotEmpty())
+                        <div class="border-t border-neutral-300 pt-4">
+                            <p class="text-[10px] font-bold uppercase tracking-[0.4em] text-neutral-900 mb-2">Links</p>
+                            @foreach ($links as $link)
+                                <p class="mb-2 leading-snug break-all">
+                                    <span class="font-semibold text-neutral-700">{{ $link->name }}:</span>
+                                    <a href="{{ $link->url }}" class="underline">{{ $link->prettifyUrl() }}</a>
+                                </p>
+                            @endforeach
+                        </div>
                     @endif
                 </div>
             </aside>

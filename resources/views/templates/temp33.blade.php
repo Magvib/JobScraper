@@ -17,6 +17,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
     $activeJobs = collect($jobs)->filter(fn ($j) => empty($j['endDate']))->values();
     $doneJobs = collect($jobs)->filter(fn ($j) => !empty($j['endDate']))->values();
@@ -119,6 +120,24 @@
                             <div class="bg-white rounded shadow px-3 py-2 flex items-center gap-2 border-l-4 border-l-violet-500">
                                 <span class="text-violet-400 text-xs">◆</span>
                                 <p class="text-xs font-semibold text-slate-700 leading-4">{{ $skill }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            {{-- RESOURCES: links --}}
+            @if ($links->isNotEmpty())
+                <div class="bg-slate-100 rounded-lg p-3 flex flex-col">
+                    <div class="flex items-center justify-between px-1 pb-2">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-amber-600">🔗 Links</p>
+                        <span class="bg-amber-600 text-white text-[10px] font-bold rounded-full px-2 py-0.5">{{ $links->count() }}</span>
+                    </div>
+                    <div class="space-y-2.5">
+                        @foreach ($links as $link)
+                            <div class="bg-white rounded shadow px-3 py-2 border-l-4 border-l-amber-500">
+                                <p class="text-xs font-semibold text-slate-700 leading-4">{{ $link->name }}</p>
+                                <a href="{{ $link->url }}" class="text-[10px] text-blue-600 underline break-all">{{ $link->prettifyUrl() }}</a>
                             </div>
                         @endforeach
                     </div>

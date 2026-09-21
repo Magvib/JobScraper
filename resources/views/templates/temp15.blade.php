@@ -17,6 +17,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
     $barWidths = [88, 76, 94, 68, 82, 72];
 @endphp
@@ -50,23 +51,37 @@
         </header>
 
         <div class="mt-10 grid grid-cols-[54mm_1fr] gap-10 flex-1">
-            {{-- Kompetencer som bjælker --}}
-            @if ($skills)
+            {{-- Kompetencer som bjælker & links --}}
+            @if ($skills || $links->isNotEmpty())
                 <aside>
-                    <h2 class="text-[10px] font-bold uppercase tracking-[0.3em] text-cyan-600 border-b border-slate-300 pb-2">Kompetencer</h2>
-                    <div class="mt-5 space-y-4">
-                        @foreach ($skills as $i => $skill)
-                            <div>
-                                <div class="flex justify-between text-xs font-semibold text-slate-700">
-                                    <span>{{ $skill }}</span>
+                    @if ($skills)
+                        <h2 class="text-[10px] font-bold uppercase tracking-[0.3em] text-cyan-600 border-b border-slate-300 pb-2">Kompetencer</h2>
+                        <div class="mt-5 space-y-4">
+                            @foreach ($skills as $i => $skill)
+                                <div>
+                                    <div class="flex justify-between text-xs font-semibold text-slate-700">
+                                        <span>{{ $skill }}</span>
+                                    </div>
+                                    <div class="mt-1.5 h-2 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full bg-linear-to-r from-cyan-500 to-teal-400"
+                                             style="width: {{ $barWidths[$i % count($barWidths)] }}%"></div>
+                                    </div>
                                 </div>
-                                <div class="mt-1.5 h-2 bg-slate-200 rounded-full overflow-hidden">
-                                    <div class="h-full rounded-full bg-linear-to-r from-cyan-500 to-teal-400"
-                                         style="width: {{ $barWidths[$i % count($barWidths)] }}%"></div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    @if ($links->isNotEmpty())
+                        <h2 class="mt-8 text-[10px] font-bold uppercase tracking-[0.3em] text-cyan-600 border-b border-slate-300 pb-2">Links</h2>
+                        <ul class="mt-5 space-y-3 text-xs">
+                            @foreach ($links as $link)
+                                <li>
+                                    <p class="font-bold text-slate-700">{{ $link->name }}</p>
+                                    <a href="{{ $link->url }}" class="text-cyan-600 underline break-all">{{ $link->prettifyUrl() }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </aside>
             @endif
 

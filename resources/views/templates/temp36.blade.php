@@ -29,6 +29,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
     $initial = strtoupper(mb_substr(trim($user->name ?? 'C'), 0, 1));
 @endphp
@@ -94,15 +95,29 @@
                     @endif
                 </main>
 
-                {{-- Kompetencer --}}
-                @if ($skills)
+                {{-- Kompetencer & links --}}
+                @if ($skills || $links->isNotEmpty())
                     <aside>
-                        <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-slate-400 border-l-4 border-slate-900 pl-3">Kompetencer</h2>
-                        <div class="mt-7 flex flex-wrap gap-2">
-                            @foreach ($skills as $skill)
-                                <span class="text-xs font-medium text-slate-600 border border-slate-200 px-3 py-1.5 rounded-full">{{ $skill }}</span>
-                            @endforeach
-                        </div>
+                        @if ($skills)
+                            <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-slate-400 border-l-4 border-slate-900 pl-3">Kompetencer</h2>
+                            <div class="mt-7 flex flex-wrap gap-2">
+                                @foreach ($skills as $skill)
+                                    <span class="text-xs font-medium text-slate-600 border border-slate-200 px-3 py-1.5 rounded-full">{{ $skill }}</span>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        @if ($links->isNotEmpty())
+                            <h2 class="mt-10 text-xs font-bold uppercase tracking-[0.3em] text-slate-400 border-l-4 border-slate-900 pl-3">Links</h2>
+                            <ul class="mt-7 space-y-3 text-xs">
+                                @foreach ($links as $link)
+                                    <li>
+                                        <p class="font-semibold text-slate-700">{{ $link->name }}</p>
+                                        <a href="{{ $link->url }}" class="text-slate-500 underline break-all">{{ $link->prettifyUrl() }}</a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
                     </aside>
                 @endif
             </div>

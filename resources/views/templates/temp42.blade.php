@@ -17,6 +17,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
@@ -45,17 +46,31 @@
                 </ul>
             </section>
 
-            @if ($skills)
+            @if ($skills || $links->isNotEmpty())
                 <section>
-                    <h2 class="text-[11px] font-bold uppercase tracking-[0.25em] text-emerald-300 border-b border-emerald-700 pb-2">Kompetencer</h2>
-                    <ul class="mt-3 space-y-2 text-sm">
-                        @foreach ($skills as $skill)
-                            <li class="flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-                                {{ $skill }}
-                            </li>
-                        @endforeach
-                    </ul>
+                    @if ($skills)
+                        <h2 class="text-[11px] font-bold uppercase tracking-[0.25em] text-emerald-300 border-b border-emerald-700 pb-2">Kompetencer</h2>
+                        <ul class="mt-3 space-y-2 text-sm">
+                            @foreach ($skills as $skill)
+                                <li class="flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                                    {{ $skill }}
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+
+                    @if ($links->isNotEmpty())
+                        <h2 class="mt-7 text-[11px] font-bold uppercase tracking-[0.25em] text-emerald-300 border-b border-emerald-700 pb-2">Links</h2>
+                        <ul class="mt-3 space-y-2 text-sm">
+                            @foreach ($links as $link)
+                                <li>
+                                    <span class="text-emerald-300">{{ $link->name }}</span>
+                                    <a href="{{ $link->url }}" class="block text-emerald-50/80 underline break-all">{{ $link->prettifyUrl() }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </section>
             @endif
         </aside>

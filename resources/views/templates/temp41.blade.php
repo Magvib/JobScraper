@@ -46,6 +46,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
 @endphp
 <body class="bg-neutral-200 min-h-screen">
@@ -112,6 +113,18 @@
                 @foreach ($skills as $i => $skill)
                     <span class="text-sm font-black uppercase {{ ['bg-red-500 text-white rotate-[-2deg]', 'bg-yellow-300 text-black rotate-[2deg]', 'bg-blue-500 text-white rotate-[-1deg]', 'bg-green-400 text-black rotate-[3deg]'][$i % 4] }} border-2 border-black px-4 py-2 shadow-[3px_3px_0_#000]">
                         {{ $skill }}
+                    </span>
+                @endforeach
+            </div>
+        @endif
+
+        {{-- Links --}}
+        @if ($links->isNotEmpty())
+            <h2 class="mt-10 text-2xl font-black uppercase tracking-wide border-b-4 border-black pb-1">Følg helten!</h2>
+            <div class="mt-5 flex flex-wrap gap-3">
+                @foreach ($links as $i => $link)
+                    <span class="text-sm font-black {{ $i % 2 === 0 ? 'bg-yellow-300 text-black -rotate-[0.5deg]' : 'bg-white text-black rotate-[0.5deg]' }} border-2 border-black px-4 py-2 shadow-[3px_3px_0_#000]">
+                        {{ $link->name }} · <a href="{{ $link->url }}" class="underline break-all">{{ $link->prettifyUrl() }}</a>
                     </span>
                 @endforeach
             </div>

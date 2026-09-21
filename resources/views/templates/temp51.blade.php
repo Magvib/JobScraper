@@ -16,6 +16,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
@@ -68,6 +69,20 @@
             <section class="mt-7">
                 <h2 class="text-xs font-bold uppercase tracking-widest text-gray-900">Kompetencer</h2>
                 <p class="mt-2 text-sm text-gray-700">{{ implode(', ', $skills) }}</p>
+            </section>
+        @endif
+
+        @if ($links->isNotEmpty())
+            <section class="mt-7">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-gray-900">Links</h2>
+                <ul class="mt-2 space-y-1 text-sm text-gray-700">
+                    @foreach ($links as $link)
+                        <li>
+                            <span class="font-semibold">{{ $link->name }}:</span>
+                            <a href="{{ $link->url }}" class="underline break-all">{{ $link->prettifyUrl() }}</a>
+                        </li>
+                    @endforeach
+                </ul>
             </section>
         @endif
 

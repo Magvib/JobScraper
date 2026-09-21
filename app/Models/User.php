@@ -48,6 +48,11 @@ class User extends Authenticatable
         return $this->hasMany(CoverLetter::class);
     }
 
+    public function links()
+    {
+        return $this->hasMany(Link::class);
+    }
+
     /**
      * Get the user's initials
      */

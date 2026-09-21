@@ -41,6 +41,12 @@ new class extends Component
 
     public string $newSkill = '';
 
+    public array $links = [];
+
+    public string $newLinkName = '';
+
+    public string $newLinkUrl = '';
+
     public bool $autoMatchNewJobs = false;
 
     public ?float $notifySkillsMatchThreshold = null;
@@ -71,6 +77,7 @@ new class extends Component
         $this->jobTitle = $user->job_title ?? '';
         $this->keywords = $user->keywords ?? [];
         $this->skills = $user->skills ?? [];
+        $this->links = $user->links->map(fn ($link) => ['name' => $link->name, 'url' => $link->url])->all();
         $this->autoMatchNewJobs = (bool) $user->auto_match_new_jobs;
         $this->notifySkillsMatchThreshold = $user->notify_skills_match_threshold;
         $this->notifyExperienceRelevanceThreshold = $user->notify_experience_relevance_threshold;
@@ -111,6 +118,9 @@ new class extends Component
             'notifySeniorityFitThreshold' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notifyKeywordMatchThreshold' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notifyMatchMode' => ['required', 'in:any,all'],
+            'links' => ['array'],
+            'links.*.name' => ['required', 'string', 'max:255'],
+            'links.*.url' => ['required', 'url', 'max:255'],
         ]);
 
         $user = auth()->user();
@@ -158,6 +168,9 @@ new class extends Component
         $user->keywords = $this->keywords;
         $user->skills = $this->skills;
         $user->save();
+
+        $user->links()->delete();
+        $user->links()->createMany($this->links);
         $this->dispatch(
             'toast',
             message: __('Profile saved successfully.'),
@@ -243,6 +256,31 @@ new class extends Component
         if (isset($this->skills[$index])) {
             unset($this->skills[$index]);
             $this->skills = array_values($this->skills);
+        }
+    }
+
+    public function addLink(): void
+    {
+        $name = trim($this->newLinkName);
+        $url = trim($this->newLinkUrl);
+
+        // Assume https:// when the user left out the scheme.
+        if ($url && ! preg_match('#^https?://#i', $url)) {
+            $url = 'https://' . $url;
+        }
+
+        if ($name && $url && ! collect($this->links)->contains(fn ($link) => $link['name'] === $name && $link['url'] === $url)) {
+            $this->links[] = ['name' => $name, 'url' => $url];
+            $this->newLinkName = '';
+            $this->newLinkUrl = '';
+        }
+    }
+
+    public function removeLink(int $index): void
+    {
+        if (isset($this->links[$index])) {
+            unset($this->links[$index]);
+            $this->links = array_values($this->links);
         }
     }
 
@@ -514,6 +552,48 @@ new class extends Component
                                 {{ __('Add') }}
                             </button>
                         </div>
+                    </fieldset>
+
+                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4 mt-4">
+                        <legend class="fieldset-legend">{{ __('Links') }}</legend>
+                        <p class="text-sm text-base-content/60 mb-3">{{ __('Add links to your GitHub, LinkedIn, portfolio and more. These are displayed on your CV.') }}</p>
+
+                        <div class="flex flex-col gap-2 mb-3">
+                            @foreach($links as $index => $link)
+                            <div class="flex items-center justify-between gap-2 border border-base-300 rounded-box px-3 py-2">
+                                <div class="min-w-0">
+                                    <span class="font-semibold">{{ $link['name'] }}</span>
+                                    <a href="{{ $link['url'] }}" target="_blank" rel="noopener" class="block text-sm text-base-content/60 truncate hover:text-primary">
+                                        {{ $link['url'] }}
+                                    </a>
+                                </div>
+                                <button type="button" wire:click="removeLink({{ $index }})" class="hover:text-error shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            @endforeach
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <input
+                                type="text"
+                                wire:model="newLinkName"
+                                class="input input-bordered w-full"
+                                placeholder="{{ __('Name (e.g. GitHub)') }}"
+                                maxlength="255" />
+                            <input
+                                type="text"
+                                wire:model="newLinkUrl"
+                                wire:keydown.enter="addLink"
+                                class="input input-bordered w-full"
+                                placeholder="{{ __('URL (e.g. github.com/username)') }}"
+                                maxlength="255" />
+                        </div>
+                        <button type="button" wire:click="addLink" class="btn btn-secondary mt-2">
+                            {{ __('Add') }}
+                        </button>
                     </fieldset>
 
                     <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">

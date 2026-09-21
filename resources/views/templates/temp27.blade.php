@@ -17,6 +17,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
     $initials = collect(explode(' ', trim($user->name ?? '')))->map(fn ($w) => strtoupper(mb_substr($w, 0, 1)))->implode('');
 @endphp
@@ -94,6 +95,23 @@
                     <p class="text-center text-sm leading-7 text-stone-600">
                         {{ collect($skills)->implode(' · ') }}
                     </p>
+                </div>
+            </section>
+        @endif
+
+        {{-- Links --}}
+        @if ($links->isNotEmpty())
+            <section class="mt-10">
+                <h2 class="text-sm font-bold uppercase tracking-[0.35em] text-stone-700 text-center">Yderligere henvisninger</h2>
+                <div class="mt-5 mx-auto max-w-[150mm] border-t border-b border-stone-300 py-4 px-6">
+                    <ul class="text-center text-sm space-y-1 text-stone-600">
+                        @foreach ($links as $link)
+                            <li>
+                                <span class="font-bold text-stone-800">{{ $link->name }}</span> ·
+                                <a href="{{ $link->url }}" class="underline break-all">{{ $link->prettifyUrl() }}</a>
+                            </li>
+                        @endforeach
+                    </ul>
                 </div>
             </section>
         @endif
