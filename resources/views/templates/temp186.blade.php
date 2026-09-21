@@ -1,4 +1,4 @@
-{{-- Flush Right --}}
+{{-- Bold Statement --}}
 <!DOCTYPE html>
 <html lang="da">
 <head>
@@ -21,25 +21,22 @@
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
-    <div class="cv-page max-w-[210mm] mx-auto bg-white text-stone-800 shadow-lg min-h-[297mm] font-sans px-14 pt-10 pb-12 flex flex-col">
+    <div class="cv-page max-w-[210mm] mx-auto bg-white text-stone-800 shadow-lg min-h-[297mm] font-sans px-14 py-12 flex flex-col">
 
-        {{-- Dobbelt regel øverst --}}
-        <div class="border-t-2 border-stone-900"></div>
-        <div class="mt-1 border-t border-stone-300"></div>
+        {{-- Etikette-række --}}
+        <div class="flex items-center gap-3">
+            <span class="w-2.5 h-2.5 bg-[#a34a28]"></span>
+            <p class="text-[10px] font-bold uppercase tracking-[0.45em] text-stone-500">Curriculum Vitae</p>
+        </div>
 
-        {{-- Højrestillet brevhoved --}}
-        <header class="mt-8 grid grid-cols-[auto_1fr] gap-10 items-start">
-            @if ($photo)
-                <img src="{{ $photo }}" alt="{{ $user->name }}"
-                     class="w-24 h-24 object-cover border border-stone-300 mt-2">
-            @endif
-            <div class="text-right">
-                <p class="text-[10px] font-bold uppercase tracking-[0.45em] text-[#9f1239]">Curriculum Vitae</p>
-                <h1 class="mt-3 font-serif text-5xl font-bold leading-tight text-stone-900">{{ $user->name }}</h1>
+        {{-- Kæmpe navn som hovedelement --}}
+        <header class="mt-6 grid grid-cols-[1fr_28mm] gap-8 items-start">
+            <div>
+                <h1 class="font-serif text-[13mm] font-bold leading-[0.95] tracking-tight text-stone-900">{{ $user->name }}</h1>
                 @if ($user->job_title)
-                    <p class="mt-2 font-serif text-lg italic text-stone-500">{{ $user->job_title }}</p>
+                    <p class="mt-4 text-xl text-[#a34a28]">{{ $user->job_title }}</p>
                 @endif
-                <div class="mt-5 flex flex-wrap justify-end gap-x-6 gap-y-1 text-xs text-stone-600">
+                <div class="mt-6 flex flex-wrap gap-x-6 gap-y-1 text-xs text-stone-600">
                     @if ($user->phone)
                         <span><span class="font-bold text-stone-900">Tlf</span> {{ $user->phone }}</span>
                     @endif
@@ -52,19 +49,25 @@
                     @endif
                 </div>
             </div>
+            @if ($photo)
+                <img src="{{ $photo }}" alt="{{ $user->name }}"
+                     class="w-24 h-24 object-cover border border-stone-300 justify-self-end">
+            @endif
         </header>
 
-        <div class="mt-9 grid grid-cols-[1fr_48mm] gap-12 flex-1">
+        <div class="mt-8 border-t border-stone-200"></div>
+
+        <div class="mt-8 grid grid-cols-[1fr_48mm] gap-12 flex-1">
             {{-- Erhvervserfaring --}}
             <main>
                 @if (isset($coverLetter))
-                    <h2 class="text-right text-[10px] font-bold uppercase tracking-[0.35em] text-[#9f1239] border-b border-stone-200 pb-2.5">Ansøgning</h2>
+                    <h2 class="text-[10px] font-bold uppercase tracking-[0.4em] text-[#a34a28]">Ansøgning</h2>
                     <div class="mt-6 space-y-4">
                         {!! $coverLetter->renderContext() !!}
                     </div>
                 @elseif ($jobs)
-                    <h2 class="text-right text-[10px] font-bold uppercase tracking-[0.35em] text-[#9f1239] border-b border-stone-200 pb-2.5">Erhvervserfaring &amp; Uddannelse</h2>
-                    <div class="mt-6 space-y-6">
+                    <h2 class="text-[10px] font-bold uppercase tracking-[0.4em] text-[#a34a28]">Erhvervserfaring &amp; Uddannelse</h2>
+                    <div class="mt-7 space-y-8">
                         @foreach ($jobs as $job)
                             <article>
                                 <p class="text-[10px] font-bold uppercase tracking-[0.25em] text-stone-400 tabular-nums">
@@ -72,10 +75,10 @@
                                     –
                                     {{ !empty($job['endDate']) ? \Carbon\Carbon::parse($job['endDate'])->format('m/Y') : 'nu' }}
                                 </p>
-                                <h3 class="mt-1 font-serif text-xl font-bold leading-snug text-stone-900">{{ $job['title'] }}</h3>
-                                <p class="text-sm text-[#9f1239]">{{ $job['company'] }}</p>
+                                <h3 class="mt-1.5 font-serif text-2xl font-bold leading-snug text-stone-900">{{ $job['title'] }}</h3>
+                                <p class="mt-0.5 text-sm text-stone-500">{{ $job['company'] }}</p>
                                 @if (!empty($job['description']))
-                                    <p class="mt-2 text-sm leading-relaxed text-stone-600">{{ $job['description'] }}</p>
+                                    <p class="mt-2.5 text-sm leading-relaxed text-stone-600">{{ $job['description'] }}</p>
                                 @endif
                             </article>
                         @endforeach
@@ -87,11 +90,11 @@
             @if ($skills || $links->isNotEmpty())
                 <aside>
                     @if ($skills)
-                        <h2 class="text-right text-[10px] font-bold uppercase tracking-[0.35em] text-[#9f1239] border-b border-stone-200 pb-2.5">Kompetencer</h2>
-                        <ul class="mt-5 space-y-2.5 text-sm text-stone-700">
+                        <h2 class="text-[10px] font-bold uppercase tracking-[0.4em] text-[#a34a28]">Kompetencer</h2>
+                        <ul class="mt-6 space-y-3 text-sm text-stone-700">
                             @foreach ($skills as $skill)
-                                <li class="flex items-start gap-2.5">
-                                    <span class="mt-[7px] w-1.5 h-1.5 bg-[#9f1239] shrink-0"></span>
+                                <li class="flex items-baseline gap-2.5">
+                                    <span class="text-[#a34a28] leading-none">—</span>
                                     <span>{{ $skill }}</span>
                                 </li>
                             @endforeach
@@ -99,12 +102,12 @@
                     @endif
 
                     @if ($links->isNotEmpty())
-                        <h2 class="mt-8 text-right text-[10px] font-bold uppercase tracking-[0.35em] text-[#9f1239] border-b border-stone-200 pb-2.5">Links</h2>
-                        <ul class="mt-5 space-y-3 text-sm">
+                        <h2 class="mt-10 text-[10px] font-bold uppercase tracking-[0.4em] text-[#a34a28]">Links</h2>
+                        <ul class="mt-6 space-y-3 text-sm">
                             @foreach ($links as $link)
                                 <li>
                                     <p class="font-bold text-stone-900">{{ $link->name }}</p>
-                                    <a href="{{ $link->url }}" class="text-[#9f1239] underline underline-offset-2 break-all">{{ $link->prettifyUrl() }}</a>
+                                    <a href="{{ $link->url }}" class="text-[#a34a28] underline underline-offset-2 break-all">{{ $link->prettifyUrl() }}</a>
                                 </li>
                             @endforeach
                         </ul>
@@ -113,14 +116,10 @@
             @endif
         </div>
 
-        {{-- Dobbelt regel i bunden, spejlet --}}
-        <footer class="mt-12">
-            <div class="border-t border-stone-300"></div>
-            <div class="mt-1 border-t-2 border-stone-900"></div>
-            <div class="mt-3 flex justify-between text-[10px] uppercase tracking-[0.3em] text-stone-400">
-                <span>{{ $user->name }}</span>
-                <span>Curriculum Vitae</span>
-            </div>
+        {{-- Footer --}}
+        <footer class="mt-12 pt-4 border-t border-stone-200 flex items-baseline justify-between">
+            <p class="font-serif text-lg font-bold text-stone-900">{{ $user->name }}</p>
+            <p class="text-[10px] uppercase tracking-[0.3em] text-stone-400">Curriculum Vitae</p>
         </footer>
     </div>
 </body>

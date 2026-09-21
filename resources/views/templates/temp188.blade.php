@@ -1,4 +1,4 @@
-{{-- Ribbon Edge --}}
+{{-- Spine Label --}}
 <!DOCTYPE html>
 <html lang="da">
 <head>
@@ -21,32 +21,32 @@
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
-    <div class="cv-page max-w-[210mm] mx-auto bg-white text-stone-800 shadow-lg min-h-[297mm] font-sans flex">
+    <div class="cv-page max-w-[210mm] mx-auto bg-white text-stone-800 shadow-lg min-h-[297mm] font-sans grid grid-cols-[14mm_1fr]">
 
-        {{-- Smal violet bånd langs venstre kant --}}
-        <div class="w-[12mm] bg-[#5b21b6] flex flex-col items-center justify-between py-10">
-            <span class="w-2 h-2 bg-white/80"></span>
-            <span class="w-2 h-2 bg-white/40"></span>
-            <span class="w-2 h-2 bg-white/80"></span>
+        {{-- Bogryg-søjle med roteret label --}}
+        <div class="bg-stone-900 text-stone-400 relative flex flex-col items-center justify-between py-8">
+            <span class="w-2.5 h-2.5 bg-amber-500 mt-2"></span>
+            <p class="[writing-mode:vertical-rl] rotate-180 text-[10px] font-bold uppercase tracking-[0.5em] whitespace-nowrap select-none">
+                Curriculum Vitae
+            </p>
+            <span class="w-2.5 h-2.5 bg-amber-500 mb-2"></span>
         </div>
 
         {{-- Indhold --}}
-        <div class="flex-1 px-12 py-12 flex flex-col min-w-0">
+        <div class="px-12 py-12 flex flex-col min-w-0">
             <header class="flex items-start justify-between gap-10 pb-7 border-b border-stone-200">
                 <div>
-                    <p class="text-[10px] font-bold uppercase tracking-[0.45em] text-[#5b21b6]">Curriculum Vitae</p>
-                    <h1 class="mt-3 font-serif text-5xl font-bold leading-tight text-stone-900">{{ $user->name }}</h1>
+                    <h1 class="font-serif text-5xl font-bold leading-tight text-stone-900">{{ $user->name }}</h1>
                     @if ($user->job_title)
-                        <p class="mt-2 text-lg italic text-stone-500">{{ $user->job_title }}</p>
+                        <p class="mt-2 text-lg text-amber-700 tracking-wide">{{ $user->job_title }}</p>
                     @endif
                 </div>
                 @if ($photo)
                     <img src="{{ $photo }}" alt="{{ $user->name }}"
-                         class="w-28 h-28 rounded-full object-cover ring-1 ring-stone-300 ring-offset-4 shrink-0 mt-1">
+                         class="w-24 h-24 object-cover border border-stone-300 shrink-0">
                 @endif
             </header>
 
-            {{-- Kontakt-række --}}
             <div class="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-stone-600">
                 @if ($user->phone)
                     <span><span class="font-bold text-stone-900">Tlf</span> {{ $user->phone }}</span>
@@ -60,26 +60,26 @@
                 @endif
             </div>
 
-            <div class="mt-9 grid grid-cols-[1fr_48mm] gap-12 flex-1">
+            <div class="mt-8 grid grid-cols-[1fr_48mm] gap-12 flex-1">
                 {{-- Erhvervserfaring --}}
                 <main>
                     @if (isset($coverLetter))
-                        <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-[#5b21b6] border-b border-stone-200 pb-2.5">Ansøgning</h2>
+                        <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-stone-900 border-b border-stone-200 pb-2.5">Ansøgning</h2>
                         <div class="mt-6 space-y-4">
                             {!! $coverLetter->renderContext() !!}
                         </div>
                     @elseif ($jobs)
-                        <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-[#5b21b6] border-b border-stone-200 pb-2.5">Erhvervserfaring &amp; Uddannelse</h2>
+                        <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-stone-900 border-b border-stone-200 pb-2.5">Erhvervserfaring &amp; Uddannelse</h2>
                         <div class="mt-6 space-y-6">
                             @foreach ($jobs as $job)
-                                <article>
+                                <article class="relative pl-5 border-l-2 border-amber-500">
                                     <p class="text-[10px] font-bold uppercase tracking-[0.25em] text-stone-400 tabular-nums">
                                         {{ \Carbon\Carbon::parse($job['startDate'])->format('m/Y') }}
                                         –
                                         {{ !empty($job['endDate']) ? \Carbon\Carbon::parse($job['endDate'])->format('m/Y') : 'nu' }}
                                     </p>
                                     <h3 class="mt-1 font-serif text-xl font-bold leading-snug text-stone-900">{{ $job['title'] }}</h3>
-                                    <p class="text-sm text-[#5b21b6]">{{ $job['company'] }}</p>
+                                    <p class="text-sm text-amber-700">{{ $job['company'] }}</p>
                                     @if (!empty($job['description']))
                                         <p class="mt-2 text-sm leading-relaxed text-stone-600">{{ $job['description'] }}</p>
                                     @endif
@@ -93,11 +93,11 @@
                 @if ($skills || $links->isNotEmpty())
                     <aside>
                         @if ($skills)
-                            <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-[#5b21b6] border-b border-stone-200 pb-2.5">Kompetencer</h2>
+                            <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-stone-900 border-b border-stone-200 pb-2.5">Kompetencer</h2>
                             <ul class="mt-5 space-y-2.5 text-sm text-stone-700">
                                 @foreach ($skills as $skill)
                                     <li class="flex items-start gap-2.5">
-                                        <span class="mt-[7px] w-1.5 h-1.5 bg-[#5b21b6] shrink-0"></span>
+                                        <span class="mt-[7px] w-1.5 h-1.5 bg-amber-500 shrink-0"></span>
                                         <span>{{ $skill }}</span>
                                     </li>
                                 @endforeach
@@ -105,12 +105,12 @@
                         @endif
 
                         @if ($links->isNotEmpty())
-                            <h2 class="mt-8 text-[10px] font-bold uppercase tracking-[0.35em] text-[#5b21b6] border-b border-stone-200 pb-2.5">Links</h2>
+                            <h2 class="mt-8 text-[10px] font-bold uppercase tracking-[0.35em] text-stone-900 border-b border-stone-200 pb-2.5">Links</h2>
                             <ul class="mt-5 space-y-3 text-sm">
                                 @foreach ($links as $link)
                                     <li>
                                         <p class="font-bold text-stone-900">{{ $link->name }}</p>
-                                        <a href="{{ $link->url }}" class="text-[#5b21b6] underline underline-offset-2 break-all">{{ $link->prettifyUrl() }}</a>
+                                        <a href="{{ $link->url }}" class="text-amber-700 underline underline-offset-2 break-all">{{ $link->prettifyUrl() }}</a>
                                     </li>
                                 @endforeach
                             </ul>
