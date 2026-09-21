@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use App\Models\Link;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 
 class FakePreviewUser
 {
@@ -35,6 +37,12 @@ class FakePreviewUser
         ]);
 
         $user->avatar = self::avatar();
+        $user->setRelation('links', new Collection([
+            new Link(['name' => 'GitHub', 'url' => 'https://github.com/emmalauridsen']),
+            new Link(['name' => 'LinkedIn', 'url' => 'https://www.linkedin.com/in/emma-lauridsen']),
+            new Link(['name' => 'Portfolio', 'url' => 'https://emmalauridsen.dk']),
+        ]));
+
         $user->cv_json = [
             [
                 'title' => 'Senior Frontend Developer',
