@@ -36,6 +36,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
     $lineColors = ['bg-blue-600', 'bg-emerald-600', 'bg-amber-500', 'bg-rose-600', 'bg-violet-600'];
 @endphp
@@ -111,6 +112,21 @@
                             <span class="text-[13px] font-bold text-white rounded-full px-4 py-1.5 {{ $lineColors[$loop->index % count($lineColors)] }}">{{ $skill }}</span>
                         @endforeach
                     </div>
+                </section>
+            @endif
+
+            @if ($links->isNotEmpty())
+                <section class="mt-9">
+                    <h2 class="text-xs font-black uppercase tracking-[0.3em] text-blue-600 mb-4">Forbindelser · Links</h2>
+                    <ul class="space-y-2 text-sm">
+                        @foreach ($links as $link)
+                            <li class="bg-white rounded-lg border border-slate-200 px-5 py-2.5 shadow-sm flex items-center gap-3">
+                                <span class="shrink-0 w-4 h-4 rounded-full {{ $lineColors[$loop->index % count($lineColors)] }}"></span>
+                                <span class="font-bold text-slate-900">{{ $link->name }}:</span>
+                                <a href="{{ $link->url }}" class="text-blue-600 underline break-all">{{ $link->prettifyUrl() }}</a>
+                            </li>
+                        @endforeach
+                    </ul>
                 </section>
             @endif
 

@@ -44,6 +44,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
     $stickyColors = ['#fef3c7', '#dcfce7', '#dbeafe', '#fae8ff'];
 @endphp
@@ -102,6 +103,21 @@
                         <span class="sticky inline-block text-sm font-bold text-slate-800 px-4 py-2.5 rounded {{ ['rotate-1', '-rotate-1', 'rotate-2', '-rotate-2'][$i % 4] }}"
                               style="background: {{ $stickyColors[($i + 1) % count($stickyColors)] }}">
                             {{ $skill }}
+                        </span>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if ($links->isNotEmpty())
+            <section class="mt-10">
+                <h2 class="sticky bg-slate-800 text-white inline-block px-5 py-2.5 text-xs font-extrabold uppercase tracking-[0.25em] rounded rotate-[-1deg] shadow-md ml-6">Links</h2>
+                <div class="mt-6 flex flex-wrap gap-4 px-6">
+                    @foreach ($links as $i => $link)
+                        <span class="sticky pin relative inline-block text-sm px-5 py-3 rounded {{ ['rotate-1', '-rotate-1', 'rotate-2', '-rotate-2'][$i % 4] }}"
+                              style="background: {{ $stickyColors[$i % count($stickyColors)] }}">
+                            <span class="font-extrabold text-slate-900">{{ $link->name }}:</span>
+                            <a href="{{ $link->url }}" class="text-slate-700 underline break-all">{{ $link->prettifyUrl() }}</a>
                         </span>
                     @endforeach
                 </div>

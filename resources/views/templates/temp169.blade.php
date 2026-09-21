@@ -39,6 +39,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
@@ -106,6 +107,20 @@
                             <p class="text-[13px] font-semibold text-sky-900 flex justify-between border-b border-dotted border-sky-300 pb-1.5">
                                 <span>{{ $skill }}</span>
                                 <span class="text-sky-400">REF {{ str_pad((string) ($loop->index + 1), 3, '0', STR_PAD_LEFT) }}</span>
+                            </p>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
+            @if ($links->isNotEmpty())
+                <section class="mt-9">
+                    <h2 class="text-[11px] font-bold uppercase tracking-[0.35em] text-sky-800 bg-sky-50 border border-sky-800 px-3 py-1.5 inline-block">Links · henvisninger</h2>
+                    <div class="mt-5 bg-white border border-sky-200 px-6 py-4 space-y-1.5">
+                        @foreach ($links as $link)
+                            <p class="text-[13px] font-semibold text-sky-900 flex justify-between gap-4 border-b border-dotted border-sky-300 pb-1.5">
+                                <span>{{ $link->name }}</span>
+                                <a href="{{ $link->url }}" class="text-sky-600 underline break-all">{{ $link->prettifyUrl() }}</a>
                             </p>
                         @endforeach
                     </div>

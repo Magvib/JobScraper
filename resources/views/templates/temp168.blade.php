@@ -21,6 +21,7 @@
 @php
     $jobs = $user->cv_json;
     $skills = is_string($user->skills) ? json_decode($user->skills, true) : ($user->skills ?? []);
+    $links = $user->links;
     $photo = $user->getImage();
     $tilts = ['rotate-[-2deg]', 'rotate-1', 'rotate-2', '-rotate-1', '-rotate-2', 'rotate-[-1.5deg]'];
     $fills = ['bg-pink-500 text-white', 'bg-sky-500 text-white', 'bg-amber-400 text-amber-950', 'bg-lime-500 text-lime-950', 'bg-violet-500 text-white'];
@@ -81,6 +82,19 @@
                 <div class="mt-5 flex flex-wrap gap-3.5">
                     @foreach ($skills as $skill)
                         <span class="diecut {{ $fills[$loop->index % count($fills)] }} {{ $tilts[$loop->index % count($tilts)] }} text-[14px] font-black rounded-lg px-4 py-2 -mx-px">{{ $skill }}</span>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if ($links->isNotEmpty())
+            <section class="mt-9">
+                <h2 class="diecut inline-block bg-white text-stone-900 text-xs font-black uppercase tracking-[0.3em] rounded-full px-5 py-2 border-2 border-dashed border-stone-400 -rotate-1">Links · klip ud</h2>
+                <div class="mt-5 flex flex-wrap gap-3.5">
+                    @foreach ($links as $link)
+                        <a href="{{ $link->url }}" class="diecut {{ $tilts[$loop->index % count($tilts)] }} bg-white text-stone-800 text-[13px] font-bold rounded-full px-4 py-2 border-2 border-stone-200 hover:bg-stone-900 hover:text-white break-all">
+                            {{ $link->name }}: {{ $link->prettifyUrl() }}
+                        </a>
                     @endforeach
                 </div>
             </section>
