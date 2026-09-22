@@ -41,6 +41,19 @@ new class extends Component
     #[Url('qf')]
     public array $questionFilters = [];
 
+    /**
+     * Maximum distance in km between the user and a job. Editable
+     * inline and saved back to the profile, like on the profile page.
+     */
+    public $maxDistance = 50;
+
+    /**
+     * Whether the distance filter is active. When off, every job is
+     * listed no matter how far away it is.
+     */
+    #[Url('df')]
+    public bool $filterByDistance = false;
+
     public bool $showMap = false;
 
     /**
@@ -253,7 +266,31 @@ new class extends Component
     {
         $user = auth()->user();
         Post::searchForJobs($user);
+        $this->maxDistance = $user->max_distance ?? 50;
         $this->jobs = Post::query()->active()->whereIn('keyword', $user->keywords)->get();
+    }
+
+    /**
+     * Save the inline-edited max distance to the profile, rejecting
+     * values outside the same 1-500 km range the profile page enforces.
+     */
+    public function updatedMaxDistance($value): void
+    {
+        $value = trim((string) $value);
+
+        if ($value === '' || ! is_numeric($value) || (int) $value < 1 || (int) $value > 500) {
+            $this->maxDistance = auth()->user()->max_distance ?? 50;
+            $this->dispatch(
+                'toast',
+                message: __('Max distance must be a number between 1 and 500 km.'),
+                type: 'error'
+            );
+
+            return;
+        }
+
+        $this->maxDistance = (int) $value;
+        auth()->user()->update(['max_distance' => $this->maxDistance]);
     }
 
     public function refreshJobs()
@@ -457,7 +494,7 @@ new class extends Component
             'lat' => (float) $user->latitude,
             'lng' => (float) $user->longitude,
             'city' => $user->city,
-            'maxDistance' => (float) ($user->max_distance ?? 50),
+            'maxDistance' => (float) ($this->maxDistance ?: ($user->max_distance ?? 50)),
         ];
     }
 
@@ -625,6 +662,20 @@ new class extends Component
                 }
 
                 return true;
+            });
+        }
+
+        $userPoint = $this->userPoint;
+
+        if ($this->filterByDistance && $userPoint !== null) {
+            $jobs = $jobs->filter(function ($job) use ($userPoint) {
+                $distance = $this->jobDistance($job);
+
+                if ($distance === null) {
+                    return false;
+                }
+
+                return $distance <= $userPoint['maxDistance'];
             });
         }
 
@@ -937,6 +988,28 @@ new class extends Component
                                 </button>
                             @endforeach
                         </div>
+                        @if($this->userPoint)
+                        <div
+                            class="flex items-center gap-2 shrink-0 h-8 border border-base-300 rounded-box px-2"
+                            title="{{ __('Only show jobs within this distance of your location. The distance is saved to your profile.') }}"
+                        >
+                            <input
+                                type="checkbox"
+                                wire:model.live="filterByDistance"
+                                class="toggle toggle-xs toggle-primary"
+                                aria-label="{{ __('Filter jobs by distance') }}"
+                            />
+                            <input
+                                type="number"
+                                wire:model.live.debounce.500ms="maxDistance"
+                                class="w-12 bg-transparent border-none focus:outline-none text-sm @error('maxDistance') text-error @enderror"
+                                min="1"
+                                max="500"
+                                aria-label="{{ __('Max distance (km)') }}"
+                            />
+                            <span class="text-xs text-base-content/60 whitespace-nowrap">{{ __('km max') }}</span>
+                        </div>
+                        @endif
                         <button
                             class="btn btn-sm {{ $showMap ? 'btn-primary' : 'btn-outline' }} gap-2"
                             wire:click="toggleMap"
@@ -960,10 +1033,10 @@ new class extends Component
                                     <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
                                     <line x1="12" y1="17" x2="12.01" y2="17"/>
                                 </svg>
-                                {{ __('Answer Questions for All') }}
+                                {{ __('Answer Questions') }}
                             </button>
                         @endif
-                        @if(trim($search) !== '' || $selectedKeywords !== [] || $selectedSources !== [] || $questionFilters !== [])
+                        @if(trim($search) !== '' || $selectedKeywords !== [] || $selectedSources !== [] || $questionFilters !== [] || $filterByDistance)
                             <span class="text-xs text-base-content/60 whitespace-nowrap">
                                 {{ number_format(count($this->sortedJobs)) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
                             </span>
@@ -1115,7 +1188,7 @@ new class extends Component
                         overflow: hidden;
                     }
                 </style>
-                <div class="card bg-base-100 shadow-sm mb-4" id="jobs-map-card" wire:key="jobs-map-{{ md5($this->mapPoints->sortBy(fn ($p) => $p['lat'].','.$p['lng'].','.$p['title'])->values()->toJson()) }}">
+                <div class="card bg-base-100 shadow-sm mb-4" id="jobs-map-card" wire:key="jobs-map-{{ md5($this->mapPoints->sortBy(fn ($p) => $p['lat'].','.$p['lng'].','.$p['title'])->values()->toJson()).'-'.(int) $this->maxDistance }}">
                     <div class="card-body p-4 gap-3">
                         <div class="flex items-center justify-between gap-2">
                             <div class="jobs-map-filters flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
