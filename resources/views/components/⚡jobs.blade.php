@@ -23,6 +23,7 @@ new class extends Component
 
     public string $search = '';
 
+    #[Url('sort')]
     public string $sort = 'date';
 
     #[Url('keywords')]
