@@ -7,6 +7,8 @@ use App\Models\Post;
 use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class GenerateCoverLetter implements ShouldQueue
 {
@@ -17,6 +19,14 @@ class GenerateCoverLetter implements ShouldQueue
      * doesn't kill the job while the model is still generating.
      */
     public $timeout = 330;
+
+    /**
+     * Retry once after a minute, so a flaky model/API call doesn't
+     * lose the letter entirely.
+     */
+    public int $tries = 2;
+
+    public array $backoff = [60];
 
     /**
      * Create a new job instance.
@@ -40,8 +50,8 @@ class GenerateCoverLetter implements ShouldQueue
         $description = $this->post->description ?? $this->post->fetchDescription();
         $jobDescription = trim(preg_replace('/\s+/', ' ', strip_tags($description ?? '')) ?? '');
         $letter = $defaultCoverLetter->content;
-        $cv = json_encode($this->user->cv) ?? '';
-        $skills = json_encode($this->user->skills) ?? '';
+        $cv = json_encode($this->user->cv) ?: '';
+        $skills = json_encode($this->user->skills) ?: '';
 
         // Change title to the job
         $newCoverLetter->title = $this->post->company_name . ' - ' . now()->format('Y-m-d H:i:s');
@@ -76,5 +86,19 @@ class GenerateCoverLetter implements ShouldQueue
         );
         
         $newCoverLetter->save();
+    }
+
+    /**
+     * Called when the job has exhausted its retries.
+     * The worker keeps running and the schedule's lock is released
+     * either way — this just makes the failure visible in the log.
+     */
+    public function failed(Throwable $e): void
+    {
+        Log::error('Cover letter generation failed', [
+            'post_id' => $this->post->id,
+            'user_id' => $this->user->id,
+            'error' => $e->getMessage(),
+        ]);
     }
 }
