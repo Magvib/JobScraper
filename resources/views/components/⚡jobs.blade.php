@@ -29,6 +29,12 @@ new class extends Component
 
     public bool $showMap = false;
 
+    /**
+     * Id of the job whose description is shown in the modal,
+     * or null when the modal is closed.
+     */
+    public ?int $descriptionModalJobId = null;
+
     public array $cordsForCitys = [
         "Copenhagen" => [55.6761, 12.5689],
         "Aarhus" => [56.1564, 10.2097],
@@ -551,11 +557,53 @@ new class extends Component
             type: 'success'
         );
     }
+
+    public function getDescription($jobId, $force = false)
+    {
+        $job = Post::find($jobId);
+
+        if ($job?->fetchDescription($force)) {
+            $this->dispatch('toast', message: __('Job description fetched.'), type: 'success');
+        } else {
+            $this->dispatch('toast', message: __('Could not fetch the job description.'), type: 'error');
+        }
+    }
+
+    public function viewDescription($jobId)
+    {
+        $job = Post::find($jobId);
+
+        if (! $job) {
+            $this->dispatch('toast', message: __('Job not found.'), type: 'error');
+
+            return;
+        }
+
+        if (! $job->description && ! $job->fetchDescription()) {
+            $this->dispatch('toast', message: __('Could not fetch the job description.'), type: 'error');
+
+            return;
+        }
+
+        $this->descriptionModalJobId = $job->id;
+    }
+
+    public function closeDescriptionModal(): void
+    {
+        $this->descriptionModalJobId = null;
+    }
 };
 ?>
 
 <div class="py-10 mx-4">
     <div class="max-w-7xl mx-auto">
+        <style>
+            /* Job ad description rendered from stored HTML. */
+            .job-desc p { margin: 0 0 .5rem; }
+            .job-desc ul { list-style: disc; padding-left: 1.25rem; margin: 0 0 .5rem; }
+            .job-desc li p { margin: 0; }
+            .job-desc strong { font-weight: 600; }
+        </style>
         <div class="flex items-center justify-between mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ __('Job Listings') }}</h1>
@@ -1075,6 +1123,21 @@ new class extends Component
                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                     </svg>
                                 </button>
+                                @if ($job->description)
+                                    <button class="btn btn-warning btn-sm gap-2" wire:click="getDescription('{{ $job->id }}', true)">
+                                        {{ __('Reload Description') }}
+                                        <span wire:loading wire:target="getDescription('{{ $job->id }}', true)" class="loading loading-spinner loading-xs"></span>
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm gap-2" wire:click="viewDescription('{{ $job->id }}')">
+                                        {{ __('Description') }}
+                                        <span wire:loading wire:target="viewDescription('{{ $job->id }}')" class="loading loading-spinner loading-xs"></span>
+                                    </button>
+                                @else
+                                    <button class="btn btn-ghost btn-sm gap-2" wire:click="getDescription('{{ $job->id }}')">
+                                        {{ __('Get Description') }}
+                                        <span wire:loading wire:target="getDescription('{{ $job->id }}')" class="loading loading-spinner loading-xs"></span>
+                                    </button>
+                                @endif
                                 <a href="{{ $job->canonical_url }}" target="_blank" class="btn btn-primary btn-sm gap-2">
                                     {{ __('View Job') }}
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1088,6 +1151,41 @@ new class extends Component
                     </div>
                 @endforeach
             </div>
+
+            @php
+                $descriptionJob = $descriptionModalJobId ? Post::find($descriptionModalJobId) : null;
+            @endphp
+            @if ($descriptionJob)
+                <div class="modal modal-open" wire:keydown.escape.window="closeDescriptionModal">
+                    <div class="modal-box max-w-3xl">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h3 class="font-semibold text-base line-clamp-2">{{ $descriptionJob->title }}</h3>
+                                <p class="text-sm opacity-60 mt-0.5">{{ $descriptionJob->company_name }} · {{ $descriptionJob->getLocation() }}</p>
+                            </div>
+                            <form method="dialog" class="modal-action mt-0">
+                                <button type="button" class="btn btn-circle btn-ghost btn-sm" wire:click="closeDescriptionModal" aria-label="{{ __('Close') }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="job-desc mt-4 max-h-[60vh] overflow-y-auto rounded-lg border border-base-300 bg-base-200/50 p-4 text-sm leading-relaxed">
+                            {!! $descriptionJob->description !!}
+                        </div>
+                        <div class="modal-action">
+                            <button type="button" class="btn btn-warning btn-sm" wire:click="getDescription('{{ $descriptionJob->id }}', true)">
+                                {{ __('Reload Description') }}
+                                <span wire:loading wire:target="getDescription('{{ $descriptionJob->id }}', true)" class="loading loading-spinner loading-xs"></span>
+                            </button>
+                            <a href="{{ $descriptionJob->canonical_url }}" target="_blank" class="btn btn-primary btn-sm">{{ __('View Job') }}</a>
+                        </div>
+                    </div>
+                    <div class="modal-backdrop bg-black/60" wire:click="closeDescriptionModal"></div>
+                </div>
+            @endif
             @endif
         @endif
     </div>
