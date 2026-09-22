@@ -34,7 +34,11 @@ class Post extends Model
     #[Scope]
     protected function active(Builder $query)
     {
-        return $query->where('is_archived', false)->where(fn ($q) => $q->whereNull('deadline_at')->orWhere('deadline_at', '>', now()));
+        return $query
+            ->where('is_archived', false)
+            ->where(fn ($q) => $q->whereNull('deadline_at')->orWhere('deadline_at', '>', now()))
+            ->where('updated_at', '>', now()->subDays(2)) // Only include posts updated in the last 2 days
+        ;
     }
 
     public static function savePost($data, PostSource $source, $keyword = null)
@@ -59,6 +63,7 @@ class Post extends Model
                 'deadline_at'      => $data['apply_deadline'] ?? $data['lastdate'],
                 'is_archived'      => $data['is_archived'],
                 'raw'              => $data,
+                'updated_at'       => now(),
             ]);
         } elseif ($source === PostSource::JOBNET) {
             // Jobnet
@@ -77,6 +82,7 @@ class Post extends Model
                 'company_logo_url' => isset($data['logoUrl']) ? "https://jobnet.dk".$data['logoUrl'] : null,
                 'city'             => $data['postalDistrictName'] ?? $data['municipality'] ?? null,
                 'zipcode'          => $data['postalCode'] ?? null,
+                'updated_at'       => now(),
             ]);
         }
     }
