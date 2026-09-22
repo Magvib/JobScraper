@@ -21,15 +21,16 @@ new class extends Component
 
     public $jobs;
 
+    #[Url('q')]
     public string $search = '';
 
-    #[Url('sort')]
+    #[Url('s')]
     public string $sort = 'date';
 
-    #[Url('keywords')]
+    #[Url('key')]
     public array $selectedKeywords = [];
 
-    #[Url('sources')]
+    #[Url('src')]
     public array $selectedSources = [];
 
     public bool $showMap = false;
