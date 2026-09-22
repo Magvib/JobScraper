@@ -614,6 +614,32 @@ new class extends Component
         );
     }
 
+    public function answerAllQuestions()
+    {
+        $user = auth()->user();
+
+        if (empty($user->questions)) {
+            $this->dispatch('toast',
+                message: __('You need to define AI questions on your profile first.'),
+                type: 'error'
+            );
+
+            return null;
+        }
+
+        $count = 0;
+
+        foreach ($this->sortedJobs as $job) {
+            $job->answerQuestions($user);
+            $count++;
+        }
+
+        $this->dispatch('toast',
+            message: __('Your AI questions are being answered for :count jobs. Please check back in a few moments.', ['count' => $count]),
+            type: 'success'
+        );
+    }
+
     public function getDescription($jobId, $force = false)
     {
         $job = Post::find($jobId);
@@ -798,6 +824,22 @@ new class extends Component
                             </svg>
                             {{ __('Map') }}
                         </button>
+                        @if(auth()->user()?->questions)
+                            <button
+                                class="btn btn-sm btn-outline gap-2"
+                                wire:click="answerAllQuestions"
+                                wire:loading.attr="disabled"
+                                wire:target="answerAllQuestions"
+                                title="{{ __('Answer your AI questions for every job currently shown') }}"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                </svg>
+                                {{ __('Answer Questions for All') }}
+                            </button>
+                        @endif
                         @if(trim($search) !== '' || $selectedKeywords !== [] || $selectedSources !== [])
                             <span class="text-xs text-base-content/60 whitespace-nowrap">
                                 {{ number_format(count($this->sortedJobs)) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
