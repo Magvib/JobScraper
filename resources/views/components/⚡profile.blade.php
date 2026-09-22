@@ -55,9 +55,12 @@ new class extends Component
 
     public string $newQuestionText = '';
 
-    public string $newQuestionOptions = '';
+    public array $newQuestionOptions = [
+        ['name' => '', 'description' => ''],
+        ['name' => '', 'description' => ''],
+    ];
 
-    public string $newQuestionLevels = '';
+    public array $newQuestionLevels = ['', ''];
 
     public bool $autoMatchNewJobs = false;
 
@@ -94,13 +97,14 @@ new class extends Component
         $this->links = $user->links->map(fn ($link) => ['name' => $link->name, 'url' => $link->url])->all();
         $this->questions = collect($user->questions ?? [])->map(function (array $question) {
             if (isset($question['options'])) {
-                $question['optionsText'] = collect($question['options'])
-                    ->map(fn ($description, $name) => $name.($description ? ': '.$description : ''))
-                    ->implode("\n");
+                $question['options'] = collect($question['options'])
+                    ->map(fn ($description, $name) => ['name' => $name, 'description' => $description ?? ''])
+                    ->values()
+                    ->all();
             }
 
             if (isset($question['levels'])) {
-                $question['levelsText'] = implode("\n", $question['levels']);
+                $question['levels'] = array_values($question['levels']);
             }
 
             return $question;
@@ -146,8 +150,11 @@ new class extends Component
             'questions.*.key' => ['required', 'string', 'regex:/^[a-z0-9_]{2,64}$/', 'distinct'],
             'questions.*.type' => ['required', 'in:boolean,choice,score'],
             'questions.*.question' => ['required', 'string', 'max:1000'],
-            'questions.*.optionsText' => ['nullable', 'string'],
-            'questions.*.levelsText' => ['nullable', 'string'],
+            'questions.*.options' => ['nullable', 'array'],
+            'questions.*.options.*.name' => ['required', 'string', 'max:64'],
+            'questions.*.options.*.description' => ['nullable', 'string', 'max:255'],
+            'questions.*.levels' => ['nullable', 'array'],
+            'questions.*.levels.*' => ['required', 'string', 'max:64'],
         ]);
 
         $user = auth()->user();
@@ -207,12 +214,22 @@ new class extends Component
             ];
 
             if ($question['type'] === 'choice') {
-                $options = $this->parseQuestionOptions($question['optionsText'] ?? '');
+                $options = [];
+
+                foreach ($question['options'] ?? [] as $option) {
+                    $name = Str::slug(trim($option['name'] ?? ''), '_');
+
+                    if ($name === '') {
+                        continue;
+                    }
+
+                    $options[$name] = trim($option['description'] ?? '') ?: null;
+                }
 
                 if (count($options) < 2) {
                     $this->dispatch(
                         'toast',
-                        message: __('The question ":key" needs at least two options, one per line.', ['key' => $question['key']]),
+                        message: __('The question ":key" needs at least two options.', ['key' => $question['key']]),
                         type: 'error'
                     );
 
@@ -221,12 +238,16 @@ new class extends Component
 
                 $definition['options'] = $options;
             } elseif ($question['type'] === 'score') {
-                $levels = $this->parseQuestionLevels($question['levelsText'] ?? '');
+                $levels = collect($question['levels'] ?? [])
+                    ->map(fn ($level) => trim($level))
+                    ->filter()
+                    ->values()
+                    ->all();
 
                 if (count($levels) < 2) {
                     $this->dispatch(
                         'toast',
-                        message: __('The question ":key" needs at least two levels, one per line.', ['key' => $question['key']]),
+                        message: __('The question ":key" needs at least two levels.', ['key' => $question['key']]),
                         type: 'error'
                     );
 
@@ -389,17 +410,52 @@ new class extends Component
         ];
 
         if ($this->newQuestionType === 'choice') {
-            $definition['optionsText'] = $this->newQuestionOptions;
+            $options = collect($this->newQuestionOptions)
+                ->filter(fn ($option) => trim($option['name'] ?? '') !== '')
+                ->map(fn ($option) => ['name' => trim($option['name']), 'description' => trim($option['description'] ?? '')])
+                ->values()
+                ->all();
+
+            if (count($options) < 2) {
+                $this->dispatch(
+                    'toast',
+                    message: __('A choice question needs at least two options with a name.'),
+                    type: 'error'
+                );
+
+                return;
+            }
+
+            $definition['options'] = $options;
         } elseif ($this->newQuestionType === 'score') {
-            $definition['levelsText'] = $this->newQuestionLevels;
+            $levels = collect($this->newQuestionLevels)
+                ->map(fn ($level) => trim($level))
+                ->filter()
+                ->values()
+                ->all();
+
+            if (count($levels) < 2) {
+                $this->dispatch(
+                    'toast',
+                    message: __('A score question needs at least two levels.'),
+                    type: 'error'
+                );
+
+                return;
+            }
+
+            $definition['levels'] = $levels;
         }
 
         $this->questions[] = $definition;
 
         $this->newQuestionKey = '';
         $this->newQuestionText = '';
-        $this->newQuestionOptions = '';
-        $this->newQuestionLevels = '';
+        $this->newQuestionOptions = [
+            ['name' => '', 'description' => ''],
+            ['name' => '', 'description' => ''],
+        ];
+        $this->newQuestionLevels = ['', ''];
     }
 
     public function removeQuestion(int $index): void
@@ -410,47 +466,52 @@ new class extends Component
         }
     }
 
-    /**
-     * Parse "name: description" lines into a choice options map.
-     *
-     * @return array<string, string|null>
-     */
-    private function parseQuestionOptions(string $text): array
+    public function addQuestionOption(int $index): void
     {
-        $options = [];
-
-        foreach (preg_split('/\R/', trim($text)) ?: [] as $line) {
-            $line = trim($line);
-
-            if ($line === '') {
-                continue;
-            }
-
-            [$name, $description] = array_pad(explode(':', $line, 2), 2, null);
-            $name = Str::slug(trim($name), '_');
-
-            if ($name === '') {
-                continue;
-            }
-
-            $options[$name] = $description ? trim($description) : null;
-        }
-
-        return $options;
+        $this->questions[$index]['options'][] = ['name' => '', 'description' => ''];
     }
 
-    /**
-     * Parse one-level-per-line text into an ordered list of score levels.
-     *
-     * @return list<string>
-     */
-    private function parseQuestionLevels(string $text): array
+    public function removeQuestionOption(int $questionIndex, int $optionIndex): void
     {
-        return collect(preg_split('/\R/', trim($text)) ?: [])
-            ->map(fn ($line) => trim($line))
-            ->filter()
-            ->values()
-            ->all();
+        if (isset($this->questions[$questionIndex]['options'][$optionIndex])) {
+            unset($this->questions[$questionIndex]['options'][$optionIndex]);
+            $this->questions[$questionIndex]['options'] = array_values($this->questions[$questionIndex]['options']);
+        }
+    }
+
+    public function addQuestionLevel(int $index): void
+    {
+        $this->questions[$index]['levels'][] = '';
+    }
+
+    public function removeQuestionLevel(int $questionIndex, int $levelIndex): void
+    {
+        if (isset($this->questions[$questionIndex]['levels'][$levelIndex])) {
+            unset($this->questions[$questionIndex]['levels'][$levelIndex]);
+            $this->questions[$questionIndex]['levels'] = array_values($this->questions[$questionIndex]['levels']);
+        }
+    }
+
+    public function addNewQuestionOption(): void
+    {
+        $this->newQuestionOptions[] = ['name' => '', 'description' => ''];
+    }
+
+    public function removeNewQuestionOption(int $index): void
+    {
+        unset($this->newQuestionOptions[$index]);
+        $this->newQuestionOptions = array_values($this->newQuestionOptions);
+    }
+
+    public function addNewQuestionLevel(): void
+    {
+        $this->newQuestionLevels[] = '';
+    }
+
+    public function removeNewQuestionLevel(int $index): void
+    {
+        unset($this->newQuestionLevels[$index]);
+        $this->newQuestionLevels = array_values($this->newQuestionLevels);
     }
 
     public function generateKeywords(): void
@@ -790,16 +851,61 @@ new class extends Component
                             <p class="text-error text-sm mt-1">{{ $message }}</p>
                             @enderror
                             @if($question['type'] === 'choice')
-                            <textarea
-                                wire:model="questions.{{ $index }}.optionsText"
-                                class="textarea textarea-bordered w-full mt-2"
-                                placeholder="{{ __('One option per line: name: description') }}"></textarea>
+                            <div class="mt-2 space-y-2">
+                                <p class="text-sm text-base-content/60">{{ __('Options (at least two)') }}</p>
+                                @foreach($question['options'] ?? [] as $optionIndex => $option)
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            wire:model="questions.{{ $index }}.options.{{ $optionIndex }}.name"
+                                            class="input input-bordered w-1/3 @error('questions.'.$index.'.options.'.$optionIndex.'.name') input-error @enderror"
+                                            placeholder="{{ __('Name (e.g. hybrid)') }}"
+                                            maxlength="64" />
+                                        <input
+                                            type="text"
+                                            wire:model="questions.{{ $index }}.options.{{ $optionIndex }}.description"
+                                            class="input input-bordered w-full"
+                                            placeholder="{{ __('Optional description') }}"
+                                            maxlength="255" />
+                                        <button type="button" wire:click="removeQuestionOption({{ $index }}, {{ $optionIndex }})" class="hover:text-error shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    @error('questions.'.$index.'.options.'.$optionIndex.'.name')
+                                    <p class="text-error text-sm">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                @endforeach
+                                <button type="button" wire:click="addQuestionOption({{ $index }})" class="btn btn-ghost btn-sm">
+                                    {{ __('+ Add option') }}
+                                </button>
+                            </div>
                             @endif
                             @if($question['type'] === 'score')
-                            <textarea
-                                wire:model="questions.{{ $index }}.levelsText"
-                                class="textarea textarea-bordered w-full mt-2"
-                                placeholder="{{ __('One level per line, ordered from lowest to highest') }}"></textarea>
+                            <div class="mt-2 space-y-2">
+                                <p class="text-sm text-base-content/60">{{ __('Levels, ordered from lowest to highest (at least two)') }}</p>
+                                @foreach($question['levels'] ?? [] as $levelIndex => $level)
+                                <div class="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        wire:model="questions.{{ $index }}.levels.{{ $levelIndex }}"
+                                        class="input input-bordered w-full"
+                                        placeholder="{{ __('e.g. Junior') }}"
+                                        maxlength="64" />
+                                    <button type="button" wire:click="removeQuestionLevel({{ $index }}, {{ $levelIndex }})" class="hover:text-error shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                @endforeach
+                                <button type="button" wire:click="addQuestionLevel({{ $index }})" class="btn btn-ghost btn-sm">
+                                    {{ __('+ Add level') }}
+                                </button>
+                            </div>
                             @endif
                         </div>
                         @endforeach
@@ -824,16 +930,56 @@ new class extends Component
                             placeholder="{{ __('Question (e.g. Does this job allow remote work?)') }}"
                             maxlength="1000" />
                         @if($newQuestionType === 'choice')
-                        <textarea
-                            wire:model="newQuestionOptions"
-                            class="textarea textarea-bordered w-full mt-2"
-                            placeholder="{{ __('One option per line: name: description (at least two options)') }}"></textarea>
+                        <div class="mt-2 space-y-2">
+                            <p class="text-sm text-base-content/60">{{ __('Options (at least two)') }}</p>
+                            @foreach($newQuestionOptions as $optionIndex => $option)
+                            <div class="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    wire:model="newQuestionOptions.{{ $optionIndex }}.name"
+                                    class="input input-bordered w-1/3"
+                                    placeholder="{{ __('Name (e.g. hybrid)') }}"
+                                    maxlength="64" />
+                                <input
+                                    type="text"
+                                    wire:model="newQuestionOptions.{{ $optionIndex }}.description"
+                                    class="input input-bordered w-full"
+                                    placeholder="{{ __('Optional description') }}"
+                                    maxlength="255" />
+                                <button type="button" wire:click="removeNewQuestionOption({{ $optionIndex }})" class="hover:text-error shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            @endforeach
+                            <button type="button" wire:click="addNewQuestionOption" class="btn btn-ghost btn-sm">
+                                {{ __('+ Add option') }}
+                            </button>
+                        </div>
                         @endif
                         @if($newQuestionType === 'score')
-                        <textarea
-                            wire:model="newQuestionLevels"
-                            class="textarea textarea-bordered w-full mt-2"
-                            placeholder="{{ __('One level per line, ordered from lowest to highest (at least two levels)') }}"></textarea>
+                        <div class="mt-2 space-y-2">
+                            <p class="text-sm text-base-content/60">{{ __('Levels, ordered from lowest to highest (at least two)') }}</p>
+                            @foreach($newQuestionLevels as $levelIndex => $level)
+                            <div class="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    wire:model="newQuestionLevels.{{ $levelIndex }}"
+                                    class="input input-bordered w-full"
+                                    placeholder="{{ __('e.g. Junior') }}"
+                                    maxlength="64" />
+                                <button type="button" wire:click="removeNewQuestionLevel({{ $levelIndex }})" class="hover:text-error shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            @endforeach
+                            <button type="button" wire:click="addNewQuestionLevel" class="btn btn-ghost btn-sm">
+                                {{ __('+ Add level') }}
+                            </button>
+                        </div>
                         @endif
                         <button type="button" wire:click="addQuestion" class="btn btn-secondary mt-2">
                             {{ __('Add question') }}
