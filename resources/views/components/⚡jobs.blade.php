@@ -1087,7 +1087,7 @@ new class extends Component
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 @foreach($this->sortedJobs as $job)
                     <div class="card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors duration-100">
-                        <div class="card-body p-5">
+                        <div class="card-body p-5 h-full">
                             <div class="flex items-start gap-4">
                                 <div class="relative w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0 overflow-hidden">
                                     {{ $this->companyInitials($job->company_name) }}
@@ -1101,84 +1101,6 @@ new class extends Component
                                     </a>
                                     <div class="text-sm text-base-content/60 mt-1">{{ $job->company_name }}</div>
                                 </div>
-                                @if ($job->rating?->status === 'pending')
-                                    <div class="badge badge-info badge-sm" wire:poll.5000ms>
-                                        {{ __('Calculating...') }}
-                                    </div>
-                                @elseif ($job->rating?->status === 'failed')
-                                    <div class="badge badge-error badge-sm">
-                                        {{ __('Failed') }}
-                                    </div>
-                                @elseif($job->rating?->status === 'completed')
-                                    <div class="flex items-center gap-1 shrink-0">
-                                        <div class="tooltip tooltip-info" data-tip="{{ $job->rating?->skills_match_reasoning }}">
-                                            <div class="badge {{ $job->rating?->skills_match >= 80 ? 'badge-success' : ($job->rating?->skills_match >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
-                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                                </svg>
-                                                {{ number_format($job->rating?->skills_match, 0) }}%
-                                            </div>
-                                        </div>
-                                        <div class="tooltip tooltip-info" data-tip="{{ $job->rating?->experience_relevance_reasoning }}">
-                                            <div class="badge {{ $job->rating?->experience_relevance >= 80 ? 'badge-success' : ($job->rating?->experience_relevance >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
-                                                    <path d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.2 0-2 .8-2 2v11c0 1.2.8 2 2 2h16c1.2 0 2-.8 2-2V9c0-1.2-.8-2-2-2zM10 4h4v3h-4V4z"/>
-                                                </svg>
-                                                {{ number_format($job->rating?->experience_relevance, 0) }}%
-                                            </div>
-                                        </div>
-                                        <div class="tooltip tooltip-info" data-tip="{{ $job->rating?->seniority_fit_reasoning }}">
-                                            <div class="badge {{ $job->rating?->seniority_fit >= 80 ? 'badge-success' : ($job->rating?->seniority_fit >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
-                                                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-                                                </svg>
-                                                {{ number_format($job->rating?->seniority_fit, 0) }}%
-                                            </div>
-                                        </div>
-                                        <div class="tooltip tooltip-info" data-tip="{{ $job->rating?->keyword_match_reasoning }}">
-                                            <div class="badge {{ $job->rating?->keyword_match >= 80 ? 'badge-success' : ($job->rating?->keyword_match >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm gap-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24">
-                                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                                                </svg>
-                                                {{ number_format($job->rating?->keyword_match, 0) }}%
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                                @if ($job->questionAnswers?->status === 'pending')
-                                    <div class="badge badge-info badge-sm" wire:poll.5000ms>
-                                        {{ __('Answering...') }}
-                                    </div>
-                                @elseif ($job->questionAnswers?->status === 'failed')
-                                    <div class="badge badge-error badge-sm">
-                                        {{ __('Answers failed') }}
-                                    </div>
-                                @elseif($job->questionAnswers?->status === 'completed')
-                                    <div class="flex items-center gap-1 shrink-0">
-                                        @foreach(auth()->user()->questions ?? [] as $definition)
-                                            @php
-                                                $saved = $job->questionAnswers->answers[$definition['key']] ?? null;
-                                            @endphp
-                                            @if($saved)
-                                            <div class="tooltip tooltip-info" data-tip="{{ $definition['question'] }}">
-                                                @if($saved['type'] === 'boolean')
-                                                <div class="badge {{ ($saved['answer']['probability'] ?? 0) >= 0.5 ? 'badge-success' : 'badge-error' }} badge-sm">
-                                                    {{ ($saved['answer']['probability'] ?? 0) >= 0.5 ? __('Yes') : __('No') }}
-                                                </div>
-                                                @elseif($saved['type'] === 'choice')
-                                                <div class="badge badge-primary badge-sm">
-                                                    {{ $saved['answer']['choice'] ?? '—' }}
-                                                </div>
-                                                @else
-                                                <div class="badge badge-secondary badge-sm">
-                                                    {{ round(($saved['answer']['score'] ?? 0) * 100 / max(count($definition['levels'] ?? []) - 1, 1)) }}%
-                                                </div>
-                                                @endif
-                                            </div>
-                                            @endif
-                                        @endforeach
-                                    </div>
-                                @endif
                             </div>
                             <div class="flex flex-wrap items-center gap-3 mt-4 text-sm">
                                 <span class="badge badge-ghost badge-sm">{{ Str::title($job['source'] ?? 'Jobindex') }}</span>
@@ -1206,56 +1128,142 @@ new class extends Component
                                     {{ $job->published_at->diffForHumans() }}
                                 </div>
                             </div>
-                            <div class="card-actions justify-end mt-4">
-                                <button class="btn btn-secondary btn-sm gap-2" wire:click="aiScore('{{ $job->id }}')">
-                                    {{ __('AI Score') }}
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                    </svg>
-                                </button>
-                                @if(auth()->user()?->questions)
+                            @if ($job->rating || $job->questionAnswers)
+                            <div class="flex flex-col lg:flex-row gap-2 mt-3">
+                                @if ($job->rating)
+                                <div class="flex-1 min-w-0 rounded-box bg-base-200/50 border border-base-300 px-3 py-2" @if ($job->rating->status === 'pending') wire:poll.5000ms @endif>
+                                    <div class="text-[10px] font-semibold uppercase tracking-wide text-base-content/50 mb-1.5">{{ __('AI Score') }}</div>
+                                    @if ($job->rating->status === 'pending')
+                                        <div class="flex items-center gap-2 text-sm text-base-content/60">
+                                            <span class="loading loading-spinner loading-xs"></span>
+                                            {{ __('Calculating...') }}
+                                        </div>
+                                    @elseif ($job->rating->status === 'failed')
+                                        <span class="badge badge-error badge-sm">{{ __('Failed') }}</span>
+                                    @else
+                                        <div class="flex flex-wrap gap-x-4 gap-y-1.5">
+                                            @foreach(['skills_match' => __('Skills'), 'experience_relevance' => __('Experience'), 'seniority_fit' => __('Seniority'), 'keyword_match' => __('Keywords')] as $field => $label)
+                                            <div class="tooltip tooltip-info" data-tip="{{ $job->rating?->{$field.'_reasoning'} }}">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="text-xs text-base-content/60">{{ $label }}</span>
+                                                    <div class="badge {{ $job->rating?->{$field} >= 80 ? 'badge-success' : ($job->rating?->{$field} >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm">
+                                                        {{ number_format($job->rating?->{$field}, 0) }}%
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                                @endif
+
+                                @if ($job->questionAnswers)
+                                <div class="flex-1 min-w-0 rounded-box bg-base-200/50 border border-base-300 px-3 py-2" @if ($job->questionAnswers->status === 'pending') wire:poll.5000ms @endif>
+                                    <div class="text-[10px] font-semibold uppercase tracking-wide text-base-content/50 mb-1.5">{{ __('Your Questions') }}</div>
+                                    @if ($job->questionAnswers->status === 'pending')
+                                        <div class="flex items-center gap-2 text-sm text-base-content/60">
+                                            <span class="loading loading-spinner loading-xs"></span>
+                                            {{ __('Answering...') }}
+                                        </div>
+                                    @elseif ($job->questionAnswers->status === 'failed')
+                                        <span class="badge badge-error badge-sm">{{ __('Answers failed') }}</span>
+                                    @else
+                                        <div class="flex flex-wrap gap-x-4 gap-y-1.5">
+                                            @foreach(auth()->user()->questions ?? [] as $definition)
+                                            @php
+                                                $saved = $job->questionAnswers->answers[$definition['key']] ?? null;
+                                            @endphp
+                                            @if($saved)
+                                            <div class="tooltip tooltip-info" data-tip="{{ $definition['question'] }}">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="text-xs text-base-content/60 truncate">{{ Str::title(str_replace('_', ' ', $definition['key'])) }}</span>
+                                                    @if($saved['type'] === 'boolean')
+                                                    <div class="badge {{ ($saved['answer']['probability'] ?? 0) >= 0.5 ? 'badge-success' : 'badge-error' }} badge-sm">
+                                                        {{ ($saved['answer']['probability'] ?? 0) >= 0.5 ? __('Yes') : __('No') }}
+                                                    </div>
+                                                    @elseif($saved['type'] === 'choice')
+                                                    <div class="badge badge-primary badge-sm">
+                                                        {{ $saved['answer']['choice'] ?? '—' }}
+                                                    </div>
+                                                    @else
+                                                    @php
+                                                        $pct = round(($saved['answer']['score'] ?? 0) * 100 / max(count($definition['levels'] ?? []) - 1, 1));
+                                                    @endphp
+                                                    <div class="badge {{ $pct >= 80 ? 'badge-success' : ($pct >= 50 ? 'badge-warning' : 'badge-error') }} badge-sm">
+                                                        {{ $pct }}%
+                                                    </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            @endif
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                                @endif
+                            </div>
+                            @endif
+
+                            <div class="flex flex-wrap items-center justify-between gap-2 mt-auto pt-4">
+                                <div class="flex flex-wrap items-center gap-1.5">
                                     <button
-                                        class="btn btn-secondary btn-sm gap-2"
+                                        class="btn btn-ghost btn-xs gap-1.5"
+                                        wire:click="aiScore('{{ $job->id }}')"
+                                        wire:loading.attr="disabled"
+                                        wire:target="aiScore('{{ $job->id }}')"
+                                        title="{{ __('Compare this job with your CV') }}"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                        </svg>
+                                        {{ __('AI Score') }}
+                                    </button>
+                                    @if(auth()->user()?->questions)
+                                    <button
+                                        class="btn btn-ghost btn-xs gap-1.5"
                                         wire:click="answerQuestions('{{ $job->id }}')"
                                         wire:loading.attr="disabled"
                                         wire:target="answerQuestions('{{ $job->id }}')"
+                                        title="{{ __('Answer your AI questions about this job') }}"
                                     >
-                                        {{ __('Answer Questions') }}
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <circle cx="12" cy="12" r="10"/>
                                             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
                                             <line x1="12" y1="17" x2="12.01" y2="17"/>
                                         </svg>
+                                        {{ __('Questions') }}
                                     </button>
-                                @endif
-                                @if(auth()->user()?->defaultCoverLetter)
+                                    @endif
+                                    @if(auth()->user()?->defaultCoverLetter)
                                     <button
-                                        class="btn btn-accent btn-sm gap-2"
+                                        class="btn btn-ghost btn-xs gap-1.5"
                                         wire:click="generateCoverLetter('{{ $job->id }}')"
                                         wire:loading.attr="disabled"
                                         wire:target="generateCoverLetter('{{ $job->id }}')"
+                                        title="{{ __('Generate a tailored cover letter') }}"
                                     >
-                                        {{ __('Cover Letter') }}
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                                             <polyline points="14 2 14 8 20 8"/>
                                             <line x1="16" y1="13" x2="8" y2="13"/>
                                             <line x1="16" y1="17" x2="8" y2="17"/>
                                             <line x1="10" y1="9" x2="8" y2="9"/>
                                         </svg>
+                                        {{ __('Cover Letter') }}
                                     </button>
-                                @endif
-                                @if ($job->description)
-                                    <button class="btn btn-ghost btn-sm gap-2" wire:click="viewDescription('{{ $job->id }}')">
+                                    @endif
+                                    @if ($job->description)
+                                    <button class="btn btn-ghost btn-xs gap-1.5" wire:click="viewDescription('{{ $job->id }}')">
                                         {{ __('Description') }}
                                         <span wire:loading wire:target="viewDescription('{{ $job->id }}')" class="loading loading-spinner loading-xs"></span>
                                     </button>
-                                @else
-                                    <button class="btn btn-ghost btn-error btn-sm gap-2" wire:click="getDescription('{{ $job->id }}')">
+                                    @else
+                                    <button class="btn btn-ghost btn-error btn-xs gap-1.5" wire:click="getDescription('{{ $job->id }}')">
                                         {{ __('Get Description') }}
                                         <span wire:loading wire:target="getDescription('{{ $job->id }}')" class="loading loading-spinner loading-xs"></span>
                                     </button>
-                                @endif
+                                    @endif
+                                </div>
                                 <a href="{{ $job->canonical_url }}" target="_blank" class="btn btn-primary btn-sm gap-2">
                                     {{ __('View Job') }}
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
