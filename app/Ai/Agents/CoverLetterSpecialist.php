@@ -4,6 +4,7 @@ namespace App\Ai\Agents;
 
 use Laravel\Ai\Attributes\Model;
 use Laravel\Ai\Attributes\Provider;
+use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasTools;
@@ -13,7 +14,7 @@ use Laravel\Ai\Messages\Message;
 use Laravel\Ai\Promptable;
 use Stringable;
 
-#[Provider(Lab::OpenRouter), Model('z-ai/glm-5.3-flash')]
+#[Provider(Lab::OpenRouter), Model('z-ai/glm-5.3-flash'), Timeout(300)]
 class CoverLetterSpecialist implements Agent, Conversational, HasTools
 {
     use Promptable;
@@ -26,6 +27,7 @@ class CoverLetterSpecialist implements Agent, Conversational, HasTools
         return join(' ', [
             'You are a specialist in analyzing cover letters.',
             'If the user has selected text in the cover letter, ONLY CHANGE THAT SECTION. and keep the rest unchanged so you still have to print out the entire cover letter but only change that section that the user selected.',
+            'If the ---Selected Text--- section is not present, just ignore the instruction regarding it.',
             'Do not provide any feedback because what you return is directly reflected in the cover letter.',
             'If you do not understand the question or the context, Just return the original text.',
         ]);

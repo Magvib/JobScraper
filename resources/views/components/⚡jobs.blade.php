@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\GenerateCoverLetter;
 use App\Jobs\ProcessJobRating;
 use App\Models\JobRating;
 use App\Models\Post;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new class extends Component
@@ -23,8 +25,10 @@ new class extends Component
 
     public string $sort = 'date';
 
+    #[Url('keywords')]
     public array $selectedKeywords = [];
 
+    #[Url('sources')]
     public array $selectedSources = [];
 
     public bool $showMap = false;
@@ -554,6 +558,32 @@ new class extends Component
 
         $this->dispatch('toast',
             message: __('AI score is being calculated. Please check back in a few moments.'),
+            type: 'success'
+        );
+    }
+
+    public function generateCoverLetter($postId)
+    {
+        $post = Post::find($postId);
+        $user = auth()->user();
+
+        if (!$post) {
+            return null;
+        }
+
+        if (!$user->defaultCoverLetter) {
+            $this->dispatch('toast',
+                message: __('You need to set a default cover letter on your profile first.'),
+                type: 'error'
+            );
+
+            return null;
+        }
+
+        GenerateCoverLetter::dispatch($post, $user);
+
+        $this->dispatch('toast',
+            message: __('Cover letter is being generated. Please check back in a few moments.'),
             type: 'success'
         );
     }
@@ -1123,17 +1153,30 @@ new class extends Component
                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                     </svg>
                                 </button>
-                                @if ($job->description)
-                                    <button class="btn btn-warning btn-sm gap-2" wire:click="getDescription('{{ $job->id }}', true)">
-                                        {{ __('Reload Description') }}
-                                        <span wire:loading wire:target="getDescription('{{ $job->id }}', true)" class="loading loading-spinner loading-xs"></span>
+                                @if(auth()->user()?->defaultCoverLetter)
+                                    <button
+                                        class="btn btn-accent btn-sm gap-2"
+                                        wire:click="generateCoverLetter('{{ $job->id }}')"
+                                        wire:loading.attr="disabled"
+                                        wire:target="generateCoverLetter('{{ $job->id }}')"
+                                    >
+                                        {{ __('Cover Letter') }}
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                            <polyline points="14 2 14 8 20 8"/>
+                                            <line x1="16" y1="13" x2="8" y2="13"/>
+                                            <line x1="16" y1="17" x2="8" y2="17"/>
+                                            <line x1="10" y1="9" x2="8" y2="9"/>
+                                        </svg>
                                     </button>
+                                @endif
+                                @if ($job->description)
                                     <button class="btn btn-ghost btn-sm gap-2" wire:click="viewDescription('{{ $job->id }}')">
                                         {{ __('Description') }}
                                         <span wire:loading wire:target="viewDescription('{{ $job->id }}')" class="loading loading-spinner loading-xs"></span>
                                     </button>
                                 @else
-                                    <button class="btn btn-ghost btn-sm gap-2" wire:click="getDescription('{{ $job->id }}')">
+                                    <button class="btn btn-ghost btn-error btn-sm gap-2" wire:click="getDescription('{{ $job->id }}')">
                                         {{ __('Get Description') }}
                                         <span wire:loading wire:target="getDescription('{{ $job->id }}')" class="loading loading-spinner loading-xs"></span>
                                     </button>

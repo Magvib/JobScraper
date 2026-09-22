@@ -59,6 +59,10 @@ new class extends Component
 
     public string $notifyMatchMode = 'any';
 
+    public ?int $defaultCoverLetter = null;
+
+    public array $coverLetters = [];
+
     public function mount(): void
     {
         $user = auth()->user();
@@ -82,6 +86,12 @@ new class extends Component
         $this->notifySeniorityFitThreshold = $user->notify_seniority_fit_threshold;
         $this->notifyKeywordMatchThreshold = $user->notify_keyword_match_threshold;
         $this->notifyMatchMode = $user->notify_match_mode ?? 'any';
+        $this->defaultCoverLetter = $user->default_cover_letter_id;
+        $this->coverLetters = $user->coverLetters()
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'title'])
+            ->map(fn ($letter) => ['id' => $letter->id, 'title' => $letter->title ?? __('Untitled')])
+            ->all();
     }
 
     public function save(): void
@@ -103,6 +113,7 @@ new class extends Component
             'notifySeniorityFitThreshold' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notifyKeywordMatchThreshold' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notifyMatchMode' => ['required', 'in:any,all'],
+            'defaultCoverLetter' => ['nullable', 'integer', 'in:' . implode(',', array_column($this->coverLetters, 'id'))],
             'links' => ['array'],
             'links.*.name' => ['required', 'string', 'max:255'],
             'links.*.url' => ['required', 'url', 'max:255'],
@@ -149,6 +160,7 @@ new class extends Component
         $user->notify_seniority_fit_threshold = $this->notifySeniorityFitThreshold;
         $user->notify_keyword_match_threshold = $this->notifyKeywordMatchThreshold;
         $user->notify_match_mode = $this->notifyMatchMode;
+        $user->default_cover_letter_id = $this->defaultCoverLetter ?: null;
 
         $user->keywords = $this->keywords;
         $user->skills = $this->skills;
@@ -579,6 +591,21 @@ new class extends Component
                         <button type="button" wire:click="addLink" class="btn btn-secondary mt-2">
                             {{ __('Add') }}
                         </button>
+                    </fieldset>
+
+                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4 mt-4">
+                        <legend class="fieldset-legend">{{ __('Default Cover Letter') }}</legend>
+                        <p class="text-sm text-base-content/60 mb-3">{{ __('Choose which of your cover letters is used as the reference when generating a new cover letter for a job listing.') }}</p>
+
+                        <select wire:model="defaultCoverLetter" class="select select-bordered w-full">
+                            <option value="">{{ __('No default cover letter') }}</option>
+                            @foreach($coverLetters as $letter)
+                            <option value="{{ $letter['id'] }}">{{ $letter['title'] }}</option>
+                            @endforeach
+                        </select>
+                        @error('defaultCoverLetter')
+                        <p class="text-error text-sm mt-1">{{ $message }}</p>
+                        @enderror
                     </fieldset>
 
                     <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">

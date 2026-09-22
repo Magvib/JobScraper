@@ -13,5 +13,5 @@ Schedule::command('jobs:auto-match')
     ->withoutOverlapping();
 
 Schedule::command('queue:work --stop-when-empty')
-    ->everyMinute()
+    ->everyTenSeconds()
     ->withoutOverlapping();
