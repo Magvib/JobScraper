@@ -1,4 +1,4 @@
-{{-- Lavender Soft --}}
+{{-- Tri Stripe --}}
 <!DOCTYPE html>
 <html lang="da">
 <head>
@@ -21,90 +21,111 @@
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
-    <div class="cv-page max-w-[210mm] mx-auto bg-violet-50/50 shadow-md min-h-[297mm] font-sans text-violet-950 px-12 py-12">
+    <div class="cv-page max-w-[210mm] mx-auto bg-white text-stone-800 shadow-lg min-h-[297mm] font-sans flex flex-col">
 
-        {{-- Blød lavendel header --}}
-        <header class="text-center">
+        {{-- Tre farvestriber øverst --}}
+        <div class="h-2.5 bg-[#116466]"></div>
+        <div class="h-1.5 bg-[#cbb994]"></div>
+        <div class="h-2.5 bg-[#a4442e]"></div>
+
+        {{-- Hoved --}}
+        <header class="px-14 pt-11 pb-8 flex items-center justify-between gap-10">
+            <div class="min-w-0">
+                <p class="text-[10px] font-bold uppercase tracking-[0.45em] text-[#116466]">Curriculum Vitae</p>
+                <h1 class="mt-3 font-serif text-5xl font-bold leading-tight text-stone-900">{{ $user->name }}</h1>
+                @if ($user->job_title)
+                    <p class="mt-2 text-lg italic text-stone-500">{{ $user->job_title }}</p>
+                @endif
+            </div>
             @if ($photo)
                 <img src="{{ $photo }}" alt="{{ $user->name }}"
-                     class="w-28 h-28 object-cover rounded-full mx-auto ring-8 ring-violet-100 shadow-md">
+                     class="w-28 h-28 rounded-full object-cover ring-1 ring-stone-300 ring-offset-4 shrink-0 mt-1">
             @endif
-            <h1 class="mt-5 text-4xl font-extrabold tracking-tight">{{ $user->name }}</h1>
-            @if ($user->job_title)
-                <p class="mt-2 inline-block bg-violet-200/70 text-violet-900 text-sm font-semibold px-4 py-1.5 rounded-full">{{ $user->job_title }}</p>
-            @endif
-            <p class="mt-4 text-sm text-violet-900/60">
-                {{ collect([$user->phone, $user->email, $user->address || $user->city ? collect([$user->address, trim(($user->zip ?? '') . ' ' . ($user->city ?? ''))])->filter()->implode(', ') : null])->filter()->implode('  ·  ') }}
-            </p>
         </header>
 
-        @if (isset($coverLetter))
-            <section class="mt-10">
-                <h2 class="text-center">
-                    <span class="bg-violet-600 text-white text-xs font-bold uppercase tracking-[0.25em] px-6 py-2 rounded-full">Ansøgning</span>
-                </h2>
-                <div class="mt-6 bg-white rounded-3xl shadow-sm p-8 space-y-4 text-[15px] leading-relaxed">
-                    {!! $coverLetter->renderContext() !!}
-                </div>
-            </section>
-        @elseif ($jobs)
-            <section class="mt-10">
-                <h2 class="text-center">
-                    <span class="bg-violet-600 text-white text-xs font-bold uppercase tracking-[0.25em] px-6 py-2 rounded-full">Erfaring &amp; uddannelse</span>
-                </h2>
-                <div class="mt-6 space-y-4">
-                    @foreach ($jobs as $job)
-                        <article class="bg-white rounded-3xl shadow-sm px-7 py-5">
-                            <div class="flex items-baseline justify-between gap-3 flex-wrap">
-                                <h3 class="text-lg font-bold leading-snug">{{ $job['title'] }}</h3>
-                                <p class="text-xs font-bold text-violet-600 whitespace-nowrap tabular-nums">
+        {{-- Kontakt-række --}}
+        <div class="px-14 border-y border-stone-200 py-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-stone-600">
+            @if ($user->phone)
+                <span><span class="font-bold text-stone-900">Tlf</span> {{ $user->phone }}</span>
+            @endif
+            <span class="break-all"><span class="font-bold text-stone-900">Mail</span> {{ $user->email }}</span>
+            @if ($user->address || $user->city)
+                <span><span class="font-bold text-stone-900">Adresse</span> {{ collect([$user->address, trim(($user->zip ?? '') . ' ' . ($user->city ?? ''))])->filter()->implode(', ') }}</span>
+            @endif
+            @if ($user->birthdate)
+                <span><span class="font-bold text-stone-900">Født</span> {{ $user->birthdate->format('d/m/Y') }}</span>
+            @endif
+        </div>
+
+        <div class="px-14 py-10 grid grid-cols-[1fr_50mm] gap-12 flex-1">
+            {{-- Erhvervserfaring --}}
+            <main>
+                @if (isset($coverLetter))
+                    <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-[#116466] border-b border-stone-200 pb-2.5">Ansøgning</h2>
+                    <div class="mt-6 space-y-4">
+                        {!! $coverLetter->renderContext() !!}
+                    </div>
+                @elseif ($jobs)
+                    <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-[#116466] border-b border-stone-200 pb-2.5">Erhvervserfaring &amp; Uddannelse</h2>
+                    <div class="mt-6 space-y-6">
+                        @foreach ($jobs as $job)
+                            <article>
+                                <p class="text-[10px] font-bold uppercase tracking-[0.25em] text-stone-400 tabular-nums">
                                     {{ \Carbon\Carbon::parse($job['startDate'])->format('m/Y') }}
                                     –
                                     {{ !empty($job['endDate']) ? \Carbon\Carbon::parse($job['endDate'])->format('m/Y') : 'nu' }}
                                 </p>
-                            </div>
-                            <p class="text-sm font-medium text-violet-500">{{ $job['company'] }}</p>
-                            @if (!empty($job['description']))
-                                <p class="text-sm mt-2 leading-relaxed text-violet-950/70">{{ $job['description'] }}</p>
-                            @endif
-                        </article>
-                    @endforeach
-                </div>
-            </section>
-        @endif
+                                <h3 class="mt-1 font-serif text-xl font-bold leading-snug text-stone-900">{{ $job['title'] }}</h3>
+                                <p class="text-sm text-[#a4442e]">{{ $job['company'] }}</p>
+                                @if (!empty($job['description']))
+                                    <p class="mt-2 text-sm leading-relaxed text-stone-600">{{ $job['description'] }}</p>
+                                @endif
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
+            </main>
 
-        @if ($skills)
-            <section class="mt-9">
-                <h2 class="text-center">
-                    <span class="bg-violet-600 text-white text-xs font-bold uppercase tracking-[0.25em] px-6 py-2 rounded-full">Kompetencer</span>
-                </h2>
-                <div class="mt-5 flex flex-wrap justify-center gap-2">
-                    @foreach ($skills as $skill)
-                        <span class="text-sm font-semibold text-violet-800 bg-white border-2 border-violet-200 px-3.5 py-1.5 rounded-full">{{ $skill }}</span>
-                    @endforeach
-                </div>
-            </section>
-        @endif
+            {{-- Kompetencer & links --}}
+            @if ($skills || $links->isNotEmpty())
+                <aside>
+                    @if ($skills)
+                        <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-[#116466] border-b border-stone-200 pb-2.5">Kompetencer</h2>
+                        <ul class="mt-5 space-y-2.5 text-sm text-stone-700">
+                            @foreach ($skills as $skill)
+                                <li class="flex items-start gap-2.5">
+                                    <span class="mt-[7px] w-1.5 h-1.5 bg-[#a4442e] shrink-0"></span>
+                                    <span>{{ $skill }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
 
-        @if ($links->isNotEmpty())
-            <section class="mt-9">
-                <h2 class="text-center">
-                    <span class="bg-violet-600 text-white text-xs font-bold uppercase tracking-[0.25em] px-6 py-2 rounded-full">Links</span>
-                </h2>
-                <ul class="mt-5 space-y-1.5 text-sm text-center">
-                    @foreach ($links as $link)
-                        <li>
-                            <span class="font-semibold text-violet-900">{{ $link->name }}:</span>
-                            <a href="{{ $link->url }}" class="text-violet-700 underline break-all">{{ $link->prettifyUrl() }}</a>
-                        </li>
-                    @endforeach
-                </ul>
-            </section>
-        @endif
+                    @if ($links->isNotEmpty())
+                        <h2 class="mt-8 text-[10px] font-bold uppercase tracking-[0.35em] text-[#116466] border-b border-stone-200 pb-2.5">Links</h2>
+                        <ul class="mt-5 space-y-3 text-sm">
+                            @foreach ($links as $link)
+                                <li>
+                                    <p class="font-bold text-stone-900">{{ $link->name }}</p>
+                                    <a href="{{ $link->url }}" class="text-[#116466] underline underline-offset-2 break-all">{{ $link->prettifyUrl() }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </aside>
+            @endif
+        </div>
 
-        @if ($user->birthdate)
-            <p class="mt-10 text-center text-xs text-violet-900/50">Fødselsdato: {{ $user->birthdate->format('d/m/Y') }}</p>
-        @endif
+        {{-- Tre tynde striber i bunden, spejlet --}}
+        <footer class="px-14 pb-10">
+            <div class="border-t border-stone-200 pt-3 flex justify-between text-[10px] uppercase tracking-[0.3em] text-stone-400">
+                <span>{{ $user->name }}</span>
+                <span>Curriculum Vitae</span>
+            </div>
+            <div class="mt-3 h-1 bg-[#a4442e]"></div>
+            <div class="mt-1 h-0.5 bg-[#cbb994]"></div>
+            <div class="mt-1 h-1 bg-[#116466]"></div>
+        </footer>
     </div>
 </body>
 </html>

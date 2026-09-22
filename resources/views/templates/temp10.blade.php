@@ -1,4 +1,4 @@
-{{-- Rose Gradient --}}
+{{-- Grid Spec --}}
 <!DOCTYPE html>
 <html lang="da">
 <head>
@@ -21,100 +21,109 @@
     $photo = $user->getImage();
 @endphp
 <body class="bg-white min-h-screen">
-    <div class="cv-page max-w-[210mm] mx-auto bg-linear-to-br from-rose-100 via-pink-50 to-purple-100 shadow-lg min-h-[297mm] font-sans text-gray-900 px-10 py-10 flex flex-col">
+    <div class="cv-page max-w-[210mm] mx-auto bg-white text-stone-800 shadow-lg min-h-[297mm] font-sans px-14 py-12 flex flex-col">
 
-        {{-- Flydende hvidt kort --}}
-        <div class="bg-white/80 backdrop-blur rounded-3xl shadow-xl border border-white px-10 py-10 flex-1 flex flex-col">
-
-            {{-- Header med monogram --}}
-            <header class="flex items-center gap-6">
-                @if ($photo)
-                    <img src="{{ $photo }}" alt="{{ $user->name }}"
-                         class="w-20 h-20 rounded-2xl object-cover shadow-md shrink-0">
-                @else
-                    <div class="w-20 h-20 rounded-2xl bg-rose-200 flex items-center justify-center shrink-0">
-                        <span class="text-3xl font-black text-rose-500">{{ strtoupper(mb_substr($user->name, 0, 1)) }}</span>
-                    </div>
-                @endif
-                <div>
-                    <h1 class="text-4xl font-extrabold tracking-tight bg-linear-to-r from-rose-500 to-purple-500 bg-clip-text text-transparent">{{ $user->name }}</h1>
-                    @if ($user->job_title)
-                        <p class="mt-1 text-base font-medium text-rose-500">{{ $user->job_title }}</p>
-                    @endif
-                </div>
-            </header>
-
-            {{-- Kontakt --}}
-            <div class="mt-6 flex flex-wrap gap-2 text-xs font-medium text-gray-600">
-                @if ($user->phone)
-                    <span class="bg-rose-50 border border-rose-100 rounded-full px-3 py-1.5">{{ $user->phone }}</span>
-                @endif
-                <span class="bg-rose-50 border border-rose-100 rounded-full px-3 py-1.5 break-all">{{ $user->email }}</span>
-                @if ($user->address || $user->city)
-                    <span class="bg-rose-50 border border-rose-100 rounded-full px-3 py-1.5">{{ collect([$user->address, trim(($user->zip ?? '') . ' ' . ($user->city ?? ''))])->filter()->implode(', ') }}</span>
-                @endif
-                @if ($user->birthdate)
-                    <span class="bg-rose-50 border border-rose-100 rounded-full px-3 py-1.5">{{ $user->birthdate->format('d/m/Y') }}</span>
+        {{-- Hoved med foto i kantet ramme --}}
+        <header class="flex items-end justify-between gap-10 pb-8 border-b-4 border-stone-900">
+            <div class="min-w-0">
+                <p class="text-[10px] font-bold uppercase tracking-[0.45em] text-amber-600">Curriculum Vitae</p>
+                <h1 class="mt-3 text-5xl font-black uppercase tracking-tight leading-none text-stone-900 break-words">{{ $user->name }}</h1>
+                @if ($user->job_title)
+                    <p class="mt-3 text-lg text-stone-500">{{ $user->job_title }}</p>
                 @endif
             </div>
+            @if ($photo)
+                <div class="shrink-0 bg-amber-500 p-1.5">
+                    <img src="{{ $photo }}" alt="{{ $user->name }}" class="w-28 h-28 object-cover">
+                </div>
+            @endif
+        </header>
 
-            <div class="mt-8 grid grid-cols-[1fr_52mm] gap-8 flex-1">
-                {{-- Erhvervserfaring --}}
-                <main>
-                    @if (isset($coverLetter))
-                        <h2 class="text-xs font-bold uppercase tracking-[0.25em] text-rose-500">Ansøgning</h2>
-                        <div class="mt-5 space-y-4">
-                            {!! $coverLetter->renderContext() !!}
-                        </div>
-                    @elseif ($jobs)
-                    <h2 class="text-xs font-bold uppercase tracking-[0.25em] text-rose-500">Erhvervserfaring &amp; Uddannelse</h2>
-                    <div class="mt-5 space-y-6">
-                        @foreach ($jobs as $job)
-                            <article class="relative pl-5">
-                                <span class="absolute left-0 top-1.5 w-2.5 h-2.5 rounded-md bg-linear-to-br from-rose-400 to-purple-400"></span>
-                                <p class="text-[10px] font-bold uppercase tracking-widest text-rose-400">
-                                    {{ \Carbon\Carbon::parse($job['startDate'])->format('m/Y') }}
-                                    –
-                                    {{ !empty($job['endDate']) ? \Carbon\Carbon::parse($job['endDate'])->format('m/Y') : 'nu' }}
-                                </p>
-                                <h3 class="mt-1 font-bold leading-snug">{{ $job['title'] }}</h3>
-                                <p class="text-sm text-slate-500">{{ $job['company'] }}</p>
-                                @if (!empty($job['description']))
-                                    <p class="mt-2 text-sm leading-relaxed text-slate-600">{{ $job['description'] }}</p>
-                                @endif
-                            </article>
-                        @endforeach
-                    </div>
-                    @endif
-                </main>
-
-                {{-- Kompetencer & links --}}
-                @if ($skills || $links->isNotEmpty())
-                    <aside>
-                        @if ($skills)
-                            <h2 class="text-xs font-bold uppercase tracking-[0.25em] text-rose-500">Kompetencer</h2>
-                            <div class="mt-5 flex flex-wrap gap-2">
-                                @foreach ($skills as $skill)
-                                    <span class="text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-100 px-3 py-1.5 rounded-full">{{ $skill }}</span>
-                                @endforeach
-                            </div>
-                        @endif
-
-                        @if ($links->isNotEmpty())
-                            <h2 class="mt-8 text-xs font-bold uppercase tracking-[0.25em] text-rose-500">Links</h2>
-                            <ul class="mt-5 space-y-3 text-sm">
-                                @foreach ($links as $link)
-                                    <li>
-                                        <p class="font-semibold text-purple-600">{{ $link->name }}</p>
-                                        <a href="{{ $link->url }}" class="text-slate-600 underline break-all">{{ $link->prettifyUrl() }}</a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @endif
-                    </aside>
-                @endif
+        {{-- Kontakt som spec-ark: fire felter med labels --}}
+        <div class="mt-6 grid grid-cols-4 gap-6">
+            <div>
+                <p class="text-[9px] font-bold uppercase tracking-[0.25em] text-amber-600">Tlf</p>
+                <p class="mt-1 text-sm font-semibold text-stone-900">{{ $user->phone ?? '—' }}</p>
+            </div>
+            <div class="min-w-0">
+                <p class="text-[9px] font-bold uppercase tracking-[0.25em] text-amber-600">Mail</p>
+                <p class="mt-1 text-sm font-semibold text-stone-900 break-all">{{ $user->email }}</p>
+            </div>
+            <div class="min-w-0">
+                <p class="text-[9px] font-bold uppercase tracking-[0.25em] text-amber-600">Adresse</p>
+                <p class="mt-1 text-sm font-semibold text-stone-900">{{ collect([$user->address, trim(($user->zip ?? '') . ' ' . ($user->city ?? ''))])->filter()->implode(', ') ?: '—' }}</p>
+            </div>
+            <div>
+                <p class="text-[9px] font-bold uppercase tracking-[0.25em] text-amber-600">Født</p>
+                <p class="mt-1 text-sm font-semibold text-stone-900">{{ $user->birthdate ? $user->birthdate->format('d/m/Y') : '—' }}</p>
             </div>
         </div>
+
+        {{-- Erhvervserfaring som kort i to kolonner --}}
+        @if (isset($coverLetter))
+            <section class="mt-10 flex-1">
+                <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-amber-600 border-b border-stone-200 pb-2.5">Ansøgning</h2>
+                <div class="mt-6 space-y-4">
+                    {!! $coverLetter->renderContext() !!}
+                </div>
+            </section>
+        @elseif ($jobs)
+            <section class="mt-10 flex-1">
+                <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-amber-600 border-b border-stone-200 pb-2.5">Erhvervserfaring &amp; Uddannelse</h2>
+                <div class="mt-6 grid grid-cols-2 gap-5">
+                    @foreach ($jobs as $job)
+                        <article class="border-t-[3px] border-t-amber-500 border-x border-b border-stone-200 px-6 py-5">
+                            <p class="text-[10px] font-bold uppercase tracking-[0.25em] text-stone-400 tabular-nums">
+                                {{ \Carbon\Carbon::parse($job['startDate'])->format('m/Y') }}
+                                –
+                                {{ !empty($job['endDate']) ? \Carbon\Carbon::parse($job['endDate'])->format('m/Y') : 'nu' }}
+                            </p>
+                            <h3 class="mt-1 font-bold text-lg leading-snug text-stone-900">{{ $job['title'] }}</h3>
+                            <p class="text-sm text-amber-700">{{ $job['company'] }}</p>
+                            @if (!empty($job['description']))
+                                <p class="mt-2 text-sm leading-relaxed text-stone-600">{{ $job['description'] }}</p>
+                            @endif
+                        </article>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        {{-- Kompetencer --}}
+        @if ($skills)
+            <section class="mt-10">
+                <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-amber-600 border-b border-stone-200 pb-2.5">Kompetencer</h2>
+                <ul class="mt-5 grid grid-cols-3 gap-x-8 gap-y-2.5 text-sm text-stone-700">
+                    @foreach ($skills as $skill)
+                        <li class="flex items-start gap-2.5">
+                            <span class="mt-[7px] w-1.5 h-1.5 bg-amber-500 shrink-0"></span>
+                            <span>{{ $skill }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
+        {{-- Links --}}
+        @if ($links->isNotEmpty())
+            <section class="mt-9">
+                <h2 class="text-[10px] font-bold uppercase tracking-[0.35em] text-amber-600 border-b border-stone-200 pb-2.5">Links</h2>
+                <ul class="mt-5 flex flex-wrap gap-x-12 gap-y-3 text-sm">
+                    @foreach ($links as $link)
+                        <li>
+                            <p class="font-bold text-stone-900">{{ $link->name }}</p>
+                            <a href="{{ $link->url }}" class="text-amber-700 underline underline-offset-2 break-all">{{ $link->prettifyUrl() }}</a>
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
+        {{-- Footer --}}
+        <footer class="mt-12 pt-3 border-t-4 border-stone-900 flex justify-between text-[10px] uppercase tracking-[0.3em] text-stone-400">
+            <span>{{ $user->name }}</span>
+            <span>Curriculum Vitae</span>
+        </footer>
     </div>
 </body>
 </html>
