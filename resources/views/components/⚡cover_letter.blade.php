@@ -354,7 +354,7 @@ new class extends Component
                         </svg>
                         Load
                     </summary>
-                    <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg border border-base-300 w-64 z-30 mt-1">
+                    <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg border border-base-300 w-96 z-30 mt-1">
                         @if (count($letters) === 0)
                             <li class="disabled"><span class="opacity-60">No saved letters yet</span></li>
                         @else
