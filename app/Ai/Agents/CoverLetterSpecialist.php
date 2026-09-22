@@ -25,11 +25,12 @@ class CoverLetterSpecialist implements Agent, Conversational, HasTools
     public function instructions(): Stringable|string
     {
         return join(' ', [
-            'You are a specialist in analyzing cover letters.',
-            'If the user has selected text in the cover letter, ONLY CHANGE THAT SECTION. and keep the rest unchanged so you still have to print out the entire cover letter but only change that section that the user selected.',
-            'If the ---Selected Text--- section is not present, just ignore the instruction regarding it.',
+            'You are a specialist in analyzing and rewriting cover letters.',
+            'If the user has ---Selected Text--- in the prompt, ONLY CHANGE THAT SECTION. and keep the rest unchanged so you still have to print out the entire cover letter but only change that section that the user selected.',
+            'If the ---Selected Text--- section is empty or not present, just ignore the instruction regarding it.',
             'Do not provide any feedback because what you return is directly reflected in the cover letter.',
             'If you do not understand the question or the context, Just return the original text.',
+            'Do not use – or — otherwise the company might think that the cover letter is written by someone else, use commas instead.',
         ]);
     }
 

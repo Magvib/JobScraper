@@ -41,6 +41,7 @@ class GenerateCoverLetter implements ShouldQueue
         $jobDescription = trim(preg_replace('/\s+/', ' ', strip_tags($description ?? '')) ?? '');
         $letter = $defaultCoverLetter->content;
         $cv = json_encode($this->user->cv) ?? '';
+        $skills = json_encode($this->user->skills) ?? '';
 
         // Change title to the job
         $newCoverLetter->title = $this->post->company_name . ' - ' . now()->format('Y-m-d H:i:s');
@@ -52,7 +53,7 @@ class GenerateCoverLetter implements ShouldQueue
             ---Prompt---
             Please generate a tailored cover letter based on the job description and the current cover letter.
             The cover letter should be customized to highlight the applicant's relevant skills and experiences in relation to the job description.
-            Do not use – or — otherwise the company might think that the cover letter is written by someone else, use commas instead.
+            You may rewrite the cover letter to better match the job description while keeping the user's original content in mind.
             ---End Prompt---
 
             ---Cover Letter---
@@ -66,6 +67,11 @@ class GenerateCoverLetter implements ShouldQueue
             ---CV---
             $cv
             ---End CV---
+
+            ---Skills---
+            Skills that the user possesses:
+            $skills
+            ---End Skills---
             PROMPT
         );
         
