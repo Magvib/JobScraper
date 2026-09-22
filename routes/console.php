@@ -9,12 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('jobs:auto-match')
-    ->dailyAt('07:00')
-    ->withoutOverlapping();
+    ->dailyAt('07:00');
 
 Schedule::command('queue:work --stop-when-empty')
-    ->everyTenSeconds()
-    // Lock expires after 10 min instead of the 24 h default, so a hard-killed
-    // worker (OOM, reboot, SIGKILL) can't block the queue for a day.
-    // 10 min > the 330s job timeout, so a healthy run can't overlap itself.
-    ->withoutOverlapping(10);
+    ->everyTenSeconds();
