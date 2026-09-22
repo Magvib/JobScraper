@@ -33,6 +33,14 @@ new class extends Component
     #[Url('src')]
     public array $selectedSources = [];
 
+    /**
+     * Question key => list of selected answer values, e.g.
+     * ['remote' => ['yes'], 'salary' => ['high']].
+     * Filters for questions no longer in the user's profile are ignored.
+     */
+    #[Url('qf')]
+    public array $questionFilters = [];
+
     public bool $showMap = false;
 
     /**
@@ -486,6 +494,102 @@ new class extends Component
         return 6371 * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 
+    /**
+     * The question definitions currently active on the user's profile.
+     * Filters and filter buttons are derived from this list, so a question
+     * deleted from the profile disappears from the filters even when old
+     * answers for it still exist.
+     */
+    protected function activeQuestionDefinitions(): \Illuminate\Support\Collection
+    {
+        return collect(auth()->user()->questions ?? [])->keyBy('key');
+    }
+
+    /**
+     * Normalized filter value for a job's answer to a question definition:
+     * 'yes'/'no' for booleans, the chosen option name for choices, and a
+     * 'high'/'medium'/'low' score bucket — or null when unanswered.
+     */
+    public function questionAnswerValue($job, array $definition): ?string
+    {
+        $saved = $job->questionAnswers?->answers[$definition['key']] ?? null;
+
+        if (! $saved) {
+            return null;
+        }
+
+        return match ($definition['type']) {
+            'boolean' => ($saved['answer']['probability'] ?? 0) >= 0.5 ? 'yes' : 'no',
+            'choice' => $saved['answer']['choice'] ?? null,
+            'score' => (function () use ($saved, $definition) {
+                $pct = round(($saved['answer']['score'] ?? 0) * 100 / max(count($definition['levels'] ?? []) - 1, 1));
+
+                return $pct >= 80 ? 'high' : ($pct >= 50 ? 'medium' : 'low');
+            })(),
+            default => null,
+        };
+    }
+
+    /**
+     * Filter buttons for the user's active questions, including only the
+     * ones at least one listed job has an answer for.
+     */
+    #[Computed]
+    public function questionFilterOptions()
+    {
+        return $this->activeQuestionDefinitions()
+            ->filter(function ($definition) {
+                return collect($this->jobs)->contains(
+                    fn ($job) => ($job->questionAnswers?->answers[$definition['key']] ?? null) !== null
+                );
+            })
+            ->map(function ($definition) {
+                return [
+                    'key' => $definition['key'],
+                    'question' => $definition['question'],
+                    'type' => $definition['type'],
+                    'values' => match ($definition['type']) {
+                        'boolean' => [
+                            ['value' => 'yes', 'label' => __('Yes'), 'title' => $definition['question']],
+                            ['value' => 'no', 'label' => __('No'), 'title' => $definition['question']],
+                        ],
+                        'choice' => collect($definition['options'] ?? [])
+                            ->map(fn ($description, $name) => [
+                                'value' => $name,
+                                'label' => $name,
+                                'title' => trim($description ?? '') ?: $definition['question'],
+                            ])
+                            ->values()
+                            ->all(),
+                        'score' => [
+                            ['value' => 'high', 'label' => __('80%+'), 'title' => $definition['question']],
+                            ['value' => 'medium', 'label' => __('50-79%'), 'title' => $definition['question']],
+                            ['value' => 'low', 'label' => __('<50%'), 'title' => $definition['question']],
+                        ],
+                        default => [],
+                    },
+                ];
+            })
+            ->values();
+    }
+
+    public function toggleQuestionFilter(string $key, string $value): void
+    {
+        $selected = collect($this->questionFilters[$key] ?? []);
+
+        if ($selected->contains($value)) {
+            $selected = $selected->reject(fn ($v) => $v === $value);
+        } else {
+            $selected->push($value);
+        }
+
+        if ($selected->isEmpty()) {
+            $this->questionFilters = collect($this->questionFilters)->except($key)->all();
+        } else {
+            $this->questionFilters[$key] = $selected->values()->all();
+        }
+    }
+
     #[Computed]
     public function sortedJobs()
     {
@@ -503,6 +607,25 @@ new class extends Component
             $needle = strtolower(trim($this->search));
 
             $jobs = $jobs->filter(fn ($job) => str_contains(strtolower(($job->title ?? '').' '.($job->company_name ?? '').' '.$job->getLocation()), $needle));
+        }
+
+        // Question filters only apply to definitions still active on the
+        // profile; stale keys (deleted questions) are ignored.
+        $definitions = $this->activeQuestionDefinitions();
+
+        $activeFilters = collect($this->questionFilters)
+            ->filter(fn ($values, $key) => $values !== [] && $definitions->has($key));
+
+        if ($activeFilters->isNotEmpty()) {
+            $jobs = $jobs->filter(function ($job) use ($activeFilters, $definitions) {
+                foreach ($activeFilters as $key => $values) {
+                    if (! in_array($this->questionAnswerValue($job, $definitions->get($key)), $values)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
         }
 
         return match ($this->sort) {
@@ -840,7 +963,7 @@ new class extends Component
                                 {{ __('Answer Questions for All') }}
                             </button>
                         @endif
-                        @if(trim($search) !== '' || $selectedKeywords !== [] || $selectedSources !== [])
+                        @if(trim($search) !== '' || $selectedKeywords !== [] || $selectedSources !== [] || $questionFilters !== [])
                             <span class="text-xs text-base-content/60 whitespace-nowrap">
                                 {{ number_format(count($this->sortedJobs)) }} / {{ number_format(count($jobs)) }} {{ __('shown') }}
                             </span>
@@ -887,6 +1010,33 @@ new class extends Component
                                     </button>
                                 @endforeach
                             </div>
+                        </div>
+                    @endif
+                    @if($this->questionFilterOptions->isNotEmpty())
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <span class="text-xs text-base-content/60">{{ __('Questions') }}:</span>
+                            @foreach($this->questionFilterOptions as $filter)
+                                <div class="flex flex-wrap items-center gap-1">
+                                    <span class="text-xs text-base-content/50 font-medium" title="{{ $filter['question'] }}">
+                                        {{ Str::title(str_replace('_', ' ', $filter['key'])) }}:
+                                    </span>
+                                    <button
+                                        class="btn btn-xs {{ ($questionFilters[$filter['key']] ?? []) === [] ? 'btn-primary' : 'btn-ghost' }}"
+                                        wire:click="$set('questionFilters.{{ $filter['key'] }}', [])"
+                                    >
+                                        {{ __('All') }}
+                                    </button>
+                                    @foreach($filter['values'] as $value)
+                                        <button
+                                            class="btn btn-xs {{ in_array($value['value'], $questionFilters[$filter['key']] ?? []) ? 'btn-primary' : 'btn-ghost' }}"
+                                            title="{{ $value['title'] }}"
+                                            wire:click="toggleQuestionFilter('{{ $filter['key'] }}', '{{ $value['value'] }}')"
+                                        >
+                                            {{ $value['label'] }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @endforeach
                         </div>
                     @endif
                 </div>
