@@ -590,6 +590,30 @@ new class extends Component
         );
     }
 
+    public function answerQuestions($postId)
+    {
+        $post = Post::find($postId);
+        $user = auth()->user();
+
+        if (!$post) {
+            return null;
+        }
+
+        if (!$post->answerQuestions($user)) {
+            $this->dispatch('toast',
+                message: __('You need to define AI questions on your profile first.'),
+                type: 'error'
+            );
+
+            return null;
+        }
+
+        $this->dispatch('toast',
+            message: __('Your AI questions are being answered. Please check back in a few moments.'),
+            type: 'success'
+        );
+    }
+
     public function getDescription($jobId, $force = false)
     {
         $job = Post::find($jobId);
@@ -1121,6 +1145,40 @@ new class extends Component
                                         </div>
                                     </div>
                                 @endif
+                                @if ($job->questionAnswers?->status === 'pending')
+                                    <div class="badge badge-info badge-sm" wire:poll.5000ms>
+                                        {{ __('Answering...') }}
+                                    </div>
+                                @elseif ($job->questionAnswers?->status === 'failed')
+                                    <div class="badge badge-error badge-sm">
+                                        {{ __('Answers failed') }}
+                                    </div>
+                                @elseif($job->questionAnswers?->status === 'completed')
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        @foreach(auth()->user()->questions ?? [] as $definition)
+                                            @php
+                                                $saved = $job->questionAnswers->answers[$definition['key']] ?? null;
+                                            @endphp
+                                            @if($saved)
+                                            <div class="tooltip tooltip-info" data-tip="{{ $definition['question'] }}">
+                                                @if($saved['type'] === 'boolean')
+                                                <div class="badge {{ ($saved['answer']['probability'] ?? 0) >= 0.5 ? 'badge-success' : 'badge-error' }} badge-sm">
+                                                    {{ ($saved['answer']['probability'] ?? 0) >= 0.5 ? __('Yes') : __('No') }}
+                                                </div>
+                                                @elseif($saved['type'] === 'choice')
+                                                <div class="badge badge-primary badge-sm">
+                                                    {{ $saved['answer']['choice'] ?? '—' }}
+                                                </div>
+                                                @else
+                                                <div class="badge badge-secondary badge-sm">
+                                                    {{ round(($saved['answer']['score'] ?? 0) * 100 / max(count($definition['levels'] ?? []) - 1, 1)) }}%
+                                                </div>
+                                                @endif
+                                            </div>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                @endif
                             </div>
                             <div class="flex flex-wrap items-center gap-3 mt-4 text-sm">
                                 <span class="badge badge-ghost badge-sm">{{ Str::title($job['source'] ?? 'Jobindex') }}</span>
@@ -1155,6 +1213,21 @@ new class extends Component
                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                     </svg>
                                 </button>
+                                @if(auth()->user()?->questions)
+                                    <button
+                                        class="btn btn-secondary btn-sm gap-2"
+                                        wire:click="answerQuestions('{{ $job->id }}')"
+                                        wire:loading.attr="disabled"
+                                        wire:target="answerQuestions('{{ $job->id }}')"
+                                    >
+                                        {{ __('Answer Questions') }}
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                        </svg>
+                                    </button>
+                                @endif
                                 @if(auth()->user()?->defaultCoverLetter)
                                     <button
                                         class="btn btn-accent btn-sm gap-2"

@@ -47,6 +47,18 @@ new class extends Component
 
     public string $newLinkUrl = '';
 
+    public array $questions = [];
+
+    public string $newQuestionKey = '';
+
+    public string $newQuestionType = 'boolean';
+
+    public string $newQuestionText = '';
+
+    public string $newQuestionOptions = '';
+
+    public string $newQuestionLevels = '';
+
     public bool $autoMatchNewJobs = false;
 
     public ?float $notifySkillsMatchThreshold = null;
@@ -80,6 +92,19 @@ new class extends Component
         $this->keywords = $user->keywords ?? [];
         $this->skills = $user->skills ?? [];
         $this->links = $user->links->map(fn ($link) => ['name' => $link->name, 'url' => $link->url])->all();
+        $this->questions = collect($user->questions ?? [])->map(function (array $question) {
+            if (isset($question['options'])) {
+                $question['optionsText'] = collect($question['options'])
+                    ->map(fn ($description, $name) => $name.($description ? ': '.$description : ''))
+                    ->implode("\n");
+            }
+
+            if (isset($question['levels'])) {
+                $question['levelsText'] = implode("\n", $question['levels']);
+            }
+
+            return $question;
+        })->all();
         $this->autoMatchNewJobs = (bool) $user->auto_match_new_jobs;
         $this->notifySkillsMatchThreshold = $user->notify_skills_match_threshold;
         $this->notifyExperienceRelevanceThreshold = $user->notify_experience_relevance_threshold;
@@ -117,6 +142,12 @@ new class extends Component
             'links' => ['array'],
             'links.*.name' => ['required', 'string', 'max:255'],
             'links.*.url' => ['required', 'url', 'max:255'],
+            'questions' => ['array'],
+            'questions.*.key' => ['required', 'string', 'regex:/^[a-z0-9_]{2,64}$/', 'distinct'],
+            'questions.*.type' => ['required', 'in:boolean,choice,score'],
+            'questions.*.question' => ['required', 'string', 'max:1000'],
+            'questions.*.optionsText' => ['nullable', 'string'],
+            'questions.*.levelsText' => ['nullable', 'string'],
         ]);
 
         $user = auth()->user();
@@ -164,6 +195,51 @@ new class extends Component
 
         $user->keywords = $this->keywords;
         $user->skills = $this->skills;
+
+        // Convert the editable question definitions into the stored JSON shape.
+        $questions = [];
+
+        foreach ($this->questions as $question) {
+            $definition = [
+                'key' => $question['key'],
+                'type' => $question['type'],
+                'question' => $question['question'],
+            ];
+
+            if ($question['type'] === 'choice') {
+                $options = $this->parseQuestionOptions($question['optionsText'] ?? '');
+
+                if (count($options) < 2) {
+                    $this->dispatch(
+                        'toast',
+                        message: __('The question ":key" needs at least two options, one per line.', ['key' => $question['key']]),
+                        type: 'error'
+                    );
+
+                    return;
+                }
+
+                $definition['options'] = $options;
+            } elseif ($question['type'] === 'score') {
+                $levels = $this->parseQuestionLevels($question['levelsText'] ?? '');
+
+                if (count($levels) < 2) {
+                    $this->dispatch(
+                        'toast',
+                        message: __('The question ":key" needs at least two levels, one per line.', ['key' => $question['key']]),
+                        type: 'error'
+                    );
+
+                    return;
+                }
+
+                $definition['levels'] = $levels;
+            }
+
+            $questions[] = $definition;
+        }
+
+        $user->questions = $questions;
         $user->save();
 
         $user->links()->delete();
@@ -279,6 +355,102 @@ new class extends Component
             unset($this->links[$index]);
             $this->links = array_values($this->links);
         }
+    }
+
+    public function addQuestion(): void
+    {
+        $key = Str::slug(trim($this->newQuestionKey), '_');
+        $question = trim($this->newQuestionText);
+
+        if ($key === '' || $question === '') {
+            $this->dispatch(
+                'toast',
+                message: __('A key and a question are required.'),
+                type: 'error'
+            );
+
+            return;
+        }
+
+        if (collect($this->questions)->contains(fn ($q) => $q['key'] === $key)) {
+            $this->dispatch(
+                'toast',
+                message: __('A question with this key already exists.'),
+                type: 'error'
+            );
+
+            return;
+        }
+
+        $definition = [
+            'key' => $key,
+            'type' => $this->newQuestionType,
+            'question' => $question,
+        ];
+
+        if ($this->newQuestionType === 'choice') {
+            $definition['optionsText'] = $this->newQuestionOptions;
+        } elseif ($this->newQuestionType === 'score') {
+            $definition['levelsText'] = $this->newQuestionLevels;
+        }
+
+        $this->questions[] = $definition;
+
+        $this->newQuestionKey = '';
+        $this->newQuestionText = '';
+        $this->newQuestionOptions = '';
+        $this->newQuestionLevels = '';
+    }
+
+    public function removeQuestion(int $index): void
+    {
+        if (isset($this->questions[$index])) {
+            unset($this->questions[$index]);
+            $this->questions = array_values($this->questions);
+        }
+    }
+
+    /**
+     * Parse "name: description" lines into a choice options map.
+     *
+     * @return array<string, string|null>
+     */
+    private function parseQuestionOptions(string $text): array
+    {
+        $options = [];
+
+        foreach (preg_split('/\R/', trim($text)) ?: [] as $line) {
+            $line = trim($line);
+
+            if ($line === '') {
+                continue;
+            }
+
+            [$name, $description] = array_pad(explode(':', $line, 2), 2, null);
+            $name = Str::slug(trim($name), '_');
+
+            if ($name === '') {
+                continue;
+            }
+
+            $options[$name] = $description ? trim($description) : null;
+        }
+
+        return $options;
+    }
+
+    /**
+     * Parse one-level-per-line text into an ordered list of score levels.
+     *
+     * @return list<string>
+     */
+    private function parseQuestionLevels(string $text): array
+    {
+        return collect(preg_split('/\R/', trim($text)) ?: [])
+            ->map(fn ($line) => trim($line))
+            ->filter()
+            ->values()
+            ->all();
     }
 
     public function generateKeywords(): void
@@ -590,6 +762,81 @@ new class extends Component
                         </div>
                         <button type="button" wire:click="addLink" class="btn btn-secondary mt-2">
                             {{ __('Add') }}
+                        </button>
+                    </fieldset>
+
+                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4 mt-4">
+                        <legend class="fieldset-legend">{{ __('AI Questions') }}</legend>
+                        <p class="text-sm text-base-content/60 mb-3">{{ __('Define your own questions that the AI answers about each job posting. Answer them from a job with the Answer Questions button.') }}</p>
+
+                        @foreach($questions as $index => $question)
+                        <div class="border border-base-300 rounded-box px-3 py-2 mb-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="badge badge-outline">{{ $question['key'] }}</span>
+                                <span class="badge badge-ghost">{{ __(Str::title($question['type'])) }}</span>
+                                <button type="button" wire:click="removeQuestion({{ $index }})" class="hover:text-error shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <input
+                                type="text"
+                                wire:model="questions.{{ $index }}.question"
+                                class="input input-bordered w-full mt-2"
+                                maxlength="1000"
+                                placeholder="{{ __('Question') }}" />
+                            @error('questions.'.$index.'.question')
+                            <p class="text-error text-sm mt-1">{{ $message }}</p>
+                            @enderror
+                            @if($question['type'] === 'choice')
+                            <textarea
+                                wire:model="questions.{{ $index }}.optionsText"
+                                class="textarea textarea-bordered w-full mt-2"
+                                placeholder="{{ __('One option per line: name: description') }}"></textarea>
+                            @endif
+                            @if($question['type'] === 'score')
+                            <textarea
+                                wire:model="questions.{{ $index }}.levelsText"
+                                class="textarea textarea-bordered w-full mt-2"
+                                placeholder="{{ __('One level per line, ordered from lowest to highest') }}"></textarea>
+                            @endif
+                        </div>
+                        @endforeach
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <input
+                                type="text"
+                                wire:model="newQuestionKey"
+                                class="input input-bordered w-full"
+                                placeholder="{{ __('Key (e.g. remote_ok)') }}"
+                                maxlength="64" />
+                            <select wire:model="newQuestionType" class="select select-bordered w-full">
+                                <option value="boolean">{{ __('Boolean (yes / no)') }}</option>
+                                <option value="choice">{{ __('Choice') }}</option>
+                                <option value="score">{{ __('Score') }}</option>
+                            </select>
+                        </div>
+                        <input
+                            type="text"
+                            wire:model="newQuestionText"
+                            class="input input-bordered w-full mt-2"
+                            placeholder="{{ __('Question (e.g. Does this job allow remote work?)') }}"
+                            maxlength="1000" />
+                        @if($newQuestionType === 'choice')
+                        <textarea
+                            wire:model="newQuestionOptions"
+                            class="textarea textarea-bordered w-full mt-2"
+                            placeholder="{{ __('One option per line: name: description (at least two options)') }}"></textarea>
+                        @endif
+                        @if($newQuestionType === 'score')
+                        <textarea
+                            wire:model="newQuestionLevels"
+                            class="textarea textarea-bordered w-full mt-2"
+                            placeholder="{{ __('One level per line, ordered from lowest to highest (at least two levels)') }}"></textarea>
+                        @endif
+                        <button type="button" wire:click="addQuestion" class="btn btn-secondary mt-2">
+                            {{ __('Add question') }}
                         </button>
                     </fieldset>
 

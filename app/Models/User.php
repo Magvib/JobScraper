@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'password', 'avatar', 'cv', 'address', 'zip', 'city', 'latitude', 'longitude', 'phone', 'birthdate', 'job_title', 'max_distance', 'keywords', 'skills', 'auto_match_new_jobs', 'notify_skills_match_threshold', 'notify_experience_relevance_threshold', 'notify_seniority_fit_threshold', 'notify_keyword_match_threshold', 'notify_match_mode', 'default_cover_letter_id'])]
+#[Fillable(['name', 'email', 'password', 'avatar', 'cv', 'address', 'zip', 'city', 'latitude', 'longitude', 'phone', 'birthdate', 'job_title', 'max_distance', 'keywords', 'skills', 'questions', 'auto_match_new_jobs', 'notify_skills_match_threshold', 'notify_experience_relevance_threshold', 'notify_seniority_fit_threshold', 'notify_keyword_match_threshold', 'notify_match_mode', 'default_cover_letter_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -40,6 +40,7 @@ class User extends Authenticatable
             'notify_seniority_fit_threshold' => 'float',
             'notify_keyword_match_threshold' => 'float',
             'cv_json' => 'array',
+            'questions' => 'array',
         ];
     }
 

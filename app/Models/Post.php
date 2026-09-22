@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\ProcessPostQuestions;
 use DOMDocument;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -88,6 +89,46 @@ class Post extends Model
     public function ratingFor(User $user)
     {
         return $this->hasOne(JobRating::class, 'job_id', 'source_id')->where('source', $this->source)->where('user_id', $user->id);
+    }
+
+    public function questionAnswers()
+    {
+        return $this->hasOne(PostQuestionAnswer::class, 'job_id', 'source_id')->where('source', $this->source)->where('user_id', auth()->id());
+    }
+
+    public function questionAnswersFor(User $user)
+    {
+        return $this->hasOne(PostQuestionAnswer::class, 'job_id', 'source_id')->where('source', $this->source)->where('user_id', $user->id);
+    }
+
+    /**
+     * Trigger (or re-run) AI answering of the user's custom questions for this post.
+     */
+    public function answerQuestions(User $user): ?PostQuestionAnswer
+    {
+        if (empty($user->questions)) {
+            return null;
+        }
+
+        $this->questionAnswers()->delete();
+
+        $this->questionAnswers()->create([
+            'user_id' => $user->id,
+            'job_id' => $this->source_id,
+            'source' => $this->source,
+        ]);
+
+        ProcessPostQuestions::dispatch($this, $user);
+
+        return $this->questionAnswers()->first();
+    }
+
+    /**
+     * The saved answers row for the user, or null when the questions were never answered.
+     */
+    public function questionAnswersForUser(User $user): ?PostQuestionAnswer
+    {
+        return $this->questionAnswersFor($user)->first();
     }
 
     public function getLocation()
