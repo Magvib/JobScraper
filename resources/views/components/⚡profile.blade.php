@@ -917,7 +917,7 @@ new class extends Component
                                 class="input input-bordered w-full"
                                 placeholder="{{ __('Key (e.g. remote_ok)') }}"
                                 maxlength="64" />
-                            <select wire:model="newQuestionType" class="select select-bordered w-full">
+                            <select wire:model.live="newQuestionType" class="select select-bordered w-full">
                                 <option value="boolean">{{ __('Boolean (yes / no)') }}</option>
                                 <option value="choice">{{ __('Choice') }}</option>
                                 <option value="score">{{ __('Score') }}</option>
