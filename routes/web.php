@@ -122,7 +122,7 @@ Route::get('/auth/callback', function () {
     $user = User::firstOrCreate([
         'email' => $githubUser->email,
     ], [
-        'name' => $githubUser->name,
+        'name' => $githubUser->name ?? $githubUser->nickname ?? $githubUser->email,
         'avatar' => $githubUser->avatar,
         'email_verified_at' => now(),
         'password' => bcrypt(uniqid()),
