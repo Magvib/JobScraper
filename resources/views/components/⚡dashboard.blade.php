@@ -1,22 +1,34 @@
 <?php
 
 use App\Models\JobRating;
+use Illuminate\Support\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 new class extends Component
 {
     public string $username = '';
 
-    public function mount()
+    public function mount(): void
     {
-        $user = auth()->user();
-        $this->username = $user->name;
+        $this->username = auth()->user()->name;
     }
 
-    public function getMatchStatsProperty(): array
+    /**
+     * All of the user's ratings, loaded once per render. The stats, top matches
+     * and recent activity are all derived from this single query (they used to be
+     * three separate accessors that re-ran their queries on every read).
+     */
+    #[Computed]
+    public function ratings(): Collection
     {
-        $ratings = JobRating::where('user_id', auth()->id())->get();
+        return JobRating::where('user_id', auth()->id())->get();
+    }
 
+    #[Computed]
+    public function stats(): array
+    {
+        $ratings = $this->ratings;
         $completed = $ratings->where('status', 'completed');
         $scores = $completed->map(fn ($rating) => $this->scoreFor($rating));
 
@@ -31,12 +43,12 @@ new class extends Component
         ];
     }
 
-    public function getTopJobsProperty()
+    #[Computed]
+    public function topJobs(): Collection
     {
-        return JobRating::where('user_id', auth()->id())
+        return $this->ratings
             ->where('status', 'completed')
-            ->whereNotNull('job_title')
-            ->get()
+            ->filter(fn ($rating) => $rating->job_title !== null)
             ->map(function ($rating) {
                 $rating->score = $this->scoreFor($rating);
 
@@ -47,12 +59,10 @@ new class extends Component
             ->values();
     }
 
-    public function getRecentActivityProperty()
+    #[Computed]
+    public function recentActivity(): Collection
     {
-        return JobRating::where('user_id', auth()->id())
-            ->orderByDesc('updated_at')
-            ->limit(5)
-            ->get();
+        return $this->ratings->sortByDesc('updated_at')->take(5)->values();
     }
 
     private function scoreFor(JobRating $rating): float
@@ -64,198 +74,149 @@ new class extends Component
             $rating->keyword_match,
         ])->filter()->avg() ?? 0;
     }
-
-    private function scoreBadge(float $score): string
-    {
-        return match (true) {
-            $score >= 80 => 'badge-success',
-            $score >= 50 => 'badge-warning',
-            default => 'badge-error',
-        };
-    }
-}
+};
 ?>
 
-<div class="py-10 mx-4">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                    @auth
-                    <div class="avatar pointer-events-none">
-                        <div class="ring-primary ring-offset-base-100 w-12 rounded-full ring-2 ring-offset-2 pointer-events-none select-none">
-                            <img src="{{ auth()->user()->avatar }}" />
-                        </div>
-                    </div>
-                    @endauth
-                    <span>Welcome back, <span class="text-primary">{{ $username }}</span>!</span>
-                </h1>
-                <p class="mt-2 text-gray-600 dark:text-gray-300">Here's how your job search is going</p>
-            </div>
+<div>
+    @php
+        $user = auth()->user();
+        $stats = $this->stats;
+        $average = $stats['average'];
+    @endphp
 
-            <div class="flex gap-2">
-                <a href="{{ route('jobs') }}" wire:navigate class="btn btn-primary gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    Browse Jobs
-                </a>
+    <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div class="flex items-center gap-4">
+            <x-ui.avatar :src="$user->getImage()" :name="$user->name" size="size-12" />
+            <div class="space-y-1">
+                <h1 class="text-2xl font-semibold tracking-tight">{{ __('Welcome back, :name!', ['name' => $username]) }}</h1>
+                <p class="text-sm text-muted-foreground">{{ __("Here's how your job search is going") }}</p>
             </div>
         </div>
 
-        <!-- Stat Tiles -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <div class="card bg-base-100 shadow-lg border border-base-300">
-                    <div class="card-body p-5">
-                        <div class="text-sm font-medium text-base-content/60">Jobs Matched</div>
-                        <div class="text-3xl font-bold text-primary">{{ $this->match_stats['completed'] }}</div>
-                        <div class="text-xs text-base-content/50 mt-1">
-                            @if ($this->match_stats['pending'] > 0)
-                                {{ $this->match_stats['pending'] }} still calculating
-                            @else
-                                rated by AI so far
-                            @endif
-                        </div>
-                    </div>
-                </div>
+        <x-ui.button :href="route('jobs')" wire:navigate>
+            <x-ui.icon name="search" /> {{ __('Browse Jobs') }}
+        </x-ui.button>
+    </div>
 
-                <div class="card bg-base-100 shadow-lg border border-base-300">
-                    <div class="card-body p-5">
-                        <div class="text-sm font-medium text-base-content/60">Average Match</div>
-                        <div class="text-3xl font-bold {{ $this->scoreBadge($this->match_stats['average'] ?? 0) === 'badge-success' ? 'text-success' : ($this->scoreBadge($this->match_stats['average'] ?? 0) === 'badge-warning' ? 'text-warning' : 'text-error') }}">
-                            {{ $this->match_stats['average'] !== null ? $this->match_stats['average'].'%' : '—' }}
-                        </div>
-                        <div class="text-xs text-base-content/50 mt-1">across all rated jobs</div>
-                    </div>
-                </div>
+    <div class="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <x-stat-card
+            :label="__('Jobs Matched')"
+            :value="$stats['completed']"
+            :hint="$stats['pending'] > 0 ? __(':count still calculating', ['count' => $stats['pending']]) : __('rated by AI so far')"
+        />
+        <x-stat-card
+            :label="__('Average Match')"
+            :value="$average !== null ? $average.'%' : '—'"
+            :tone="$average === null ? null : ($average >= 80 ? 'success' : ($average >= 50 ? 'warning' : 'destructive'))"
+            :hint="__('across all rated jobs')"
+        />
+        <x-stat-card :label="__('Strong Matches')" :value="$stats['strong']" tone="success" :hint="__('scoring 80% or above')" />
+        <x-stat-card
+            :label="__('New This Week')"
+            :value="$stats['this_week']"
+            tone="info"
+            :hint="$stats['failed'] > 0 ? trans_choice(':count failed rating|:count failed ratings', $stats['failed']) : __('matched in the last 7 days')"
+        />
+    </div>
 
-                <div class="card bg-base-100 shadow-lg border border-base-300">
-                    <div class="card-body p-5">
-                        <div class="text-sm font-medium text-base-content/60">Strong Matches</div>
-                        <div class="text-3xl font-bold text-success">{{ $this->match_stats['strong'] }}</div>
-                        <div class="text-xs text-base-content/50 mt-1">scoring 80% or above</div>
-                    </div>
-                </div>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <x-ui.card class="lg:col-span-2">
+            <x-ui.card-header class="flex-row items-center justify-between">
+                <x-ui.card-title class="text-lg">{{ __('Top Matches') }}</x-ui.card-title>
+                <x-ui.button variant="link" size="sm" :href="route('jobs')" wire:navigate>
+                    {{ __('View all jobs') }} <x-ui.icon name="arrow-right" />
+                </x-ui.button>
+            </x-ui.card-header>
 
-                <div class="card bg-base-100 shadow-lg border border-base-300">
-                    <div class="card-body p-5">
-                        <div class="text-sm font-medium text-base-content/60">New This Week</div>
-                        <div class="text-3xl font-bold text-info">{{ $this->match_stats['this_week'] }}</div>
-                        <div class="text-xs text-base-content/50 mt-1">
-                            {{ $this->match_stats['failed'] > 0 ? $this->match_stats['failed'].' failed rating'.($this->match_stats['failed'] > 1 ? 's' : '') : 'matched in the last 7 days' }}
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <x-ui.card-content>
+                @if ($this->topJobs->isEmpty())
+                    <x-ui.empty
+                        icon="target"
+                        :title="__('No scored jobs yet')"
+                        :description="__('Use the AI Score button on the Jobs page, or enable auto-match in your profile, to get your first matches.')"
+                    />
+                @else
+                    <div class="divide-y">
+                        @foreach ($this->topJobs as $i => $job)
+                            <div class="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
+                                <div @class([
+                                    'flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                                    'bg-warning/15 text-warning' => $i === 0,
+                                    'bg-muted text-muted-foreground' => $i !== 0,
+                                ])>{{ $i + 1 }}</div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Top 5 Best Scoring Jobs -->
-                <div class="card bg-base-100 shadow-lg lg:col-span-2">
-                    <div class="card-body">
-                        <div class="flex items-center justify-between mb-2">
-                            <h2 class="text-xl font-bold">Top Matches</h2>
-                            <a href="{{ route('jobs') }}" wire:navigate class="link link-primary link-sm">View all jobs →</a>
-                        </div>
+                                <div class="min-w-0 grow">
+                                    <a href="{{ $job->job_url }}" target="_blank" rel="noopener" class="line-clamp-1 font-medium hover:underline">
+                                        {{ $job->job_title }}
+                                    </a>
+                                    <div class="mt-0.5 text-xs text-muted-foreground">{{ __('Rated :time', ['time' => $job->updated_at->diffForHumans()]) }}</div>
+                                </div>
 
-                        @if ($this->top_jobs->isEmpty())
-                            <div class="text-center py-10 text-base-content/50">
-                                <div class="text-4xl mb-3">🎯</div>
-                                <p class="font-medium">No scored jobs yet</p>
-                                <p class="text-sm mt-1">Use the AI Score button on the Jobs page, or enable auto-match in your profile, to get your first matches.</p>
+                                <div class="hidden shrink-0 items-center gap-1 md:flex">
+                                    @foreach (['skills_match' => __('Skills'), 'experience_relevance' => __('Experience'), 'seniority_fit' => __('Seniority'), 'keyword_match' => __('Keywords')] as $field => $label)
+                                        <x-ui.tooltip :text="$label.': '.number_format($job->{$field} ?? 0, 0).'%'">
+                                            <x-ui.badge variant="muted" class="tabular-nums">{{ number_format($job->{$field} ?? 0, 0) }}%</x-ui.badge>
+                                        </x-ui.tooltip>
+                                    @endforeach
+                                </div>
+
+                                <x-score-badge :value="$job->score" class="shrink-0 px-2.5 py-1 text-sm" />
                             </div>
-                        @else
-                            <div class="divide-y divide-base-200">
-                                @foreach ($this->top_jobs as $i => $job)
-                                    <div class="flex items-center gap-4 py-3">
-                                        <div class="w-8 h-8 rounded-full {{ $i === 0 ? 'bg-warning/20 text-warning' : 'bg-base-200 text-base-content/60' }} flex items-center justify-center font-bold text-sm shrink-0">
-                                            {{ $i + 1 }}
-                                        </div>
-                                        <div class="grow min-w-0">
-                                            <a href="{{ $job->job_url }}" target="_blank" class="font-semibold hover:text-primary transition-colors line-clamp-1">
-                                                {{ $job->job_title }}
-                                            </a>
-                                            <div class="text-xs text-base-content/50 mt-0.5">Rated {{ $job->updated_at->diffForHumans() }}</div>
-                                        </div>
-                                        <div class="flex items-center gap-1 shrink-0 max-md:hidden">
-                                            <div class="tooltip" data-tip="Skills: {{ number_format($job->skills_match ?? 0, 0) }}%">
-                                                <div class="badge badge-ghost badge-sm">{{ number_format($job->skills_match ?? 0, 0) }}%</div>
-                                            </div>
-                                            <div class="tooltip" data-tip="Experience: {{ number_format($job->experience_relevance ?? 0, 0) }}%">
-                                                <div class="badge badge-ghost badge-sm">{{ number_format($job->experience_relevance ?? 0, 0) }}%</div>
-                                            </div>
-                                            <div class="tooltip" data-tip="Seniority: {{ number_format($job->seniority_fit ?? 0, 0) }}%">
-                                                <div class="badge badge-ghost badge-sm">{{ number_format($job->seniority_fit ?? 0, 0) }}%</div>
-                                            </div>
-                                            <div class="tooltip" data-tip="Keywords: {{ number_format($job->keyword_match ?? 0, 0) }}%">
-                                                <div class="badge badge-ghost badge-sm">{{ number_format($job->keyword_match ?? 0, 0) }}%</div>
-                                            </div>
-                                        </div>
-                                        <div class="shrink-0">
-                                            <div class="badge {{ $this->scoreBadge($job->score) }} badge-lg gap-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                                </svg>
-                                                {{ number_format($job->score, 0) }}%
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
+                        @endforeach
                     </div>
-                </div>
+                @endif
+            </x-ui.card-content>
+        </x-ui.card>
 
-                <!-- Recent Activity -->
-                <div class="card bg-base-100 shadow-lg">
-                    <div class="card-body">
-                        <h2 class="text-xl font-bold mb-2">Recent Activity</h2>
+        <x-ui.card>
+            <x-ui.card-header>
+                <x-ui.card-title class="text-lg">{{ __('Recent Activity') }}</x-ui.card-title>
+            </x-ui.card-header>
 
-                        @if ($this->recent_activity->isEmpty())
-                            <div class="text-center py-10 text-base-content/50">
-                                <p class="text-sm">No activity yet. Once jobs are scored, they'll show up here.</p>
+            <x-ui.card-content>
+                @if ($this->recentActivity->isEmpty())
+                    <p class="py-8 text-center text-sm text-muted-foreground">{{ __("No activity yet. Once jobs are scored, they'll show up here.") }}</p>
+                @else
+                    <div class="space-y-2">
+                        @foreach ($this->recentActivity as $activity)
+                            <div class="flex items-center gap-3 rounded-lg border p-3">
+                                <div @class([
+                                    'flex size-8 shrink-0 items-center justify-center rounded-full',
+                                    'bg-success/10 text-success' => $activity->status === 'completed',
+                                    'bg-info/10 text-info' => $activity->status === 'pending',
+                                    'bg-destructive/10 text-destructive' => ! in_array($activity->status, ['completed', 'pending']),
+                                ])>
+                                    @if ($activity->status === 'completed')
+                                        <x-ui.icon name="check" />
+                                    @elseif ($activity->status === 'pending')
+                                        <x-ui.spinner />
+                                    @else
+                                        <x-ui.icon name="x" />
+                                    @endif
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="line-clamp-1 text-sm font-medium">
+                                        @if ($activity->job_url)
+                                            <a href="{{ $activity->job_url }}" target="_blank" rel="noopener" class="hover:underline">{{ $activity->job_title ?? __('Job') }}</a>
+                                        @else
+                                            {{ $activity->job_title ?? __('Job') }}
+                                        @endif
+                                    </p>
+                                    <p class="text-xs text-muted-foreground">
+                                        @if ($activity->status === 'completed')
+                                            {{ __('Scored :time', ['time' => $activity->updated_at->diffForHumans()]) }}
+                                        @elseif ($activity->status === 'pending')
+                                            {{ __('Calculating — started :time', ['time' => $activity->updated_at->diffForHumans()]) }}
+                                        @else
+                                            {{ __('Failed :time', ['time' => $activity->updated_at->diffForHumans()]) }}
+                                        @endif
+                                    </p>
+                                </div>
                             </div>
-                        @else
-                            <div class="space-y-2">
-                                @foreach ($this->recent_activity as $activity)
-                                    <div class="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
-                                        <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 {{ $activity->status === 'completed' ? 'bg-success/20' : ($activity->status === 'pending' ? 'bg-info/20' : 'bg-error/20') }}">
-                                            @if ($activity->status === 'completed')
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            @elseif ($activity->status === 'pending')
-                                                <span class="loading loading-spinner text-info w-4"></span>
-                                            @else
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            @endif
-                                        </div>
-                                        <div class="min-w-0">
-                                            <p class="font-medium text-sm line-clamp-1">
-                                                @if ($activity->job_url)
-                                                    <a href="{{ $activity->job_url }}" target="_blank" class="hover:text-primary">{{ $activity->job_title ?? 'Job' }}</a>
-                                                @else
-                                                    {{ $activity->job_title ?? 'Job' }}
-                                                @endif
-                                            </p>
-                                            <p class="text-xs text-base-content/50">
-                                                @if ($activity->status === 'completed')
-                                                    Scored {{ $activity->updated_at->diffForHumans() }}
-                                                @elseif ($activity->status === 'pending')
-                                                    Calculating — started {{ $activity->updated_at->diffForHumans() }}
-                                                @else
-                                                    Failed {{ $activity->updated_at->diffForHumans() }}
-                                                @endif
-                                            </p>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
+                        @endforeach
                     </div>
-                </div>
-            </div>
+                @endif
+            </x-ui.card-content>
+        </x-ui.card>
     </div>
 </div>

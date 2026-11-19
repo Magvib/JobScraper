@@ -1,109 +1,116 @@
+@php
+    $user = auth()->user();
+
+    $nav = [
+        ['route' => 'dashboard', 'label' => __('Home'), 'icon' => 'home'],
+        ['route' => 'jobs', 'label' => __('Jobs'), 'icon' => 'briefcase'],
+        ['route' => 'cv', 'label' => __('CV'), 'icon' => 'file-text'],
+        ['route' => 'cover-letter', 'label' => __('Cover Letter'), 'icon' => 'file-text'],
+        ['route' => 'templates', 'label' => __('Templates'), 'icon' => 'layout-template'],
+    ];
+@endphp
 <!DOCTYPE html>
-<html lang="en" data-theme="halloween">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>{{ config('app.name', 'Laravel') }}</title>
-
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('partials.head', ['title' => config('app.name', 'JobScraper')])
 </head>
 
-<body>
-    <div class="navbar bg-base-100 shadow-sm">
-        <div class="navbar-start">
-            <div class="dropdown">
-                <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
-                    </svg>
-                </div>
-                <ul tabindex="-1" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-                    <li><a wire:navigate href="{{ route('dashboard') }}" wire:current="bg-primary">Home</a></li>
-                    <li><a wire:navigate href="{{ route('profile') }}" wire:current="bg-primary">Profile</a></li>
-                    <li><a wire:navigate href="{{ route('cv') }}" wire:current="bg-primary">CV</a></li>
-                    <li><a wire:navigate href="{{ route('cover-letter') }}" wire:current="bg-primary">Cover Letter</a></li>
-                    <li><a wire:navigate href="{{ route('templates') }}" wire:current="bg-primary">Templates</a></li>
-                    <li><a wire:navigate href="{{ route('jobs') }}" wire:current="bg-primary">Jobs</a></li>
-                </ul>
-            </div>
-            <a class="btn btn-ghost text-xl" wire:navigate href="{{ route('home') }}"><span><span class="text-primary">Job</span>Scraper</span></a>
-        </div>
-        <div class="navbar-center hidden lg:flex">
-            <ul class="menu menu-horizontal px-1 gap-2">
-                <li><a wire:navigate href="{{ route('dashboard') }}" wire:current="bg-primary text-white">Home</a></li>
-                <li><a wire:navigate href="{{ route('profile') }}" wire:current="bg-primary text-white">Profile</a></li>
-                <li><a wire:navigate href="{{ route('cv') }}" wire:current="bg-primary text-white">CV</a></li>
-                <li><a wire:navigate href="{{ route('cover-letter') }}" wire:current="bg-primary text-white">Cover Letter</a></li>
-                <li><a wire:navigate href="{{ route('templates') }}" wire:current="bg-primary text-white">Templates</a></li>
-                <li><a wire:navigate href="{{ route('jobs') }}" wire:current="bg-primary text-white">Jobs</a></li>
-            </ul>
-        </div>
-        <div class="navbar-end">
-            <a class="btn btn-error text-white" wire:navigate href="{{ route('logout') }}">Logout</a>
-        </div>
-    </div>
+<body class="min-h-screen">
+    <header class="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        x-data="{ mobileOpen: false }">
+        <div class="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+            <a href="{{ route('home') }}" wire:navigate class="shrink-0">
+                <x-brand />
+            </a>
 
-    {{ $slot }}
+            {{-- Desktop navigation --}}
+            <nav class="ml-4 hidden items-center gap-1 md:flex" aria-label="{{ __('Main') }}">
+                @foreach ($nav as $item)
+                    @php($active = request()->routeIs($item['route']))
+                    <a
+                        href="{{ route($item['route']) }}"
+                        wire:navigate
+                        @if ($active) aria-current="page" @endif
+                        @class([
+                            'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                            'bg-accent text-accent-foreground' => $active,
+                            'text-muted-foreground hover:bg-accent/60 hover:text-foreground' => ! $active,
+                        ])
+                    >{{ $item['label'] }}</a>
+                @endforeach
+            </nav>
+
+            <div class="ml-auto flex items-center gap-1">
+                <x-theme-toggle />
+
+                @if ($user)
+                    <x-ui.dropdown width="w-60">
+                        <x-slot:trigger>
+                            <button type="button" class="flex rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50" aria-label="{{ __('Account menu') }}">
+                                <x-ui.avatar :src="$user->getImage()" :name="$user->name" size="size-8" />
+                            </button>
+                        </x-slot:trigger>
+
+                        <div class="px-2 py-1.5">
+                            <p class="truncate text-sm font-medium">{{ $user->name }}</p>
+                            <p class="truncate text-xs text-muted-foreground">{{ $user->email }}</p>
+                        </div>
+                        <x-ui.separator class="my-1" />
+                        <x-ui.dropdown-item :href="route('profile')" wire:navigate :active="request()->routeIs('profile')">
+                            <x-ui.icon name="user" /> {{ __('Profile') }}
+                        </x-ui.dropdown-item>
+                        <x-ui.dropdown-item :href="route('logout')" destructive>
+                            <x-ui.icon name="log-out" /> {{ __('Log out') }}
+                        </x-ui.dropdown-item>
+                    </x-ui.dropdown>
+                @endif
+
+                <x-ui.button variant="ghost" size="icon" class="md:hidden" x-on:click="mobileOpen = !mobileOpen" aria-label="{{ __('Toggle navigation') }}">
+                    <x-ui.icon name="menu" x-show="!mobileOpen" />
+                    <x-ui.icon name="x" x-show="mobileOpen" x-cloak />
+                </x-ui.button>
+            </div>
+        </div>
+
+        {{-- Mobile navigation --}}
+        <nav x-show="mobileOpen" x-cloak x-transition.opacity class="border-t md:hidden" aria-label="{{ __('Main') }}">
+            <div class="mx-auto flex max-w-7xl flex-col gap-1 p-3">
+                @foreach ($nav as $item)
+                    @php($active = request()->routeIs($item['route']))
+                    <a
+                        href="{{ route($item['route']) }}"
+                        wire:navigate
+                        @class([
+                            'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                            'bg-accent text-accent-foreground' => $active,
+                            'text-muted-foreground hover:bg-accent/60 hover:text-foreground' => ! $active,
+                        ])
+                    >
+                        <x-ui.icon :name="$item['icon']" /> {{ $item['label'] }}
+                    </a>
+                @endforeach
+                <a
+                    href="{{ route('profile') }}"
+                    wire:navigate
+                    @class([
+                        'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                        'bg-accent text-accent-foreground' => request()->routeIs('profile'),
+                        'text-muted-foreground hover:bg-accent/60 hover:text-foreground' => ! request()->routeIs('profile'),
+                    ])
+                >
+                    <x-ui.icon name="user" /> {{ __('Profile') }}
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {{ $slot }}
+    </main>
 
     @persist('toast')
-    <?php
-    // Alert types alert-dash alert-error alert-horizontal alert-info alert-outline alert-soft alert-success alert-vertical alert-warning
-    ?>
-    <div
-        x-data="toastManager()"
-        x-on:toast.window="add($event.detail)"
-        class="toast toast-end toast-bottom"
-    >
-        <template x-for="toast in toasts" :key="toast.id">
-            <div
-                x-show="toast.show"
-                x-transition
-                :class="'alert alert-' + toast.type"
-            >
-                <span x-text="toast.message"></span>
-
-                <button @click="remove(toast.id)">✕</button>
-            </div>
-        </template>
-    </div>
-
-    <script>
-    function toastManager() {
-        return {
-            toasts: [],
-
-            add(toast) {
-                const id = Date.now() + Math.random();
-
-                this.toasts.push({
-                    id,
-                    message: toast.message,
-                    type: toast.type || 'info',
-                    show: true
-                });
-
-                setTimeout(() => this.remove(id), 3000);
-            },
-
-            remove(id) {
-                const index = this.toasts.findIndex(t => t.id === id);
-                if (index !== -1) {
-                    this.toasts.splice(index, 1);
-                }
-            }
-        }
-    }
-    </script>
+        <x-toaster />
     @endpersist
 </body>
 

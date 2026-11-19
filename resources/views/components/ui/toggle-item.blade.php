@@ -1,0 +1,3 @@
+@props(['active' => false, 'size' => 'default'])
+
+<button type="button" aria-pressed="{{ $active ? 'true' : 'false' }}" {{ $attributes->merge(['class' => 'inline-flex items-center justify-center gap-1.5 whitespace-nowrap border text-sm font-medium outline-none transition-colors first:rounded-l-md last:rounded-r-md focus-visible:z-10 focus-visible:ring-[3px] focus-visible:ring-ring/50 [&:not(:first-child)]:-ml-px '.($size === 'sm' ? 'h-8 px-3' : 'h-9 px-4').' '.($active ? 'bg-accent text-accent-foreground' : 'bg-background text-muted-foreground hover:bg-accent/60 hover:text-foreground dark:bg-input/30')]) }}>{{ $slot }}</button>

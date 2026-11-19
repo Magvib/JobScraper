@@ -1,48 +1,320 @@
 @import 'tailwindcss';
 
 @source '../views';
+/* The CV/cover letter templates are standalone pages with their own CDN Tailwind. */
+@source not '../views/templates';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design tokens, shadcn/ui "zinc" theme.
+ * Every colour is a CSS variable so light/dark is a pure token swap.
+ */
+:root {
+    --radius: 0.625rem;
+
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.141 0.005 285.823);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.141 0.005 285.823);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.141 0.005 285.823);
+    --primary: oklch(0.21 0.006 285.885);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.967 0.001 286.375);
+    --secondary-foreground: oklch(0.21 0.006 285.885);
+    --muted: oklch(0.967 0.001 286.375);
+    --muted-foreground: oklch(0.552 0.016 285.938);
+    --accent: oklch(0.967 0.001 286.375);
+    --accent-foreground: oklch(0.21 0.006 285.885);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.92 0.004 286.32);
+    --input: oklch(0.92 0.004 286.32);
+    --ring: oklch(0.705 0.015 286.067);
+
+    /* Status colours (not part of stock shadcn, used for scores/toasts) */
+    --success: oklch(0.527 0.154 150.069);
+    --warning: oklch(0.555 0.163 48.998);
+    --info: oklch(0.488 0.243 264.376);
 }
 
-/* @custom-variant dark (&:where(.dark, .dark *)); */
+.dark {
+    --background: oklch(0.141 0.005 285.823);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.21 0.006 285.885);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.21 0.006 285.885);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.92 0.004 286.32);
+    --primary-foreground: oklch(0.21 0.006 285.885);
+    --secondary: oklch(0.274 0.006 286.033);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.274 0.006 286.033);
+    --muted-foreground: oklch(0.705 0.015 286.067);
+    --accent: oklch(0.274 0.006 286.033);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.552 0.016 285.938);
 
-@plugin "daisyui";
+    --success: oklch(0.792 0.209 151.711);
+    --warning: oklch(0.828 0.189 84.429);
+    --info: oklch(0.707 0.165 254.624);
+}
 
-@plugin "daisyui/theme" {
-  name: "halloween";
-  default: false;
-  prefersdark: false;
-  color-scheme: "dark";
-  --color-base-100: oklch(21% 0.006 56.043);
-  --color-base-200: oklch(14% 0.004 49.25);
-  --color-base-300: oklch(0% 0 0);
-  --color-base-content: oklch(84.955% 0 0);
-  --color-primary: oklch(77.48% 0.204 60.62);
-  --color-primary-content: oklch(19.693% 0.004 196.779);
-  --color-secondary: oklch(45.98% 0.248 305.03);
-  --color-secondary-content: oklch(89.196% 0.049 305.03);
-  --color-accent: oklch(64.8% 0.223 136.073);
-  --color-accent-content: oklch(0% 0 0);
-  --color-neutral: oklch(24.371% 0.046 65.681);
-  --color-neutral-content: oklch(84.874% 0.009 65.681);
-  --color-info: oklch(54.615% 0.215 262.88);
-  --color-info-content: oklch(90.923% 0.043 262.88);
-  --color-success: oklch(62.705% 0.169 149.213);
-  --color-success-content: oklch(12.541% 0.033 149.213);
-  --color-warning: oklch(66.584% 0.157 58.318);
-  --color-warning-content: oklch(13.316% 0.031 58.318);
-  --color-error: oklch(65.72% 0.199 27.33);
-  --color-error-content: oklch(13.144% 0.039 27.33);
-  --radius-selector: 1rem;
-  --radius-field: 0.5rem;
-  --radius-box: 1rem;
-  --size-selector: 0.25rem;
-  --size-field: 0.25rem;
-  --border: 1px;
-  --depth: 1;
-  --noise: 0;
-  --root-bg: oklch(24% 0.006 56.043);
+@theme inline {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-info: var(--info);
+
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+
+    --animate-fade-in: fade-in 0.15s ease-out;
+    --animate-dialog-in: dialog-in 0.18s ease-out;
+    --animate-toast-in: toast-in 0.2s ease-out;
+
+    @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes dialog-in {
+        from { opacity: 0; transform: translateY(4px) scale(0.97); }
+        to { opacity: 1; transform: none; }
+    }
+
+    @keyframes toast-in {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: none; }
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    html {
+        color-scheme: light;
+    }
+
+    html.dark {
+        color-scheme: dark;
+    }
+
+    body {
+        @apply bg-background font-sans text-foreground antialiased;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    button:not(:disabled),
+    [role='button']:not(:disabled) {
+        cursor: pointer;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+ * Job ad description rendered from stored (sanitised) HTML
+ * ------------------------------------------------------------------------- */
+.job-desc p { margin: 0 0 .5rem; }
+.job-desc ul { list-style: disc; padding-left: 1.25rem; margin: 0 0 .5rem; }
+.job-desc ol { list-style: decimal; padding-left: 1.25rem; margin: 0 0 .5rem; }
+.job-desc li p { margin: 0; }
+.job-desc strong, .job-desc b { font-weight: 600; }
+.job-desc h1, .job-desc h2, .job-desc h3, .job-desc h4 { font-weight: 600; margin: .75rem 0 .25rem; }
+.job-desc a { text-decoration: underline; text-underline-offset: 2px; }
+
+/* Frozen selection highlight shown while the cover letter rewrite popup is open. */
+.ai-selection-highlight {
+    background: #fde047;
+    border-radius: 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+/* ---------------------------------------------------------------------------
+ * Template thumbnails (A4 = 794x1123px at 96dpi, scaled down with transforms)
+ * ------------------------------------------------------------------------- */
+.tpl-thumb {
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 8px;
+    width: calc(794px * var(--s));
+    height: calc(1123px * var(--s));
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+}
+
+.tpl-thumb iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 794px;
+    height: 1123px;
+    border: 0;
+    transform: scale(var(--s));
+    transform-origin: top left;
+    pointer-events: none; /* let the parent anchor handle clicks */
+}
+
+.cv-thumb {
+    position: relative;
+    width: 264px;
+    height: 374px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.cv-thumb iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 794px;
+    height: 1123px;
+    border: 0;
+    transform: scale(0.333);
+    transform-origin: top left;
+    pointer-events: none; /* let the parent handle clicks */
+}
+
+.cv-modal-thumb {
+    position: relative;
+    width: 596px;
+    height: 843px;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.cv-modal-thumb iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 794px;
+    height: 1123px;
+    border: 0;
+    transform: scale(0.75);
+    transform-origin: top left;
+}
+
+@media (max-width: 640px) {
+    .cv-modal-thumb {
+        width: 346px;
+        height: 489px;
+    }
+
+    .cv-modal-thumb iframe {
+        transform: scale(0.435);
+    }
+}
+
+/* ---------------------------------------------------------------------------
+ * Jobs map (Leaflet). Fullscreen state is toggled from resources/js/jobs-map.js
+ * ------------------------------------------------------------------------- */
+#jobs-map-card .jobs-map-filters,
+#jobs-map-card #jobs-map-exit {
+    display: none;
+}
+
+#jobs-map-card.is-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    margin: 0;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#jobs-map-card.is-fullscreen .jobs-map-body {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+#jobs-map-card.is-fullscreen .jobs-map-header-text,
+#jobs-map-card.is-fullscreen .jobs-map-legend,
+#jobs-map-card.is-fullscreen #jobs-map-expand {
+    display: none;
+}
+
+#jobs-map-card.is-fullscreen .jobs-map-filters {
+    display: flex;
+}
+
+#jobs-map-card.is-fullscreen #jobs-map-exit {
+    display: inline-flex;
+}
+
+#jobs-map-card.is-fullscreen .jobs-map-layout {
+    display: flex;
+    flex: 1 1 auto;
+    gap: 0.75rem;
+    min-height: 0;
+}
+
+#jobs-map-card.is-fullscreen #jobs-map {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    min-width: 0;
+}
+
+#jobs-map-card.is-fullscreen #jobs-map-sidebar {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    width: min(20rem, 45vw);
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Hovering or selecting a marker highlights the matching sidebar item(s). */
+#jobs-map-card .jobs-map-sidebar-item.is-highlighted,
+#jobs-map-card .jobs-map-sidebar-item.is-selected {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.3);
+}
+
+#jobs-map-card .jobs-map-sidebar-item.is-selected {
+    background: rgba(29, 78, 216, 0.08);
+}
+
+body.jobs-map-fullscreen-open {
+    overflow: hidden;
+}
+
+/* Leaflet popups sit on the map, keep them readable in dark mode too. */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+    background: #fff;
+    color: #18181b;
 }

@@ -109,187 +109,118 @@ new class extends Component
 };
 ?>
 
-<div class="py-10 mx-4">
-    <div class="max-w-7xl mx-auto">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-                <h1 class="text-3xl font-bold">Templates</h1>
-                <p class="mt-2 opacity-70">
-                    Showing {{ count($this->filteredTemplates) }} of {{ count($templates) }} templates — click one to preview
-                </p>
-            </div>
-            <label class="input input-bordered flex items-center gap-2 w-full md:w-72">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-60" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
-                </svg>
-                <input type="text" class="grow" placeholder="Search templates..."
-                    wire:model.live.debounce.300ms="search">
-            </label>
+<div>
+    <x-page-header
+        :title="__('Templates')"
+        :description="__('Showing :shown of :total templates — click one to preview', ['shown' => count($this->filteredTemplates), 'total' => count($templates)])"
+    >
+        <div class="relative w-full sm:w-72">
+            <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <x-ui.input type="search" class="pl-9" placeholder="{{ __('Search templates...') }}" wire:model.live.debounce.300ms="search" />
         </div>
+    </x-page-header>
 
-        @if (count($this->filteredTemplates) === 0)
-            <div class="alert alert-warning">
-                No templates match "{{ $search }}". Try another search.
-            </div>
-        @endif
+    @if (count($this->filteredTemplates) === 0)
+        <x-ui.empty icon="search" :title="__('No templates match “:search”', ['search' => $search])" :description="__('Try another search.')" />
+    @endif
 
-        <div class="grid justify-center gap-6" style="grid-template-columns: repeat(auto-fill, 264px)">
-            @foreach ($this->filteredTemplates as $template)
-                <div wire:key="tpl-{{ $template['slug'] }}"
-                    class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow overflow-hidden">
-                    <div class="cursor-pointer" wire:click="select('{{ $template['slug'] }}')">
-                        <div class="cv-thumb" wire:ignore>
-                            <iframe src="{{ route('template', $template['slug']) }}" loading="lazy" scrolling="no"
-                                title="{{ $template['name'] }}"></iframe>
-                        </div>
+    <div class="grid justify-center gap-6" style="grid-template-columns: repeat(auto-fill, 264px)">
+        @foreach ($this->filteredTemplates as $template)
+            <x-ui.card size="flush" wire:key="tpl-{{ $template['slug'] }}" class="group/tpl overflow-hidden transition-shadow hover:shadow-md">
+                <button type="button" class="block cursor-pointer border-b text-left" wire:click="select('{{ $template['slug'] }}')" aria-label="{{ __('Preview :name', ['name' => $template['name']]) }}">
+                    <div class="cv-thumb" wire:ignore>
+                        <iframe src="{{ route('template', $template['slug']) }}" loading="lazy" scrolling="no" title="{{ $template['name'] }}" tabindex="-1"></iframe>
                     </div>
-                    <div class="card-body py-3 px-4 flex-row items-center justify-between gap-2">
-                        <div>
-                            <h2 class="card-title text-base leading-tight">{{ $template['name'] }}</h2>
-                            <p class="text-xs opacity-60">#{{ $template['number'] }}</p>
-                        </div>
-                        <button class="btn btn-sm btn-ghost" wire:click="download('{{ $template['slug'] }}')" title="Download PDF">
-                            Download
-                        </button>
+                </button>
+                <div class="flex items-center justify-between gap-2 px-4 py-3">
+                    <div class="min-w-0">
+                        <h2 class="truncate text-sm font-medium leading-tight">{{ $template['name'] }}</h2>
+                        <p class="text-xs text-muted-foreground">#{{ $template['number'] }}</p>
                     </div>
+                    <x-ui.button variant="ghost" size="sm" wire:click="download('{{ $template['slug'] }}')" wire:loading.attr="disabled" wire:target="download('{{ $template['slug'] }}')" title="{{ __('Download PDF') }}">
+                        <x-ui.spinner wire:loading wire:target="download('{{ $template['slug'] }}')" />
+                        <x-ui.icon name="download" wire:loading.remove wire:target="download('{{ $template['slug'] }}')" />
+                        {{ __('PDF') }}
+                    </x-ui.button>
                 </div>
-            @endforeach
-        </div>
+            </x-ui.card>
+        @endforeach
     </div>
 
     @if ($selected)
         @php
             $firstLetterId = collect($letters)->first()['id'] ?? null;
+            $selectedTemplate = collect($this->templates)->firstWhere('slug', $selected);
         @endphp
-        <div class="modal modal-open" wire:keydown.escape.window="close">
-            <div class="modal-box max-w-7xl p-4 flex flex-col items-center gap-3"
+
+        <x-ui.dialog close="$wire.close()" max-width="max-w-7xl" padding="p-4">
+            <div class="flex items-center justify-between gap-3">
+                <h3 class="text-lg font-semibold leading-tight">{{ $selectedTemplate['name'] ?? $selected }}</h3>
+                <x-ui.button variant="ghost" size="icon-sm" wire:click="close" aria-label="{{ __('Close') }}">
+                    <x-ui.icon name="x" />
+                </x-ui.button>
+            </div>
+
+            <div class="flex min-h-0 flex-col items-center gap-3 overflow-y-auto"
                 x-data="{ letterId: {{ $firstLetterId ?? 'null' }}, letters: @entangle('letters') }">
-                @php
-                    $selectedTemplate = collect($this->templates)->firstWhere('slug', $selected);
-                @endphp
-                <span class="card-title text-base leading-tight">
-                    {{ $selectedTemplate['name'] ?? $selected }}
-                </span>
-                <div class="relative flex flex-col lg:flex-row items-start gap-3">
+                <div class="relative flex flex-col items-start gap-3 lg:flex-row">
                     <div class="cv-modal-thumb" wire:key="modal-frame-{{ $selected }}" wire:ignore>
-                        <iframe src="{{ route('template', $selected) }}" title="Preview"></iframe>
+                        <iframe src="{{ route('template', $selected) }}" title="{{ __('Preview') }}"></iframe>
                     </div>
+
                     <div class="relative">
                         {{-- Switch between saved cover letters, floating over the letter preview --}}
-                        <details class="dropdown dropdown-end absolute right-3 top-3 z-30">
-                            <summary class="btn btn-outline btn-sm bg-base-100/90 backdrop-blur-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
-                                <span x-text="letters.find(l => l.id == letterId)?.title ?? 'No cover letter'">Cover letter</span>
-                            </summary>
-                            <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg border border-base-300 w-64 z-30">
+                        <div class="absolute right-3 top-3 z-30">
+                            <x-ui.dropdown width="w-64">
+                                <x-slot:trigger>
+                                    <x-ui.button variant="outline" size="sm" class="bg-background/90 backdrop-blur-sm">
+                                        <x-ui.icon name="file-text" />
+                                        <span class="max-w-40 truncate" x-text="letters.find(l => l.id == letterId)?.title ?? '{{ __('No cover letter') }}'">{{ __('Cover letter') }}</span>
+                                        <x-ui.icon name="chevron-down" size="size-3.5" class="opacity-60" />
+                                    </x-ui.button>
+                                </x-slot:trigger>
+
                                 @forelse ($letters as $letter)
-                                    <li wire:key="modal-letter-{{ $letter['id'] }}">
-                                        <button @click="letterId = {{ $letter['id'] }}; $el.closest('details').removeAttribute('open')"
-                                            :class="letterId == {{ $letter['id'] }} && 'text-primary'">
-                                            {{ $letter['title'] ?? __('Untitled') }}
-                                        </button>
-                                    </li>
+                                    <x-ui.dropdown-item wire:key="modal-letter-{{ $letter['id'] }}" x-on:click="letterId = {{ $letter['id'] }}" x-bind:class="letterId == {{ $letter['id'] }} && 'bg-accent font-medium'">
+                                        <span class="truncate">{{ $letter['title'] ?? __('Untitled') }}</span>
+                                    </x-ui.dropdown-item>
                                 @empty
-                                    <li class="disabled"><span class="opacity-60">No saved letters yet</span></li>
+                                    <p class="px-2 py-1.5 text-sm text-muted-foreground">{{ __('No saved letters yet') }}</p>
                                 @endforelse
-                            </ul>
-                        </details>
+                            </x-ui.dropdown>
+                        </div>
+
                         <div class="cv-modal-thumb" wire:key="modal-letter-frame-{{ $selected }}" wire:ignore>
-                            <iframe :src="'{{ route('template', ['name' => $selected]) }}' + (letterId ? '?coverLetter=' + letterId : '')"
-                                title="Preview"></iframe>
+                            <iframe :src="'{{ route('template', ['name' => $selected]) }}' + (letterId ? '?coverLetter=' + letterId : '')" title="{{ __('Preview') }}"></iframe>
                         </div>
                     </div>
+
                     {{-- Download CV / Download Letter, anchored to the bottom of the previews --}}
-                    <details class="dropdown dropdown-top dropdown-center absolute bottom-3 left-1/2 -translate-x-1/2 z-30">
-                        <summary class="btn btn-outline btn-sm bg-base-100/90 backdrop-blur-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            Download
-                        </summary>
-                        <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg border border-base-300 w-64 z-30">
-                            <li>
-                                <button @click="$el.closest('details').removeAttribute('open')"
-                                    wire:click="download('{{ $selected }}')">
-                                    Download CV
-                                </button>
-                            </li>
-                            <li>
-                                <button @click="$el.closest('details').removeAttribute('open')"
-                                    wire:click="download('{{ $selected }}', letterId)">
-                                    Download Letter
-                                </button>
-                            </li>
-                        </ul>
-                    </details>
+                    <div class="absolute bottom-3 left-1/2 z-30 -translate-x-1/2">
+                        <x-ui.dropdown side="top" align="start" width="w-56">
+                            <x-slot:trigger>
+                                <x-ui.button size="sm" class="shadow-md">
+                                    <x-ui.icon name="download" /> {{ __('Download') }}
+                                    <x-ui.icon name="chevron-up" size="size-3.5" class="opacity-70" />
+                                </x-ui.button>
+                            </x-slot:trigger>
+
+                            <x-ui.dropdown-item wire:click="download('{{ $selected }}')">
+                                <x-ui.icon name="file-text" /> {{ __('Download CV') }}
+                            </x-ui.dropdown-item>
+                            <x-ui.dropdown-item wire:click="download('{{ $selected }}', letterId)">
+                                <x-ui.icon name="file-text" /> {{ __('Download Letter') }}
+                            </x-ui.dropdown-item>
+                        </x-ui.dropdown>
+                    </div>
                 </div>
-                <button class="btn btn-error w-full" wire:click="close">Close</button>
             </div>
-            <div class="modal-backdrop bg-black/60" wire:click="close"></div>
-        </div>
+
+            <div wire:loading wire:target="download" class="absolute inset-x-0 bottom-4 z-40 flex justify-center">
+                <span class="flex items-center gap-2 rounded-full border bg-popover px-4 py-2 text-sm text-popover-foreground shadow-lg">
+                    <x-ui.spinner /> {{ __('Generating PDF…') }}
+                </span>
+            </div>
+        </x-ui.dialog>
     @endif
 </div>
-
-<style>
-    /* A4 at 96dpi is 794x1123px — scale each iframe down to a 264px-wide thumbnail */
-    .cv-thumb {
-        position: relative;
-        width: 264px;
-        height: 374px;
-        overflow: hidden;
-        background: #fff;
-        transition: transform 0.15s ease;
-        transform-origin: top left;
-    }
-
-    .cv-thumb iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 794px;
-        height: 1123px;
-        border: 0;
-        transform: scale(0.333);
-        transform-origin: top left;
-        pointer-events: none; /* let the parent div handle clicks */
-    }
-
-    .cv-modal-thumb {
-        position: relative;
-        width: 596px;
-        height: 843px;
-        overflow: hidden;
-        background: #fff;
-        border-radius: 8px;
-    }
-
-    .cv-modal-thumb iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 794px;
-        height: 1123px;
-        border: 0;
-        transform: scale(0.75);
-        transform-origin: top left;
-    }
-
-    @media (max-width: 640px) {
-        .cv-modal-thumb {
-            width: 346px;
-            height: 489px;
-        }
-
-        .cv-modal-thumb iframe {
-            transform: scale(0.435);
-        }
-    }
-</style>

@@ -23,7 +23,7 @@ new class extends Component
 };
 ?>
 
-<div class="py-10 mx-4"
+<div
     x-data="{
         jobs: @entangle('jobs'),
         saved: '',
@@ -212,254 +212,203 @@ new class extends Component
     x-on:cv-saved.window="saved = JSON.stringify(jobs)"
     x-on:keydown.meta.s.prevent="$wire.save()"
     x-on:keydown.ctrl.s.prevent="$wire.save()">
-    <div class="max-w-8xl mx-auto">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div>
-                <h1 class="text-3xl font-bold">CV Editor</h1>
-                <p class="mt-2 opacity-70">
-                    <span x-show="changed" class="text-warning flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-warning inline-block"></span>
-                        Unsaved changes
-                    </span>
-                    <span x-show="!changed" x-cloak>All changes saved</span>
-                </p>
-            </div>
+    @php($user = auth()->user())
 
-            <div class="flex items-center gap-2">
-                <a href="{{ route('template', 'temp1') }}" target="_blank" class="btn btn-outline">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    {{ __('Open in template') }}
-                </a>
-                <button type="button" class="btn btn-primary" wire:click="save">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                    </svg>
-                    Save
-                    <span wire:loading wire:target="save" class="loading loading-spinner loading-xs"></span>
-                </button>
-            </div>
-        </div>
+    <x-page-header :title="__('CV Editor')">
+        <x-slot:subtitle>
+            <span x-show="changed" class="flex items-center gap-2 text-warning">
+                <span class="size-2 rounded-full bg-warning"></span>
+                {{ __('Unsaved changes') }}
+            </span>
+            <span x-show="!changed" x-cloak>{{ __('All changes saved') }}</span>
+        </x-slot:subtitle>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            {{-- Editor --}}
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body gap-4">
-                    <div class="flex items-center justify-between">
-                        <h2 class="card-title text-base">{{ __('Experience') }}</h2>
-                        <div class="flex items-center gap-2">
-                            <span class="badge badge-ghost"><span x-text="jobCount">0</span> {{ __('entries') }}</span>
-                            <button type="button" class="btn btn-ghost btn-sm" @click="sortJobs()"
-                                title="{{ __('Newest start date first') }}">
-                                {{ __('Sort by date') }}
-                            </button>
+        <x-ui.button variant="outline" :href="route('template', 'temp1')" target="_blank">
+            <x-ui.icon name="external-link" /> {{ __('Open in template') }}
+        </x-ui.button>
+        <x-ui.button wire:click="save" wire:loading.attr="disabled" wire:target="save">
+            <x-ui.spinner wire:loading wire:target="save" />
+            <x-ui.icon name="save" wire:loading.remove wire:target="save" />
+            {{ __('Save') }}
+        </x-ui.button>
+    </x-page-header>
+
+    <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        {{-- Editor --}}
+        <x-ui.card>
+            <x-ui.card-header class="flex-row items-center justify-between">
+                <x-ui.card-title>{{ __('Experience') }}</x-ui.card-title>
+                <div class="flex items-center gap-2">
+                    <x-ui.badge variant="muted"><span x-text="jobCount">0</span> {{ __('entries') }}</x-ui.badge>
+                    <x-ui.button variant="ghost" size="sm" x-on:click="sortJobs()" title="{{ __('Sort by start date') }}">
+                        {{ __('Sort by date') }}
+                    </x-ui.button>
+                </div>
+            </x-ui.card-header>
+
+            <x-ui.card-content class="flex flex-col gap-4">
+                <template x-for="(job, index) in jobs" :key="index">
+                    <div class="rounded-lg border bg-muted/30 p-4">
+                        <div class="mb-3 flex items-center justify-between">
+                            <x-ui.badge variant="secondary">
+                                {{ __('Entry') }} <span x-text="index + 1"></span>
+                            </x-ui.badge>
+                            <div class="flex items-center gap-0.5">
+                                <x-ui.button variant="ghost" size="icon-xs" x-on:click="moveJob(index, -1)" x-bind:disabled="index === 0" title="{{ __('Move up') }}">
+                                    <x-ui.icon name="chevron-up" />
+                                </x-ui.button>
+                                <x-ui.button variant="ghost" size="icon-xs" x-on:click="moveJob(index, 1)" x-bind:disabled="index === jobs.length - 1" title="{{ __('Move down') }}">
+                                    <x-ui.icon name="chevron-down" />
+                                </x-ui.button>
+                                <x-ui.button variant="ghost" size="icon-xs" class="hover:text-destructive" x-on:click="removeJob(index)" title="{{ __('Remove') }}">
+                                    <x-ui.icon name="trash" />
+                                </x-ui.button>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="flex flex-col gap-4">
-                        <template x-for="(job, index) in jobs" :key="index">
-                            <div class="rounded-lg border border-base-300 bg-base-200/50 p-4">
-                                <div class="flex items-center justify-between mb-3">
-                                    <span class="badge badge-neutral">
-                                        {{ __('Entry') }} <span x-text="index + 1"></span>
-                                    </span>
-                                    <div class="flex items-center gap-1">
-                                        <button type="button" class="btn btn-ghost btn-xs" @click="moveJob(index, -1)"
-                                            :disabled="index === 0" title="{{ __('Move up') }}">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M5 15l7-7 7 7" />
-                                            </svg>
-                                        </button>
-                                        <button type="button" class="btn btn-ghost btn-xs" @click="moveJob(index, 1)"
-                                            :disabled="index === jobs.length - 1" title="{{ __('Move down') }}">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
-                                        <button type="button" class="btn btn-ghost btn-xs text-error"
-                                            @click="removeJob(index)" title="{{ __('Remove') }}">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <label class="form-control">
-                                        <span class="label-text mb-1 block text-sm opacity-70">{{ __('Job Title') }}</span>
-                                        <input type="text" x-model="job.title"
-                                            class="input input-bordered w-full" placeholder="{{ __('Senior Frontend Developer') }}" />
-                                    </label>
-                                    <label class="form-control">
-                                        <span class="label-text mb-1 block text-sm opacity-70">{{ __('Company') }}</span>
-                                        <input type="text" x-model="job.company"
-                                            class="input input-bordered w-full" placeholder="{{ __('Nordic Tech ApS') }}" />
-                                    </label>
-                                    <label class="form-control">
-                                        <span class="label-text mb-1 block text-sm opacity-70">{{ __('Start Date') }}</span>
-                                        <input type="date" x-model="job.startDate" class="input input-bordered w-full" />
-                                    </label>
-                                    <div>
-                                        <span class="label-text mb-1 block text-sm opacity-70">{{ __('End Date') }}</span>
-                                        <div class="join w-full">
-                                            <input type="date" x-model="job.endDate"
-                                                class="input input-bordered join-item w-full"
-                                                :disabled="job.endDate === null" />
-                                            <button type="button"
-                                                class="btn join-item whitespace-nowrap"
-                                                :class="job.endDate === null ? 'btn-primary' : 'btn-ghost'"
-                                                @click="job.endDate = job.endDate === null ? '' : null"
-                                                :aria-pressed="job.endDate === null">{{ __('Current job') }}</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <label class="form-control">
-                                    <span class="label-text mb-1 mt-3 block text-sm opacity-70">{{ __('Description') }}</span>
-                                    <textarea x-model="job.description" rows="4"
-                                        class="textarea textarea-bordered w-full"
-                                        placeholder="{{ __('What did you do and achieve in this role?') }}"></textarea>
+                        <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                            <x-ui.field :label="__('Job Title')">
+                                <x-ui.input x-model="job.title" placeholder="{{ __('Senior Frontend Developer') }}" />
+                            </x-ui.field>
+                            <x-ui.field :label="__('Company')">
+                                <x-ui.input x-model="job.company" placeholder="{{ __('Nordic Tech ApS') }}" />
+                            </x-ui.field>
+                            <x-ui.field :label="__('Start Date')">
+                                <x-ui.input type="date" x-model="job.startDate" />
+                            </x-ui.field>
+                            <x-ui.field :label="__('End Date')">
+                                <x-ui.input type="date" x-model="job.endDate" x-bind:disabled="job.endDate === null" />
+                                <label class="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                                    <x-ui.switch
+                                        x-bind:checked="job.endDate === null"
+                                        x-on:change="job.endDate = $event.target.checked ? null : ''"
+                                    />
+                                    {{ __('Current job') }}
                                 </label>
-                            </div>
-                        </template>
-
-                        <div x-show="jobs.length === 0" x-cloak
-                            class="text-center py-10 border border-dashed border-base-300 rounded-lg text-base-content/50">
-                            <p>{{ __('No experience entries yet.') }}</p>
-                            <p class="text-sm mt-1">{{ __('Add your first job or education below.') }}</p>
+                            </x-ui.field>
                         </div>
 
-                        <button type="button" class="btn btn-outline" @click="addJob()">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 4v16m8-8H4" />
-                            </svg>
-                            {{ __('Add entry') }}
-                        </button>
+                        <x-ui.field :label="__('Description')" class="mt-3">
+                            <x-ui.textarea x-model="job.description" rows="4" placeholder="{{ __('What did you do and achieve in this role?') }}" />
+                        </x-ui.field>
                     </div>
+                </template>
+
+                <div x-show="jobs.length === 0" x-cloak>
+                    <x-ui.empty icon="briefcase" :title="__('No experience entries yet.')" :description="__('Add your first job or education below.')" />
                 </div>
-            </div>
 
-            {{-- Live preview --}}
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body gap-4">
-                    <div class="flex items-center justify-between">
-                        <h2 class="card-title text-base">{{ __('Preview') }}</h2>
-                        <template x-if="diffData">
-                            <div class="flex items-center gap-2 text-xs">
-                                <span class="font-medium text-green-600" x-cloak>+<span x-text="diffData.added">0</span></span>
-                                <span class="font-medium text-red-600" x-cloak>−<span x-text="diffData.removed">0</span></span>
-                                <button type="button" class="btn btn-ghost btn-xs"
-                                    @click="showDiff = !showDiff"
-                                    x-text="showDiff ? '{{ __('Hide changes') }}' : '{{ __('Show changes') }}'"></button>
-                            </div>
-                        </template>
+                <x-ui.button variant="outline" x-on:click="addJob()">
+                    <x-ui.icon name="plus" /> {{ __('Add entry') }}
+                </x-ui.button>
+            </x-ui.card-content>
+        </x-ui.card>
+
+        {{-- Live preview --}}
+        <x-ui.card class="lg:sticky lg:top-20">
+            <x-ui.card-header class="flex-row items-center justify-between">
+                <x-ui.card-title>{{ __('Preview') }}</x-ui.card-title>
+                <template x-if="diffData">
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="font-medium text-success">+<span x-text="diffData.added">0</span></span>
+                        <span class="font-medium text-destructive">−<span x-text="diffData.removed">0</span></span>
+                        <x-ui.button variant="ghost" size="xs" x-on:click="showDiff = !showDiff" x-text="showDiff ? '{{ __('Hide changes') }}' : '{{ __('Show changes') }}'" />
                     </div>
+                </template>
+            </x-ui.card-header>
 
-                    <div class="bg-white rounded-lg shadow-inner border border-base-300 px-8 py-10 font-serif text-gray-900 max-h-[297mm] overflow-y-auto">
-                        <header class="text-center pb-6 border-b-2 border-gray-900">
-                            <h1 class="text-3xl font-bold tracking-wide uppercase">@auth {{ auth()->user()->name }} @endauth</h1>
-                            @if (auth()->user()->job_title)
-                                <p class="text-lg mt-1 text-gray-700">{{ auth()->user()->job_title }}</p>
-                            @endif
-                            <p class="text-sm mt-3 text-gray-700">
-                                {{ collect([auth()->user()->address, trim(auth()->user()->zip . ' ' . auth()->user()->city), auth()->user()->phone, auth()->user()->email])->filter()->implode(' · ') }}
-                            </p>
-                        </header>
-
-                        <section class="mt-8">
-                            <h2 class="text-sm font-bold uppercase tracking-widest border-b border-gray-900 pb-1">
-                                {{ __('Erhvervserfaring & uddannelse') }}
-                            </h2>
-                            <div class="mt-5 space-y-5">
-                                <template x-for="(job, index) in jobs" :key="index">
-                                    <div class="grid grid-cols-[150px_1fr] gap-4">
-                                        <div class="text-sm text-gray-600 pt-0.5 whitespace-nowrap">
-                                            <span x-html="fieldHtml(index, 'start', fmt(job.startDate))"></span>
-                                            –
-                                            <span x-html="fieldHtml(index, 'end', job.endDate ? fmt(job.endDate) : '{{ __('nu') }}')"></span>
-                                        </div>
-                                        <div>
-                                            <h3 class="font-bold leading-snug" x-html="fieldHtml(index, 'title', job.title)"></h3>
-                                            <p class="text-sm italic text-gray-600" x-html="fieldHtml(index, 'company', job.company)"></p>
-                                            <p x-show="job.description"
-                                                class="text-sm mt-1.5 leading-relaxed text-justify whitespace-pre-wrap"
-                                                x-html="fieldHtml(index, 'description', job.description)"></p>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                {{-- Entries removed since the last save, only shown while the diff is on --}}
-                                <template x-for="(job, r) in diff?.removedJobs || []" :key="'removed-' + r">
-                                    <div class="grid grid-cols-[150px_1fr] gap-4">
-                                        <div class="text-sm text-gray-600 pt-0.5 whitespace-nowrap">
-                                            <span class="bg-red-100 text-red-900 rounded-sm line-through" x-text="fmt(job.startDate)"></span>
-                                            –
-                                            <span class="bg-red-100 text-red-900 rounded-sm line-through" x-text="job.endDate ? fmt(job.endDate) : '{{ __('nu') }}'"></span>
-                                        </div>
-                                        <div class="bg-red-100 text-red-900 rounded-sm line-through">
-                                            <h3 class="font-bold leading-snug" x-text="job.title"></h3>
-                                            <p class="text-sm italic text-gray-600" x-text="job.company"></p>
-                                            <p x-show="job.description"
-                                                class="text-sm mt-1.5 leading-relaxed text-justify whitespace-pre-wrap"
-                                                x-text="job.description"></p>
-                                        </div>
-                                    </div>
-                                </template>
-                                <p x-show="jobs.length === 0" class="text-sm italic text-gray-400">
-                                    {{ __('Your experience will appear here as you add entries...') }}
-                                </p>
-                            </div>
-                        </section>
-
-                        @if (auth()->user()->skills)
-                            <section class="mt-8">
-                                <h2 class="text-sm font-bold uppercase tracking-widest border-b border-gray-900 pb-1">
-                                    {{ __('Kompetencer') }}
-                                </h2>
-                                <p class="mt-3 text-sm">{{ implode(', ', auth()->user()->skills) }}</p>
-                            </section>
+            <x-ui.card-content class="space-y-3">
+                {{-- The paper stays white in dark mode: it previews a printed document. --}}
+                <div class="max-h-[297mm] overflow-y-auto rounded-lg border bg-white px-8 py-10 font-serif text-gray-900 shadow-inner">
+                    <header class="border-b-2 border-gray-900 pb-6 text-center">
+                        <h1 class="text-3xl font-bold uppercase tracking-wide">{{ $user->name }}</h1>
+                        @if ($user->job_title)
+                            <p class="mt-1 text-lg text-gray-700">{{ $user->job_title }}</p>
                         @endif
+                        <p class="mt-3 text-sm text-gray-700">
+                            {{ collect([$user->address, trim($user->zip.' '.$user->city), $user->phone, $user->email])->filter()->implode(' · ') }}
+                        </p>
+                    </header>
 
+                    <section class="mt-8">
+                        <h2 class="border-b border-gray-900 pb-1 text-sm font-bold uppercase tracking-widest">
+                            {{ __('Erhvervserfaring & uddannelse') }}
+                        </h2>
+                        <div class="mt-5 space-y-5">
+                            <template x-for="(job, index) in jobs" :key="index">
+                                <div class="grid grid-cols-[150px_1fr] gap-4">
+                                    <div class="whitespace-nowrap pt-0.5 text-sm text-gray-600">
+                                        <span x-html="fieldHtml(index, 'start', fmt(job.startDate))"></span>
+                                        –
+                                        <span x-html="fieldHtml(index, 'end', job.endDate ? fmt(job.endDate) : '{{ __('nu') }}')"></span>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold leading-snug" x-html="fieldHtml(index, 'title', job.title)"></h3>
+                                        <p class="text-sm italic text-gray-600" x-html="fieldHtml(index, 'company', job.company)"></p>
+                                        <p x-show="job.description"
+                                            class="mt-1.5 whitespace-pre-wrap text-justify text-sm leading-relaxed"
+                                            x-html="fieldHtml(index, 'description', job.description)"></p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            {{-- Entries removed since the last save, only shown while the diff is on --}}
+                            <template x-for="(job, r) in diff?.removedJobs || []" :key="'removed-' + r">
+                                <div class="grid grid-cols-[150px_1fr] gap-4">
+                                    <div class="whitespace-nowrap pt-0.5 text-sm text-gray-600">
+                                        <span class="rounded-sm bg-red-100 text-red-900 line-through" x-text="fmt(job.startDate)"></span>
+                                        –
+                                        <span class="rounded-sm bg-red-100 text-red-900 line-through" x-text="job.endDate ? fmt(job.endDate) : '{{ __('nu') }}'"></span>
+                                    </div>
+                                    <div class="rounded-sm bg-red-100 text-red-900 line-through">
+                                        <h3 class="font-bold leading-snug" x-text="job.title"></h3>
+                                        <p class="text-sm italic text-gray-600" x-text="job.company"></p>
+                                        <p x-show="job.description"
+                                            class="mt-1.5 whitespace-pre-wrap text-justify text-sm leading-relaxed"
+                                            x-text="job.description"></p>
+                                    </div>
+                                </div>
+                            </template>
+                            <p x-show="jobs.length === 0" class="text-sm italic text-gray-400">
+                                {{ __('Your experience will appear here as you add entries...') }}
+                            </p>
+                        </div>
+                    </section>
+
+                    @if ($user->skills)
                         <section class="mt-8">
-                            <h2 class="text-sm font-bold uppercase tracking-widest border-b border-gray-900 pb-1">
-                                {{ __('Personlige oplysninger') }}
+                            <h2 class="border-b border-gray-900 pb-1 text-sm font-bold uppercase tracking-widest">
+                                {{ __('Kompetencer') }}
                             </h2>
-                            <dl class="mt-3 grid grid-cols-[140px_1fr] gap-y-1.5 text-sm">
-                                @if (auth()->user()->birthdate)
-                                    <dt class="font-semibold">{{ __('Fødselsdato') }}</dt>
-                                    <dd>{{ auth()->user()->birthdate->format('d/m Y') }}</dd>
-                                @endif
-                                <dt class="font-semibold">{{ __('Adresse') }}</dt>
-                                <dd>{{ collect([auth()->user()->address, auth()->user()->zip, auth()->user()->city])->filter()->implode(', ') }}</dd>
-                                @if (auth()->user()->phone)
-                                    <dt class="font-semibold">{{ __('Telefon') }}</dt>
-                                    <dd>{{ auth()->user()->phone }}</dd>
-                                @endif
-                                <dt class="font-semibold">{{ __('E-mail') }}</dt>
-                                <dd>{{ auth()->user()->email }}</dd>
-                            </dl>
+                            <p class="mt-3 text-sm">{{ implode(', ', $user->skills) }}</p>
                         </section>
-                    </div>
+                    @endif
 
-                    <p class="text-xs opacity-60">
-                        {{ __('Skills and personal details come from your profile — manage them there for now.') }}
-                    </p>
+                    <section class="mt-8">
+                        <h2 class="border-b border-gray-900 pb-1 text-sm font-bold uppercase tracking-widest">
+                            {{ __('Personlige oplysninger') }}
+                        </h2>
+                        <dl class="mt-3 grid grid-cols-[140px_1fr] gap-y-1.5 text-sm">
+                            @if ($user->birthdate)
+                                <dt class="font-semibold">{{ __('Fødselsdato') }}</dt>
+                                <dd>{{ $user->birthdate->format('d/m Y') }}</dd>
+                            @endif
+                            <dt class="font-semibold">{{ __('Adresse') }}</dt>
+                            <dd>{{ collect([$user->address, $user->zip, $user->city])->filter()->implode(', ') }}</dd>
+                            @if ($user->phone)
+                                <dt class="font-semibold">{{ __('Telefon') }}</dt>
+                                <dd>{{ $user->phone }}</dd>
+                            @endif
+                            <dt class="font-semibold">{{ __('E-mail') }}</dt>
+                            <dd>{{ $user->email }}</dd>
+                        </dl>
+                    </section>
                 </div>
-            </div>
-        </div>
+
+                <p class="text-xs text-muted-foreground">
+                    {{ __('Skills and personal details come from your profile — manage them there for now.') }}
+                </p>
+            </x-ui.card-content>
+        </x-ui.card>
     </div>
 </div>

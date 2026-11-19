@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Jobs\ProcessPostQuestions;
+use App\Support\HtmlSanitizer;
 use DOMDocument;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -140,6 +141,15 @@ class Post extends Model
     public function getLocation()
     {
         return join(', ', array_filter([$this->city, $this->zipcode, $this->street, $this->country]));
+    }
+
+    /**
+     * The stored description with everything but basic formatting stripped,
+     * safe to echo unescaped. Descriptions are scraped third-party HTML.
+     */
+    public function safeDescription(): string
+    {
+        return HtmlSanitizer::clean($this->description);
     }
 
     /**

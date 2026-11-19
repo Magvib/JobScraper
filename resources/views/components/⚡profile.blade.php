@@ -540,554 +540,392 @@ new class extends Component
 }
 ?>
 
-<div class="py-10 mx-4">
-    <div class="max-w-7xl mx-auto card bg-base-100 shadow-sm mt-4">
-        <form wire:submit="save" class="mt-6 space-y-6">
-            <div class="card-body flex flex-col lg:flex-row gap-4">
-                <div class="flex-1">
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-4 mb-2">
-                        @auth
-                        <div class="avatar ml-2">
-                            <div class="ring-primary ring-offset-base-100 w-12 rounded-full ring-2 ring-offset-2">
-                                <img src="{{ auth()->user()->image ? '/storage/' . auth()->user()->image : auth()->user()->avatar }}" />
-                            </div>
-                        </div>
-                        @endauth
-                        {{ __('Profile Settings') }}
-                    </h1>
+<div>
+    <form wire:submit="save" class="pb-24">
+        <x-page-header :title="__('Profile Settings')" :description="__('Your details, search keywords and AI preferences.')">
+            <x-ui.avatar :src="auth()->user()->getImage()" :name="auth()->user()->name" size="size-10" />
+        </x-page-header>
 
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                        <legend class="fieldset-legend">{{ __('Username') }}</legend>
-                        <input
-                            type="text"
-                            wire:model="username"
-                            class="input validator w-full"
-                            placeholder="{{ __('Enter your username') }}"
-                            required
-                            minlength="2"
-                            maxlength="50" />
-                        <p class="fieldset-label">{{ __('This is how you appear to others') }}</p>
-                    </fieldset>
+        <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+            {{-- Left column: who you are --}}
+            <div class="space-y-6">
+                <x-ui.card>
+                    <x-ui.card-header>
+                        <x-ui.card-title>{{ __('Account') }}</x-ui.card-title>
+                        <x-ui.card-description>{{ __('This is how you appear to others') }}</x-ui.card-description>
+                    </x-ui.card-header>
+                    <x-ui.card-content class="space-y-4">
+                        <x-ui.field :label="__('Username')" for="username" error="username">
+                            <x-ui.input id="username" wire:model="username" placeholder="{{ __('Enter your username') }}" required minlength="2" maxlength="50" />
+                        </x-ui.field>
+                    </x-ui.card-content>
+                </x-ui.card>
 
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                        <legend class="fieldset-legend">{{ __('Information') }}</legend>
+                <x-ui.card>
+                    <x-ui.card-header>
+                        <x-ui.card-title>{{ __('Information') }}</x-ui.card-title>
+                        <x-ui.card-description>{{ __('Shown on your CV and cover letters.') }}</x-ui.card-description>
+                    </x-ui.card-header>
+                    <x-ui.card-content class="space-y-4">
+                        <x-ui.field :label="__('Profile Image')" for="image" :hint="__('JPG or PNG up to 5MB')" error="image">
+                            <div class="flex items-center gap-4">
+                                @if ($image)
+                                    <x-ui.avatar :src="$image->temporaryUrl()" :name="$username" size="size-16" />
+                                @else
+                                    <x-ui.avatar :src="auth()->user()->getImage()" :name="$username" size="size-16" />
+                                @endif
+                                <x-ui.input id="image" type="file" wire:model="image" accept="image/*" class="h-auto py-1.5" />
+                            </div>
+                            <div wire:loading wire:target="image" class="flex items-center gap-2 text-xs text-muted-foreground">
+                                <x-ui.spinner /> {{ __('Uploading…') }}
+                            </div>
+                        </x-ui.field>
 
-                        <label class="label">
-                            <span class="label-text">{{ __('Profile Image') }}</span>
-                        </label>
-                        @if ($image)
-                        <div class="avatar mb-2">
-                            <div class="w-16 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-base-200">
-                                <img src="{{ $image->temporaryUrl() }}" alt="{{ __('New profile image preview') }}" />
-                            </div>
+                        <x-ui.field :label="__('Email')" for="email" error="email">
+                            <x-ui.input id="email" type="email" wire:model="email" placeholder="{{ __('name@p13.dk') }}" required maxlength="255" />
+                        </x-ui.field>
+
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <x-ui.field :label="__('Phone Number')" for="phone" error="phone">
+                                <x-ui.input id="phone" type="tel" wire:model="phone" placeholder="{{ __('+45 12 34 56 78') }}" maxlength="20" />
+                            </x-ui.field>
+                            <x-ui.field :label="__('Birthdate')" for="birthdate" error="birthdate">
+                                <x-ui.input id="birthdate" type="date" wire:model="birthdate" max="{{ now()->format('Y-m-d') }}" />
+                            </x-ui.field>
                         </div>
-                        @elseif (auth()->user()->image)
-                        <div class="avatar mb-2">
-                            <div class="w-16 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-base-200">
-                                <img src="/storage/{{ auth()->user()->image }}" alt="{{ __('Profile image') }}" />
-                            </div>
+
+                        <x-ui.field :label="__('Job Title')" for="jobTitle" error="jobTitle">
+                            <x-ui.input id="jobTitle" wire:model="jobTitle" placeholder="{{ __('Software Developer') }}" maxlength="100" />
+                        </x-ui.field>
+                    </x-ui.card-content>
+                </x-ui.card>
+
+                <x-ui.card>
+                    <x-ui.card-header>
+                        <x-ui.card-title>{{ __('Location') }}</x-ui.card-title>
+                        <x-ui.card-description>{{ __('Used to measure how far away each job is.') }}</x-ui.card-description>
+                    </x-ui.card-header>
+                    <x-ui.card-content class="space-y-4">
+                        <x-ui.field :label="__('Street Address')" for="address" error="address">
+                            <x-ui.input id="address" wire:model="address" placeholder="{{ __('123 Main St') }}" maxlength="255" />
+                        </x-ui.field>
+
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            <x-ui.field :label="__('Zip / Postal Code')" for="zip" error="zip">
+                                <x-ui.input id="zip" wire:model="zip" placeholder="{{ __('8800') }}" maxlength="10" />
+                            </x-ui.field>
+                            <x-ui.field :label="__('City')" for="city" class="sm:col-span-2" error="city">
+                                <x-ui.input id="city" wire:model="city" placeholder="{{ __('Viborg') }}" maxlength="100" />
+                            </x-ui.field>
                         </div>
+
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <x-ui.field :label="__('Latitude')" for="latitude">
+                                <x-ui.input id="latitude" wire:model="latitude" readonly placeholder="{{ __('Set automatically on save') }}" />
+                            </x-ui.field>
+                            <x-ui.field :label="__('Longitude')" for="longitude">
+                                <x-ui.input id="longitude" wire:model="longitude" readonly placeholder="{{ __('Set automatically on save') }}" />
+                            </x-ui.field>
+                        </div>
+
+                        <div class="flex flex-wrap items-end gap-4">
+                            <x-ui.field :label="__('Max Distance (km)')" for="maxDistance" error="maxDistance" class="w-40">
+                                <x-ui.input id="maxDistance" type="number" wire:model="maxDistance" min="1" max="500" />
+                            </x-ui.field>
+                            <x-ui.button variant="secondary" wire:click="forceUpdateCords" wire:loading.attr="disabled" wire:target="forceUpdateCords">
+                                <x-ui.spinner wire:loading wire:target="forceUpdateCords" />
+                                <x-ui.icon name="map-pin" wire:loading.remove wire:target="forceUpdateCords" />
+                                {{ __('Update Coordinates') }}
+                            </x-ui.button>
+                        </div>
+                    </x-ui.card-content>
+                </x-ui.card>
+            </div>
+
+            {{-- Right column: what you are looking for --}}
+            <div class="space-y-6">
+                <x-ui.card>
+                    <x-ui.card-header>
+                        <x-ui.card-title>{{ __('Search Keywords') }}</x-ui.card-title>
+                        <x-ui.card-description>{{ __('These keywords are used to find matching jobs based on your CV. You can add or remove keywords.') }}</x-ui.card-description>
+                    </x-ui.card-header>
+                    <x-ui.card-content class="space-y-3">
+                        @if ($keywords)
+                            <div class="flex flex-wrap gap-2">
+                                @foreach ($keywords as $index => $keyword)
+                                    <x-ui.badge variant="secondary" class="gap-1.5 py-1 pl-2.5 pr-1.5 text-sm" wire:key="keyword-{{ $index }}-{{ $keyword }}">
+                                        {{ $keyword }}
+                                        <button type="button" wire:click="removeKeyword({{ $index }})" class="rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-destructive" aria-label="{{ __('Remove') }}">
+                                            <x-ui.icon name="x" size="size-3.5" />
+                                        </button>
+                                    </x-ui.badge>
+                                @endforeach
+                            </div>
                         @endif
-                        <input
-                            type="file"
-                            wire:model="image"
-                            class="file-input file-input-bordered w-full"
-                            accept="image/*" />
-                        <p class="fieldset-label">{{ __('JPG or PNG up to 5MB') }}</p>
-                        @error('image')
-                        <p class="text-error text-sm mt-1">{{ $message }}</p>
-                        @enderror
-
-                        <label class="label mt-2">
-                            <span class="label-text">{{ __('Email') }}</span>
-                        </label>
-                        <input
-                            type="email"
-                            wire:model="email"
-                            class="input w-full"
-                            placeholder="{{ __('name@p13.dk') }}"
-                            required
-                            maxlength="255" />
-                        @error('email')
-                        <p class="text-error text-sm mt-1">{{ $message }}</p>
-                        @enderror
-
-                        <label class="label mt-2">
-                            <span class="label-text">{{ __('Phone Number') }}</span>
-                        </label>
-                        <input
-                            type="tel"
-                            wire:model="phone"
-                            class="input w-full"
-                            placeholder="{{ __('+45 12 34 56 78') }}"
-                            maxlength="20" />
-                        @error('phone')
-                        <p class="text-error text-sm mt-1">{{ $message }}</p>
-                        @enderror
-
-                        <label class="label mt-2">
-                            <span class="label-text">{{ __('Birthdate') }}</span>
-                        </label>
-                        <input
-                            type="date"
-                            wire:model="birthdate"
-                            class="input w-full"
-                            max="{{ now()->format('Y-m-d') }}" />
-                        @error('birthdate')
-                        <p class="text-error text-sm mt-1">{{ $message }}</p>
-                        @enderror
-
-                        <label class="label mt-2">
-                            <span class="label-text">{{ __('Job Title') }}</span>
-                        </label>
-                        <input
-                            type="text"
-                            wire:model="jobTitle"
-                            class="input w-full"
-                            placeholder="{{ __('Software Developer') }}"
-                            maxlength="100" />
-                        @error('jobTitle')
-                        <p class="text-error text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </fieldset>
-
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                        <legend class="fieldset-legend">{{ __('Location') }}</legend>
-                        <label class="label">
-                            <span class="label-text">{{ __('Street Address') }}</span>
-                        </label>
-                        <input
-                            type="text"
-                            wire:model="address"
-                            class="input w-full"
-                            placeholder="{{ __('123 Main St') }}"
-                            maxlength="255" />
-                        <label class="label mt-2">
-                            <span class="label-text">{{ __('Zip / Postal Code') }}</span>
-                        </label>
-                        <input
-                            type="text"
-                            wire:model="zip"
-                            class="input w-full"
-                            placeholder="{{ __('8800') }}"
-                            maxlength="10" />
-                        <label class="label mt-2">
-                            <span class="label-text">{{ __('City') }}</span>
-                        </label>
-                        <input
-                            type="text"
-                            wire:model="city"
-                            class="input w-full"
-                            placeholder="{{ __('Viborg') }}"
-                            maxlength="100" />
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                                <label class="label">
-                                    <span class="label-text">{{ __('Latitude') }}</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    wire:model="latitude"
-                                    class="input w-full"
-                                    readonly
-                                    placeholder="{{ __('Set automatically on save') }}" />
-                            </div>
-                            <div>
-                                <label class="label">
-                                    <span class="label-text">{{ __('Longitude') }}</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    wire:model="longitude"
-                                    class="input w-full"
-                                    readonly
-                                    placeholder="{{ __('Set automatically on save') }}" />
-                            </div>
-                        </div>
-                        <button type="button" wire:click="forceUpdateCords" class="btn btn-secondary mt-2">
-                            {{ __('Update Coordinates') }}
-                        </button>
-                        <label class="label mt-2">
-                            <span class="label-text">{{ __('Max Distance (km)') }}</span>
-                        </label>
-                        <input
-                            type="number"
-                            wire:model="maxDistance"
-                            class="input w-full"
-                            min="1"
-                            max="500" />
-                    </fieldset>
-                </div>
-
-                <div class="flex-1">
-                    <div class="lg:mb-14"></div>
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                        <legend class="fieldset-legend">{{ __('Search Keywords') }}</legend>
-                        <p class="text-sm text-base-content/60 mb-3">{{ __('These keywords are used to find matching jobs based on your CV. You can add or remove keywords.') }}</p>
-
-                        <div class="flex flex-wrap gap-2 mb-3">
-                            @foreach($keywords as $index => $keyword)
-                            <div class="badge badge-primary badge-lg gap-2">
-                                {{ $keyword }}
-                                <button type="button" wire:click="removeKeyword({{ $index }})" class="hover:text-error">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                            @endforeach
-                        </div>
 
                         <div class="flex flex-wrap gap-2">
-                            <input
-                                type="text"
-                                wire:model="newKeyword"
-                                wire:keydown.enter="addKeyword"
-                                class="input input-bordered w-full"
-                                placeholder="{{ __('Add a keyword') }}" />
-                            <button type="button" wire:click="addKeyword" class="btn btn-secondary">
-                                {{ __('Add') }}
-                            </button>
-                            <button type="button" wire:click="generateKeywords" class="btn">
+                            <x-ui.input wire:model="newKeyword" wire:keydown.enter.prevent="addKeyword" placeholder="{{ __('Add a keyword') }}" class="min-w-40 flex-1" />
+                            <x-ui.button variant="secondary" wire:click="addKeyword">{{ __('Add') }}</x-ui.button>
+                            <x-ui.button variant="outline" wire:click="generateKeywords" wire:loading.attr="disabled" wire:target="generateKeywords">
+                                <x-ui.spinner wire:loading wire:target="generateKeywords" />
+                                <x-ui.icon name="sparkles" wire:loading.remove wire:target="generateKeywords" />
                                 {{ __('Generate from CV') }}
-                            </button>
+                            </x-ui.button>
                         </div>
-                    </fieldset>
+                    </x-ui.card-content>
+                </x-ui.card>
 
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4 mt-4">
-                        <legend class="fieldset-legend">{{ __('Skills') }}</legend>
-                        <p class="text-sm text-base-content/60 mb-3">{{ __('Add the skills you have. These are displayed on your CV.') }}</p>
-
-                        <div class="flex flex-wrap gap-2 mb-3">
-                            @foreach($skills as $index => $skill)
-                            <div class="badge badge-secondary badge-lg gap-2">
-                                {{ $skill }}
-                                <button type="button" wire:click="removeSkill({{ $index }})" class="hover:text-error">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+                <x-ui.card>
+                    <x-ui.card-header>
+                        <x-ui.card-title>{{ __('Skills') }}</x-ui.card-title>
+                        <x-ui.card-description>{{ __('Add the skills you have. These are displayed on your CV.') }}</x-ui.card-description>
+                    </x-ui.card-header>
+                    <x-ui.card-content class="space-y-3">
+                        @if ($skills)
+                            <div class="flex flex-wrap gap-2">
+                                @foreach ($skills as $index => $skill)
+                                    <x-ui.badge variant="outline" class="gap-1.5 py-1 pl-2.5 pr-1.5 text-sm" wire:key="skill-{{ $index }}-{{ $skill }}">
+                                        {{ $skill }}
+                                        <button type="button" wire:click="removeSkill({{ $index }})" class="rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-destructive" aria-label="{{ __('Remove') }}">
+                                            <x-ui.icon name="x" size="size-3.5" />
+                                        </button>
+                                    </x-ui.badge>
+                                @endforeach
                             </div>
-                            @endforeach
-                        </div>
+                        @endif
 
                         <div class="flex flex-wrap gap-2">
-                            <input
-                                type="text"
-                                wire:model="newSkill"
-                                wire:keydown.enter="addSkill"
-                                class="input input-bordered w-full"
-                                placeholder="{{ __('Add a skill') }}" />
-                            <button type="button" wire:click="addSkill" class="btn btn-secondary">
-                                {{ __('Add') }}
-                            </button>
+                            <x-ui.input wire:model="newSkill" wire:keydown.enter.prevent="addSkill" placeholder="{{ __('Add a skill') }}" class="min-w-40 flex-1" />
+                            <x-ui.button variant="secondary" wire:click="addSkill">{{ __('Add') }}</x-ui.button>
                         </div>
-                    </fieldset>
+                    </x-ui.card-content>
+                </x-ui.card>
 
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4 mt-4">
-                        <legend class="fieldset-legend">{{ __('Links') }}</legend>
-                        <p class="text-sm text-base-content/60 mb-3">{{ __('Add links to your GitHub, LinkedIn, portfolio and more. These are displayed on your CV.') }}</p>
-
-                        <div class="flex flex-col gap-2 mb-3">
-                            @foreach($links as $index => $link)
-                            <div class="flex items-center justify-between gap-2 border border-base-300 rounded-box px-3 py-2">
+                <x-ui.card>
+                    <x-ui.card-header>
+                        <x-ui.card-title>{{ __('Links') }}</x-ui.card-title>
+                        <x-ui.card-description>{{ __('Add links to your GitHub, LinkedIn, portfolio and more. These are displayed on your CV.') }}</x-ui.card-description>
+                    </x-ui.card-header>
+                    <x-ui.card-content class="space-y-3">
+                        @foreach ($links as $index => $link)
+                            <div class="flex items-center justify-between gap-2 rounded-lg border px-3 py-2" wire:key="link-{{ $index }}-{{ $link['url'] }}">
                                 <div class="min-w-0">
-                                    <span class="font-semibold">{{ $link['name'] }}</span>
-                                    <a href="{{ $link['url'] }}" target="_blank" rel="noopener" class="block text-sm text-base-content/60 truncate hover:text-primary">
+                                    <span class="text-sm font-medium">{{ $link['name'] }}</span>
+                                    <a href="{{ $link['url'] }}" target="_blank" rel="noopener" class="block truncate text-sm text-muted-foreground hover:text-foreground hover:underline">
                                         {{ $link['url'] }}
                                     </a>
                                 </div>
-                                <button type="button" wire:click="removeLink({{ $index }})" class="hover:text-error shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+                                <x-ui.button variant="ghost" size="icon-sm" wire:click="removeLink({{ $index }})" aria-label="{{ __('Remove') }}" class="hover:text-destructive">
+                                    <x-ui.icon name="x" />
+                                </x-ui.button>
                             </div>
-                            @endforeach
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            <input
-                                type="text"
-                                wire:model="newLinkName"
-                                class="input input-bordered w-full"
-                                placeholder="{{ __('Name (e.g. GitHub)') }}"
-                                maxlength="255" />
-                            <input
-                                type="text"
-                                wire:model="newLinkUrl"
-                                wire:keydown.enter="addLink"
-                                class="input input-bordered w-full"
-                                placeholder="{{ __('URL (e.g. github.com/username)') }}"
-                                maxlength="255" />
-                        </div>
-                        <button type="button" wire:click="addLink" class="btn btn-secondary mt-2">
-                            {{ __('Add') }}
-                        </button>
-                    </fieldset>
-
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4 mt-4">
-                        <legend class="fieldset-legend">{{ __('AI Questions') }}</legend>
-                        <p class="text-sm text-base-content/60 mb-3">{{ __('Define your own questions that the AI answers about each job posting. Answer them from a job with the Answer Questions button.') }}</p>
-
-                        @foreach($questions as $index => $question)
-                        <div class="border border-base-300 rounded-box px-3 py-2 mb-2">
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="badge badge-outline">{{ $question['key'] }}</span>
-                                <span class="badge badge-ghost">{{ __(Str::title($question['type'])) }}</span>
-                                <button type="button" wire:click="removeQuestion({{ $index }})" class="hover:text-error shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <input
-                                type="text"
-                                wire:model="questions.{{ $index }}.question"
-                                class="input input-bordered w-full mt-2"
-                                maxlength="1000"
-                                placeholder="{{ __('Question') }}" />
-                            @error('questions.'.$index.'.question')
-                            <p class="text-error text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                            @if($question['type'] === 'choice')
-                            <div class="mt-2 space-y-2">
-                                <p class="text-sm text-base-content/60">{{ __('Options (at least two)') }}</p>
-                                @foreach($question['options'] ?? [] as $optionIndex => $option)
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <input
-                                            type="text"
-                                            wire:model="questions.{{ $index }}.options.{{ $optionIndex }}.name"
-                                            class="input input-bordered w-1/3 @error('questions.'.$index.'.options.'.$optionIndex.'.name') input-error @enderror"
-                                            placeholder="{{ __('Name (e.g. hybrid)') }}"
-                                            maxlength="64" />
-                                        <input
-                                            type="text"
-                                            wire:model="questions.{{ $index }}.options.{{ $optionIndex }}.description"
-                                            class="input input-bordered w-full"
-                                            placeholder="{{ __('Optional description') }}"
-                                            maxlength="255" />
-                                        <button type="button" wire:click="removeQuestionOption({{ $index }}, {{ $optionIndex }})" class="hover:text-error shrink-0">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    @error('questions.'.$index.'.options.'.$optionIndex.'.name')
-                                    <p class="text-error text-sm">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                @endforeach
-                                <button type="button" wire:click="addQuestionOption({{ $index }})" class="btn btn-ghost btn-sm">
-                                    {{ __('+ Add option') }}
-                                </button>
-                            </div>
-                            @endif
-                            @if($question['type'] === 'score')
-                            <div class="mt-2 space-y-2">
-                                <p class="text-sm text-base-content/60">{{ __('Levels, ordered from lowest to highest (at least two)') }}</p>
-                                @foreach($question['levels'] ?? [] as $levelIndex => $level)
-                                <div class="flex items-center gap-2">
-                                    <input
-                                        type="text"
-                                        wire:model="questions.{{ $index }}.levels.{{ $levelIndex }}"
-                                        class="input input-bordered w-full"
-                                        placeholder="{{ __('e.g. Junior') }}"
-                                        maxlength="64" />
-                                    <button type="button" wire:click="removeQuestionLevel({{ $index }}, {{ $levelIndex }})" class="hover:text-error shrink-0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                                @endforeach
-                                <button type="button" wire:click="addQuestionLevel({{ $index }})" class="btn btn-ghost btn-sm">
-                                    {{ __('+ Add level') }}
-                                </button>
-                            </div>
-                            @endif
-                        </div>
                         @endforeach
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            <input
-                                type="text"
-                                wire:model="newQuestionKey"
-                                class="input input-bordered w-full"
-                                placeholder="{{ __('Key (e.g. remote_ok)') }}"
-                                maxlength="64" />
-                            <select wire:model.live="newQuestionType" class="select select-bordered w-full">
+                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <x-ui.input wire:model="newLinkName" placeholder="{{ __('Name (e.g. GitHub)') }}" maxlength="255" />
+                            <x-ui.input wire:model="newLinkUrl" wire:keydown.enter.prevent="addLink" placeholder="{{ __('URL (e.g. github.com/username)') }}" maxlength="255" />
+                        </div>
+                        @if ($errors->has('links.*'))
+                            <p class="text-xs font-medium text-destructive">{{ collect($errors->get('links.*'))->flatten()->first() }}</p>
+                        @endif
+                        <x-ui.button variant="secondary" wire:click="addLink">{{ __('Add') }}</x-ui.button>
+                    </x-ui.card-content>
+                </x-ui.card>
+
+                <x-ui.card>
+                    <x-ui.card-header>
+                        <x-ui.card-title>{{ __('AI Questions') }}</x-ui.card-title>
+                        <x-ui.card-description>{{ __('Define your own questions that the AI answers about each job posting. Answer them from a job with the Answer Questions button.') }}</x-ui.card-description>
+                    </x-ui.card-header>
+                    <x-ui.card-content class="space-y-3">
+                        @foreach ($questions as $index => $question)
+                            <div class="space-y-2 rounded-lg border p-3" wire:key="question-{{ $index }}-{{ $question['key'] }}">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <x-ui.badge variant="outline" class="font-mono">{{ $question['key'] }}</x-ui.badge>
+                                        <x-ui.badge variant="muted">{{ __(Str::title($question['type'])) }}</x-ui.badge>
+                                    </div>
+                                    <x-ui.button variant="ghost" size="icon-sm" wire:click="removeQuestion({{ $index }})" aria-label="{{ __('Remove') }}" class="hover:text-destructive">
+                                        <x-ui.icon name="trash" />
+                                    </x-ui.button>
+                                </div>
+
+                                <x-ui.field error="questions.{{ $index }}.question">
+                                    <x-ui.input wire:model="questions.{{ $index }}.question" maxlength="1000" placeholder="{{ __('Question') }}" />
+                                </x-ui.field>
+
+                                @if ($question['type'] === 'choice')
+                                    <div class="space-y-2">
+                                        <p class="text-xs text-muted-foreground">{{ __('Options (at least two)') }}</p>
+                                        @foreach ($question['options'] ?? [] as $optionIndex => $option)
+                                            <div wire:key="question-{{ $index }}-option-{{ $optionIndex }}">
+                                                <div class="flex items-center gap-2">
+                                                    <x-ui.input
+                                                        wire:model="questions.{{ $index }}.options.{{ $optionIndex }}.name"
+                                                        class="w-1/3"
+                                                        aria-invalid="{{ $errors->has('questions.'.$index.'.options.'.$optionIndex.'.name') ? 'true' : 'false' }}"
+                                                        placeholder="{{ __('Name (e.g. hybrid)') }}"
+                                                        maxlength="64"
+                                                    />
+                                                    <x-ui.input wire:model="questions.{{ $index }}.options.{{ $optionIndex }}.description" placeholder="{{ __('Optional description') }}" maxlength="255" />
+                                                    <x-ui.button variant="ghost" size="icon-sm" wire:click="removeQuestionOption({{ $index }}, {{ $optionIndex }})" aria-label="{{ __('Remove') }}" class="hover:text-destructive">
+                                                        <x-ui.icon name="x" />
+                                                    </x-ui.button>
+                                                </div>
+                                                @error('questions.'.$index.'.options.'.$optionIndex.'.name')
+                                                    <p class="mt-1 text-xs font-medium text-destructive">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                        @endforeach
+                                        <x-ui.button variant="ghost" size="xs" wire:click="addQuestionOption({{ $index }})">
+                                            <x-ui.icon name="plus" size="size-3.5" /> {{ __('Add option') }}
+                                        </x-ui.button>
+                                    </div>
+                                @endif
+
+                                @if ($question['type'] === 'score')
+                                    <div class="space-y-2">
+                                        <p class="text-xs text-muted-foreground">{{ __('Levels, ordered from lowest to highest (at least two)') }}</p>
+                                        @foreach ($question['levels'] ?? [] as $levelIndex => $level)
+                                            <div class="flex items-center gap-2" wire:key="question-{{ $index }}-level-{{ $levelIndex }}">
+                                                <x-ui.input wire:model="questions.{{ $index }}.levels.{{ $levelIndex }}" placeholder="{{ __('e.g. Junior') }}" maxlength="64" />
+                                                <x-ui.button variant="ghost" size="icon-sm" wire:click="removeQuestionLevel({{ $index }}, {{ $levelIndex }})" aria-label="{{ __('Remove') }}" class="hover:text-destructive">
+                                                    <x-ui.icon name="x" />
+                                                </x-ui.button>
+                                            </div>
+                                        @endforeach
+                                        <x-ui.button variant="ghost" size="xs" wire:click="addQuestionLevel({{ $index }})">
+                                            <x-ui.icon name="plus" size="size-3.5" /> {{ __('Add level') }}
+                                        </x-ui.button>
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+
+                        <x-ui.separator class="my-2" />
+                        <p class="text-sm font-medium">{{ __('New question') }}</p>
+
+                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <x-ui.input wire:model="newQuestionKey" placeholder="{{ __('Key (e.g. remote_ok)') }}" maxlength="64" />
+                            <x-ui.select wire:model.live="newQuestionType">
                                 <option value="boolean">{{ __('Boolean (yes / no)') }}</option>
                                 <option value="choice">{{ __('Choice') }}</option>
                                 <option value="score">{{ __('Score') }}</option>
-                            </select>
+                            </x-ui.select>
                         </div>
-                        <input
-                            type="text"
-                            wire:model="newQuestionText"
-                            class="input input-bordered w-full mt-2"
-                            placeholder="{{ __('Question (e.g. Does this job allow remote work?)') }}"
-                            maxlength="1000" />
-                        @if($newQuestionType === 'choice')
-                        <div class="mt-2 space-y-2">
-                            <p class="text-sm text-base-content/60">{{ __('Options (at least two)') }}</p>
-                            @foreach($newQuestionOptions as $optionIndex => $option)
-                            <div class="flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    wire:model="newQuestionOptions.{{ $optionIndex }}.name"
-                                    class="input input-bordered w-1/3"
-                                    placeholder="{{ __('Name (e.g. hybrid)') }}"
-                                    maxlength="64" />
-                                <input
-                                    type="text"
-                                    wire:model="newQuestionOptions.{{ $optionIndex }}.description"
-                                    class="input input-bordered w-full"
-                                    placeholder="{{ __('Optional description') }}"
-                                    maxlength="255" />
-                                <button type="button" wire:click="removeNewQuestionOption({{ $optionIndex }})" class="hover:text-error shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+                        <x-ui.input wire:model="newQuestionText" placeholder="{{ __('Question (e.g. Does this job allow remote work?)') }}" maxlength="1000" />
+
+                        @if ($newQuestionType === 'choice')
+                            <div class="space-y-2">
+                                <p class="text-xs text-muted-foreground">{{ __('Options (at least two)') }}</p>
+                                @foreach ($newQuestionOptions as $optionIndex => $option)
+                                    <div class="flex items-center gap-2" wire:key="new-option-{{ $optionIndex }}">
+                                        <x-ui.input wire:model="newQuestionOptions.{{ $optionIndex }}.name" class="w-1/3" placeholder="{{ __('Name (e.g. hybrid)') }}" maxlength="64" />
+                                        <x-ui.input wire:model="newQuestionOptions.{{ $optionIndex }}.description" placeholder="{{ __('Optional description') }}" maxlength="255" />
+                                        <x-ui.button variant="ghost" size="icon-sm" wire:click="removeNewQuestionOption({{ $optionIndex }})" aria-label="{{ __('Remove') }}" class="hover:text-destructive">
+                                            <x-ui.icon name="x" />
+                                        </x-ui.button>
+                                    </div>
+                                @endforeach
+                                <x-ui.button variant="ghost" size="xs" wire:click="addNewQuestionOption">
+                                    <x-ui.icon name="plus" size="size-3.5" /> {{ __('Add option') }}
+                                </x-ui.button>
                             </div>
-                            @endforeach
-                            <button type="button" wire:click="addNewQuestionOption" class="btn btn-ghost btn-sm">
-                                {{ __('+ Add option') }}
-                            </button>
-                        </div>
                         @endif
-                        @if($newQuestionType === 'score')
-                        <div class="mt-2 space-y-2">
-                            <p class="text-sm text-base-content/60">{{ __('Levels, ordered from lowest to highest (at least two)') }}</p>
-                            @foreach($newQuestionLevels as $levelIndex => $level)
-                            <div class="flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    wire:model="newQuestionLevels.{{ $levelIndex }}"
-                                    class="input input-bordered w-full"
-                                    placeholder="{{ __('e.g. Junior') }}"
-                                    maxlength="64" />
-                                <button type="button" wire:click="removeNewQuestionLevel({{ $levelIndex }})" class="hover:text-error shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+
+                        @if ($newQuestionType === 'score')
+                            <div class="space-y-2">
+                                <p class="text-xs text-muted-foreground">{{ __('Levels, ordered from lowest to highest (at least two)') }}</p>
+                                @foreach ($newQuestionLevels as $levelIndex => $level)
+                                    <div class="flex items-center gap-2" wire:key="new-level-{{ $levelIndex }}">
+                                        <x-ui.input wire:model="newQuestionLevels.{{ $levelIndex }}" placeholder="{{ __('e.g. Junior') }}" maxlength="64" />
+                                        <x-ui.button variant="ghost" size="icon-sm" wire:click="removeNewQuestionLevel({{ $levelIndex }})" aria-label="{{ __('Remove') }}" class="hover:text-destructive">
+                                            <x-ui.icon name="x" />
+                                        </x-ui.button>
+                                    </div>
+                                @endforeach
+                                <x-ui.button variant="ghost" size="xs" wire:click="addNewQuestionLevel">
+                                    <x-ui.icon name="plus" size="size-3.5" /> {{ __('Add level') }}
+                                </x-ui.button>
                             </div>
-                            @endforeach
-                            <button type="button" wire:click="addNewQuestionLevel" class="btn btn-ghost btn-sm">
-                                {{ __('+ Add level') }}
-                            </button>
-                        </div>
                         @endif
-                        <button type="button" wire:click="addQuestion" class="btn btn-secondary mt-2">
-                            {{ __('Add question') }}
-                        </button>
-                    </fieldset>
 
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4 mt-4">
-                        <legend class="fieldset-legend">{{ __('Default Cover Letter') }}</legend>
-                        <p class="text-sm text-base-content/60 mb-3">{{ __('Choose which of your cover letters is used as the reference when generating a new cover letter for a job listing.') }}</p>
+                        <x-ui.button variant="secondary" wire:click="addQuestion">{{ __('Add question') }}</x-ui.button>
+                    </x-ui.card-content>
+                </x-ui.card>
 
-                        <select wire:model="defaultCoverLetter" class="select select-bordered w-full">
-                            <option value="">{{ __('No default cover letter') }}</option>
-                            @foreach($coverLetters as $letter)
-                            <option value="{{ $letter['id'] }}">{{ $letter['title'] }}</option>
+                <x-ui.card>
+                    <x-ui.card-header>
+                        <x-ui.card-title>{{ __('Default Cover Letter') }}</x-ui.card-title>
+                        <x-ui.card-description>{{ __('Choose which of your cover letters is used as the reference when generating a new cover letter for a job listing.') }}</x-ui.card-description>
+                    </x-ui.card-header>
+                    <x-ui.card-content>
+                        <x-ui.field error="defaultCoverLetter">
+                            <x-ui.select wire:model="defaultCoverLetter" aria-label="{{ __('Default Cover Letter') }}">
+                                <option value="">{{ __('No default cover letter') }}</option>
+                                @foreach ($coverLetters as $letter)
+                                    <option value="{{ $letter['id'] }}">{{ $letter['title'] }}</option>
+                                @endforeach
+                            </x-ui.select>
+                        </x-ui.field>
+                    </x-ui.card-content>
+                </x-ui.card>
+
+                <x-ui.card>
+                    <x-ui.card-header>
+                        <x-ui.card-title>{{ __('Auto-match New Jobs') }}</x-ui.card-title>
+                        <x-ui.card-description>{{ __('When enabled, new matches are queued automatically.') }}</x-ui.card-description>
+                    </x-ui.card-header>
+                    <x-ui.card-content>
+                        <label class="flex cursor-pointer items-center justify-between gap-4">
+                            <span class="text-sm">{{ __('Fetch and auto-rate the newest 20 matching jobs each morning.') }}</span>
+                            <x-ui.switch wire:model="autoMatchNewJobs" />
+                        </label>
+                    </x-ui.card-content>
+                </x-ui.card>
+
+                <x-ui.card>
+                    <x-ui.card-header>
+                        <x-ui.card-title>{{ __('Match Notifications') }}</x-ui.card-title>
+                        <x-ui.card-description>{{ __('Only send emails when a score meets your threshold. Leave a field empty to ignore that score.') }}</x-ui.card-description>
+                    </x-ui.card-header>
+                    <x-ui.card-content class="space-y-4">
+                        <x-ui.field :label="__('Notify when')" for="notifyMatchMode">
+                            <x-ui.select id="notifyMatchMode" wire:model="notifyMatchMode">
+                                <option value="any">{{ __('Any selected score meets its threshold') }}</option>
+                                <option value="all">{{ __('All selected scores meet their thresholds') }}</option>
+                            </x-ui.select>
+                        </x-ui.field>
+
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            @foreach ([
+                                'notifySkillsMatchThreshold' => __('Skills match threshold (%)'),
+                                'notifyExperienceRelevanceThreshold' => __('Experience relevance threshold (%)'),
+                                'notifySeniorityFitThreshold' => __('Seniority fit threshold (%)'),
+                                'notifyKeywordMatchThreshold' => __('Keyword match threshold (%)'),
+                            ] as $field => $label)
+                                <x-ui.field :label="$label" :for="$field" :error="$field">
+                                    <x-ui.input :id="$field" type="number" wire:model="{{ $field }}" min="0" max="100" step="0.1" placeholder="40" />
+                                </x-ui.field>
                             @endforeach
-                        </select>
-                        @error('defaultCoverLetter')
-                        <p class="text-error text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </fieldset>
-
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                        <legend class="fieldset-legend">{{ __('Auto-match New Jobs') }}</legend>
-                        <label class="label cursor-pointer justify-between gap-4">
-                            <span class="label-text">{{ __('Fetch and auto-rate the newest 20 matching jobs each morning.') }}</span>
-                            <input type="checkbox" wire:model="autoMatchNewJobs" class="toggle toggle-primary" />
-                        </label>
-                        <p class="fieldset-label">{{ __('When enabled, new matches are queued automatically.') }}</p>
-                    </fieldset>
-
-                    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
-                        <legend class="fieldset-legend">{{ __('Match Notifications') }}</legend>
-                        <p class="text-sm text-base-content/60 mb-3">{{ __('Only send emails when a score meets your threshold. Leave a field empty to ignore that score.') }}</p>
-
-                        <label class="label">
-                            <span class="label-text">{{ __('Notify when') }}</span>
-                        </label>
-                        <select wire:model="notifyMatchMode" class="select select-bordered w-full">
-                            <option value="any">{{ __('Any selected score meets its threshold') }}</option>
-                            <option value="all">{{ __('All selected scores meet their thresholds') }}</option>
-                        </select>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                                <label class="label">
-                                    <span class="label-text">{{ __('Skills match threshold (%)') }}</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    wire:model="notifySkillsMatchThreshold"
-                                    class="input w-full"
-                                    min="0"
-                                    max="100"
-                                    step="0.1"
-                                    placeholder="40" />
-                            </div>
-
-                            <div>
-                                <label class="label">
-                                    <span class="label-text">{{ __('Experience relevance threshold (%)') }}</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    wire:model="notifyExperienceRelevanceThreshold"
-                                    class="input w-full"
-                                    min="0"
-                                    max="100"
-                                    step="0.1"
-                                    placeholder="40" />
-                            </div>
-
-                            <div>
-                                <label class="label">
-                                    <span class="label-text">{{ __('Seniority fit threshold (%)') }}</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    wire:model="notifySeniorityFitThreshold"
-                                    class="input w-full"
-                                    min="0"
-                                    max="100"
-                                    step="0.1"
-                                    placeholder="40" />
-                            </div>
-
-                            <div>
-                                <label class="label">
-                                    <span class="label-text">{{ __('Keyword match threshold (%)') }}</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    wire:model="notifyKeywordMatchThreshold"
-                                    class="input w-full"
-                                    min="0"
-                                    max="100"
-                                    step="0.1"
-                                    placeholder="40" />
-                            </div>
                         </div>
-                    </fieldset>
-
-                    <div class="flex items-center justify-end gap-3 mt-4">
-                        <button type="submit" class="btn btn-primary">
-                            {{ __('Save Changes') }}
-                        </button>
-                    </div>
-                </div>
+                    </x-ui.card-content>
+                </x-ui.card>
             </div>
-        </form>
-    </div>
+        </div>
+
+        {{-- Sticky save bar --}}
+        <div class="fixed inset-x-0 bottom-0 z-30 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div class="mx-auto flex max-w-7xl items-center justify-end gap-3 px-4 py-3 sm:px-6 lg:px-8">
+                <span wire:dirty class="mr-auto flex items-center gap-2 text-sm text-warning">
+                    <span class="size-2 rounded-full bg-warning"></span> {{ __('Unsaved changes') }}
+                </span>
+                <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="save">
+                    <x-ui.spinner wire:loading wire:target="save" />
+                    <x-ui.icon name="save" wire:loading.remove wire:target="save" />
+                    {{ __('Save Changes') }}
+                </x-ui.button>
+            </div>
+        </div>
+    </form>
 </div>
