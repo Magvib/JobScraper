@@ -8,6 +8,9 @@
         ['route' => 'cover-letter', 'label' => __('Cover Letter'), 'icon' => 'file-text'],
         ['route' => 'templates', 'label' => __('Templates'), 'icon' => 'layout-template'],
     ];
+
+    // The two editors benefit from more room on big screens; everything else stays readable at 7xl.
+    $container = request()->routeIs('cv', 'cover-letter') ? 'max-w-[100rem]' : 'max-w-7xl';
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -19,7 +22,7 @@
 <body class="min-h-screen">
     <header class="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
         x-data="{ mobileOpen: false }">
-        <div class="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto flex h-14 {{ $container }} items-center gap-4 px-4 sm:px-6 lg:px-8">
             <a href="{{ route('home') }}" wire:navigate class="shrink-0">
                 <x-brand />
             </a>
@@ -75,7 +78,7 @@
 
         {{-- Mobile navigation --}}
         <nav x-show="mobileOpen" x-cloak x-transition.opacity class="border-t md:hidden" aria-label="{{ __('Main') }}">
-            <div class="mx-auto flex max-w-7xl flex-col gap-1 p-3">
+            <div class="mx-auto flex {{ $container }} flex-col gap-1 p-3">
                 @foreach ($nav as $item)
                     @php($active = request()->routeIs($item['route']))
                     <a
@@ -105,7 +108,7 @@
         </nav>
     </header>
 
-    <main class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main class="mx-auto w-full {{ $container }} px-4 py-8 sm:px-6 lg:px-8">
         {{ $slot }}
     </main>
 
