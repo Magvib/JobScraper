@@ -797,12 +797,12 @@ new class extends Component
                                     <input
                                         type="number"
                                         wire:model.live.debounce.500ms="maxDistance"
-                                        class="w-12 bg-transparent text-sm tabular-nums outline-none"
+                                        class="w-10 bg-transparent text-right text-sm tabular-nums outline-none"
                                         min="1"
                                         max="500"
                                         aria-label="{{ __('Max distance (km)') }}"
                                     />
-                                    <span class="whitespace-nowrap text-xs text-muted-foreground">{{ __('km max') }}</span>
+                                    <span class="whitespace-nowrap text-sm text-muted-foreground">{{ __('km max') }}</span>
                                 </div>
                             @endif
 
@@ -823,48 +823,59 @@ new class extends Component
                             @endif
                         </div>
 
-                        @if ($this->keywords->count() > 1)
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="w-16 text-xs font-medium text-muted-foreground">{{ __('Keyword') }}</span>
-                                <x-ui.chip :active="$this->selectedKeywords === []" wire:click="$set('selectedKeywords', [])">{{ __('All') }}</x-ui.chip>
-                                @foreach ($this->keywords as $kw)
-                                    <x-ui.chip :active="in_array($kw, $this->selectedKeywords)" wire:click="toggleKeyword('{{ $kw }}')" wire:key="kw-{{ $kw }}">
-                                        <span class="size-2 shrink-0 rounded-full" style="background: {{ $this->keywordColor($kw) }}" title="{{ __('Map color') }}"></span>
-                                        {{ Str::title($kw) }}
-                                    </x-ui.chip>
-                                @endforeach
-                            </div>
-                        @endif
+                        @if ($this->keywords->count() > 1 || $this->sources->count() > 1 || $this->questionFilterOptions->isNotEmpty())
+                            <div class="space-y-3 border-t pt-4">
+                                @if ($this->keywords->count() > 1)
+                                    <div class="grid gap-1.5 sm:grid-cols-[9rem_1fr]">
+                                        <span class="text-sm font-medium leading-8">{{ __('Keyword') }}</span>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <x-ui.chip :active="$this->selectedKeywords === []" wire:click="$set('selectedKeywords', [])">{{ __('All') }}</x-ui.chip>
+                                            @foreach ($this->keywords as $kw)
+                                                <x-ui.chip :active="in_array($kw, $this->selectedKeywords)" wire:click="toggleKeyword('{{ $kw }}')" wire:key="kw-{{ $kw }}">
+                                                    <span class="size-2 shrink-0 rounded-full" style="background: {{ $this->keywordColor($kw) }}" title="{{ __('Map color') }}"></span>
+                                                    {{ Str::title($kw) }}
+                                                </x-ui.chip>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
 
-                        @if ($this->sources->count() > 1)
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="w-16 text-xs font-medium text-muted-foreground">{{ __('Source') }}</span>
-                                <x-ui.chip :active="$this->selectedSources === []" wire:click="$set('selectedSources', [])">{{ __('All') }}</x-ui.chip>
-                                @foreach ($this->sources as $src)
-                                    <x-ui.chip :active="in_array($src, $this->selectedSources)" wire:click="toggleSource('{{ $src }}')" wire:key="src-{{ $src }}">
-                                        {{ Str::title($src) }}
-                                    </x-ui.chip>
-                                @endforeach
-                            </div>
-                        @endif
+                                @if ($this->sources->count() > 1)
+                                    <div class="grid gap-1.5 sm:grid-cols-[9rem_1fr]">
+                                        <span class="text-sm font-medium leading-8">{{ __('Source') }}</span>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <x-ui.chip :active="$this->selectedSources === []" wire:click="$set('selectedSources', [])">{{ __('All') }}</x-ui.chip>
+                                            @foreach ($this->sources as $src)
+                                                <x-ui.chip :active="in_array($src, $this->selectedSources)" wire:click="toggleSource('{{ $src }}')" wire:key="src-{{ $src }}">
+                                                    {{ Str::title($src) }}
+                                                </x-ui.chip>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
 
-                        @if ($this->questionFilterOptions->isNotEmpty())
-                            <div class="flex flex-col gap-2">
-                                @foreach ($this->questionFilterOptions as $filter)
-                                    <div class="flex flex-wrap items-center gap-2" wire:key="qf-{{ $filter['key'] }}">
-                                        <span class="w-16 truncate text-xs font-medium text-muted-foreground" title="{{ $filter['question'] }}">
-                                            {{ Str::title(str_replace('_', ' ', $filter['key'])) }}
-                                        </span>
-                                        <x-ui.chip :active="($this->questionFilters[$filter['key']] ?? []) === []" wire:click="$set('questionFilters.{{ $filter['key'] }}', [])">{{ __('All') }}</x-ui.chip>
-                                        @foreach ($filter['values'] as $value)
-                                            <x-ui.chip
-                                                :active="in_array($value['value'], $this->questionFilters[$filter['key']] ?? [])"
-                                                title="{{ $value['title'] }}"
-                                                wire:click="toggleQuestionFilter('{{ $filter['key'] }}', '{{ $value['value'] }}')"
-                                            >{{ $value['label'] }}</x-ui.chip>
+                                @if ($this->questionFilterOptions->isNotEmpty())
+                                    <div class="space-y-3 border-t border-dashed pt-3">
+                                        <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ __('Your questions') }}</p>
+                                        @foreach ($this->questionFilterOptions as $filter)
+                                            <div class="grid gap-1.5 sm:grid-cols-[9rem_1fr]" wire:key="qf-{{ $filter['key'] }}">
+                                                <span class="break-words text-sm leading-8 text-muted-foreground sm:leading-8" title="{{ $filter['question'] }}">
+                                                    {{ Str::title(str_replace('_', ' ', $filter['key'])) }}
+                                                </span>
+                                                <div class="flex flex-wrap gap-1.5">
+                                                    <x-ui.chip :active="($this->questionFilters[$filter['key']] ?? []) === []" wire:click="$set('questionFilters.{{ $filter['key'] }}', [])">{{ __('All') }}</x-ui.chip>
+                                                    @foreach ($filter['values'] as $value)
+                                                        <x-ui.chip
+                                                            :active="in_array($value['value'], $this->questionFilters[$filter['key']] ?? [])"
+                                                            title="{{ $value['title'] }}"
+                                                            wire:click="toggleQuestionFilter('{{ $filter['key'] }}', '{{ $value['value'] }}')"
+                                                        >{{ $value['label'] }}</x-ui.chip>
+                                                    @endforeach
+                                                </div>
+                                            </div>
                                         @endforeach
                                     </div>
-                                @endforeach
+                                @endif
                             </div>
                         @endif
                     </x-ui.card-content>
